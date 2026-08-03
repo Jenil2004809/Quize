@@ -3,17 +3,21 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateProfileSuccess } from '../redux/authSlice';
 import api, { ASSET_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
-import { FaUser, FaLock, FaCamera, FaEnvelope, FaTrashAlt } from 'react-icons/fa';
+import { FaUser, FaLock, FaCamera, FaEnvelope, FaTrashAlt, FaEye, FaEyeSlash, FaPhoneAlt } from 'react-icons/fa';
 
 const ProfilePage = () => {
   const { user } = useSelector(state => state.auth);
   const dispatch = useDispatch();
 
   const [name, setName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [profileLoading, setProfileLoading] = useState(false);
 
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Profile Avatar Upload Handler
   const handleAvatarChange = async (e) => {
@@ -40,17 +44,17 @@ const ProfilePage = () => {
     }
   };
 
-  // Name Update Handler
+  // Name & Mobile Phone Update Handler
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     setProfileLoading(true);
     try {
-      const res = await api.put('/auth/profile', { name });
+      const res = await api.put('/auth/profile', { name, phone });
       if (res.data.success) {
         dispatch(updateProfileSuccess(res.data.user));
-        Swal.fire({ title: 'Profile Saved!', text: 'Your name has been updated.', icon: 'success', timer: 1500, showConfirmButton: false });
+        Swal.fire({ title: 'Profile Saved!', text: 'Your profile details have been updated.', icon: 'success', timer: 1500, showConfirmButton: false });
       }
     } catch (err) {
       console.error(err);
@@ -157,6 +161,20 @@ const ProfilePage = () => {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Mobile Number (For Mobile OTP Verification)</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><FaPhoneAlt className="w-4 h-4" /></span>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+91 9876543210"
+                    className="w-full text-sm pl-10 pr-4 py-3 rounded-xl border border-slate-350 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={profileLoading}
@@ -177,38 +195,65 @@ const ProfilePage = () => {
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Current Password</label>
-                <input
-                  type="password"
-                  required
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  placeholder="••••••••"
-                  className="w-full text-sm px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    required
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    placeholder="••••••••"
+                    className="w-full text-sm pl-4 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                  >
+                    {showCurrentPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-400 mb-1">New Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    placeholder="••••••••"
-                    className="w-full text-sm px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      required
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full text-sm pl-4 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                      {showNewPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Confirm New Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    placeholder="••••••••"
-                    className="w-full text-sm px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full text-sm pl-4 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                      {showConfirmPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 

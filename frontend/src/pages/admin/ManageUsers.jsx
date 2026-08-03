@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUsers, FaTrash, FaFilter } from 'react-icons/fa';
+import { FaUsers, FaTrash, FaFilter, FaUserCheck } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
@@ -50,6 +50,23 @@ const ManageUsers = () => {
         }
       }
     });
+  };
+
+  const handleApprove = async (id, name) => {
+    try {
+      const res = await api.put(`/users/${id}/approve`);
+      if (res.data.success) {
+        Swal.fire({
+          title: 'Account Activated! 🔓',
+          text: `${name}'s account has been successfully approved.`,
+          icon: 'success'
+        });
+        fetchUsers();
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Error', 'Could not complete user approval.', 'error');
+    }
   };
 
   return (
@@ -127,15 +144,26 @@ const ManageUsers = () => {
                     </td>
                     <td className="py-4 text-slate-400">{new Date(u.createdAt).toLocaleDateString()}</td>
                     <td className="py-4 text-right">
-                      {u.role !== 'admin' && (
-                        <button
-                          onClick={() => handleDelete(u._id, u.name)}
-                          className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
-                          title="Delete Account"
-                        >
-                          <FaTrash className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                      <div className="flex justify-end items-center gap-2">
+                        {u.role !== 'admin' && !u.isApproved && (
+                          <button
+                            onClick={() => handleApprove(u._id, u.name)}
+                            className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors"
+                            title="Approve User Account"
+                          >
+                            <FaUserCheck className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {u.role !== 'admin' && (
+                          <button
+                            onClick={() => handleDelete(u._id, u.name)}
+                            className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                            title="Delete Account"
+                          >
+                            <FaTrash className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

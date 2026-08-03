@@ -1,6 +1,17 @@
 import axios from 'axios';
 
-export const ASSET_BASE_URL = import.meta.env.VITE_ASSET_URL || 'http://localhost:5005';
+// Dynamically construct backend URL so mobile phones on local Wi-Fi connect to PC IP automatically
+const getBackendURL = () => {
+  if (import.meta.env.VITE_ASSET_URL) {
+    return import.meta.env.VITE_ASSET_URL;
+  }
+  if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+    return `http://${window.location.hostname}:5005`;
+  }
+  return 'http://localhost:5005';
+};
+
+export const ASSET_BASE_URL = getBackendURL();
 
 const api = axios.create({
   baseURL: `${ASSET_BASE_URL}/api`,
@@ -31,7 +42,6 @@ api.interceptors.response.use(
       console.warn('Unauthorized session, logging out...');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // We can redirect to login if we are in browser environment and not on register/login pages
       const path = window.location.pathname;
       if (path !== '/login' && path !== '/register' && path !== '/') {
         window.location.href = '/login';

@@ -1,0 +1,358 @@
+{
+  "info": {
+    "_postman_id": "4b684534-1188-468a-b855-38827fa6d8cc",
+    "name": "Online Quiz System API Collection",
+    "description": "Comprehensive Postman collection for verifying the restructured Online Quiz Management System backend. Set global variables: {{baseUrl}} = http://localhost:5005/api, {{token}} = Bearer <token>",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth API",
+      "item": [
+        {
+          "name": "Student Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Student\",\n  \"email\": \"jane_new@quiz.com\",\n  \"password\": \"Student@1234\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/student/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "student", "register"]
+            }
+          }
+        },
+        {
+          "name": "Teacher Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bob Math Teacher\",\n  \"email\": \"bob_new@quiz.com\",\n  \"password\": \"Teacher@1234\",\n  \"specialization\": \"Mathematics\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/teacher/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "teacher", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login (Dynamic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@quizsystem.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@quiz.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot-password"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@quiz.com\",\n  \"otp\": \"123456\",\n  \"newPassword\": \"NewPassword@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin API",
+      "item": [
+        {
+          "name": "Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Get Students List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "students"]
+            }
+          }
+        },
+        {
+          "name": "Get Teachers List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teachers"]
+            }
+          }
+        },
+        {
+          "name": "Approve Teacher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/teachers/:id/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "teachers", ":id", "approve"]
+            }
+          }
+        },
+        {
+          "name": "Database Collections",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/database/collections",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "database", "collections"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quizzes API",
+      "item": [
+        {
+          "name": "Get Quizzes (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/quizzes",
+              "host": ["{{baseUrl}}"],
+              "path": ["quizzes"]
+            }
+          }
+        },
+        {
+          "name": "Create Quiz Draft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Calculus Quiz\",\n  \"description\": \"Basic differentiation and integration.\",\n  \"category\": \"cat_id_here\",\n  \"timeLimit\": 15,\n  \"passingMarks\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/quizzes",
+              "host": ["{{baseUrl}}"],
+              "path": ["quizzes"]
+            }
+          }
+        },
+        {
+          "name": "Add Question to Quiz",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"mcq\",\n  \"text\": \"What is the derivative of x^2?\",\n  \"options\": [\"x\", \"2x\", \"2\", \"x^3\"],\n  \"correctAnswers\": [\"2x\"],\n  \"marks\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/quizzes/:quizId/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["quizzes", ":quizId", "questions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Student API",
+      "item": [
+        {
+          "name": "Get Bookmarks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students/bookmarks",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "bookmarks"]
+            }
+          }
+        },
+        {
+          "name": "Submit Quiz Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quizId\": \"quiz_id_here\",\n  \"timeTaken\": 120,\n  \"answers\": [\n    {\n      \"questionId\": \"q_id_here\",\n      \"selectedAnswers\": [\"let\"]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/results/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["results", "submit"]
+            }
+          }
+        },
+        {
+          "name": "Global Leaderboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/students/leaderboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", "leaderboard"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

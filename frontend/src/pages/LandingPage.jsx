@@ -4,6 +4,8 @@ import { FaGraduationCap, FaChalkboardTeacher, FaClipboardCheck, FaAward, FaSear
 import { motion } from 'framer-motion';
 import api from '../services/api';
 
+import PageTransition from '../components/PageTransition';
+
 const LandingPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="space-y-20 pb-20">
+    <PageTransition className="space-y-20 pb-20">
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-20 pb-12 md:pt-32 md:pb-20">
         {/* Animated Background Gradients */}
@@ -103,7 +105,7 @@ const LandingPage = () => {
           >
             <div className="relative w-full max-w-md h-[400px]">
               {/* Stacked cards demonstrating interface */}
-              <div className="absolute top-0 right-0 w-80 p-6 glass-card rounded-3xl shadow-2xl space-y-4 transform rotate-3 hover:rotate-0 transition-transform duration-500 z-20">
+              <div className="absolute top-0 right-0 w-80 p-6 glass-card rounded-3xl shadow-2xl space-y-4 transform rotate-3 hover:rotate-0 transition-transform duration-500 z-20 animate-float">
                 <div className="flex justify-between items-center">
                   <span className="px-3 py-1 rounded bg-emerald-500/10 text-emerald-500 text-xs font-bold uppercase">Active Exam</span>
                   <span className="text-slate-400 text-xs font-semibold">Time: 09:59</span>
@@ -116,7 +118,7 @@ const LandingPage = () => {
                 </div>
               </div>
 
-              <div className="absolute bottom-4 left-0 w-72 p-6 bg-slate-900 text-white rounded-3xl shadow-xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10">
+              <div className="absolute bottom-4 left-0 w-72 p-6 bg-slate-900 text-white rounded-3xl shadow-xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10 animate-float-slow">
                 <div className="flex items-center space-x-3">
                   <div className="p-3 bg-blue-500/20 text-blue-400 rounded-2xl"><FaAward className="w-6 h-6" /></div>
                   <div>
@@ -237,7 +239,7 @@ const LandingPage = () => {
           ))}
         </div>
       </section>
-    </div>
+    </PageTransition>
   );
 };
 

@@ -17,26 +17,28 @@ const {
   deleteQuestion,
   importQuestions
 } = require('../controllers/questionController');
-const { protect, authorize } = require('../middleware/authMiddleware');
-const upload = require('../middleware/uploadMiddleware');
+const { protect } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
-// Quiz CRUD Routes
+// Public endpoints
 router.get('/', getQuizzes);
-router.get('/creator', protect, authorize('teacher', 'admin'), getCreatorQuizzes);
 router.get('/:id', getQuizById);
-router.post('/', protect, authorize('teacher', 'admin'), upload.single('thumbnail'), createQuiz);
-router.put('/:id', protect, authorize('teacher', 'admin'), upload.single('thumbnail'), updateQuiz);
-router.delete('/:id', protect, authorize('teacher', 'admin'), deleteQuiz);
-router.put('/:id/publish', protect, authorize('teacher', 'admin'), togglePublishQuiz);
+
+// Protected endpoints (Students / Teachers / Admins)
+router.get('/creator/all', protect, getCreatorQuizzes);
 router.post('/:id/bookmark', protect, bookmarkQuiz);
 
-// Question Management nested inside Quiz Routes
-router.get('/:id/questions', protect, getQuestionsForQuiz);
-router.post('/:id/questions', protect, authorize('teacher', 'admin'), upload.single('image'), createQuestion);
-router.post('/:id/import-questions', protect, authorize('teacher', 'admin'), importQuestions);
+// Quiz Management (Teachers / Admins)
+router.post('/', protect, upload.single('thumbnail'), createQuiz);
+router.put('/:id', protect, upload.single('thumbnail'), updateQuiz);
+router.delete('/:id', protect, deleteQuiz);
+router.put('/:id/publish', protect, togglePublishQuiz);
 
-// Question operations outside specific quiz context
-router.put('/questions/:id', protect, authorize('teacher', 'admin'), upload.single('image'), updateQuestion);
-router.delete('/questions/:id', protect, authorize('teacher', 'admin'), deleteQuestion);
+// Questions Management (Teachers / Admins)
+router.get('/:id/questions', protect, getQuestionsForQuiz);
+router.post('/:id/questions', protect, upload.single('image'), createQuestion);
+router.put('/questions/:id', protect, upload.single('image'), updateQuestion);
+router.delete('/questions/:id', protect, deleteQuestion);
+router.post('/:id/import-questions', protect, importQuestions);
 
 module.exports = router;

@@ -5,8 +5,8 @@ import { logout } from '../redux/authSlice';
 import { ASSET_BASE_URL } from '../services/api';
 import {
   FaTrophy, FaAward, FaHistory, FaBookmark, FaCog, FaUser, FaSignOutAlt,
-  FaPlusCircle, FaFolderOpen, FaChartPie, FaCheckDouble, FaUserShield, FaUsers,
-  FaComments, FaBars, FaTimes, FaHome, FaGamepad, FaDatabase
+  FaPlusCircle, FaFolderOpen, FaChartPie, FaCheckDouble, FaUsers,
+  FaComments, FaBars, FaTimes, FaHome, FaGamepad, FaDatabase, FaArrowLeft
 } from 'react-icons/fa';
 
 const DashboardLayout = () => {
@@ -46,7 +46,6 @@ const DashboardLayout = () => {
         return [
           { to: '/admin-dashboard', label: 'Overview', icon: <FaChartPie /> },
           { to: '/admin-dashboard/users', label: 'Manage Users', icon: <FaUsers /> },
-          { to: '/admin-dashboard/approvals', label: 'Teacher Approvals', icon: <FaUserShield /> },
           { to: '/admin-dashboard/categories', label: 'Categories', icon: <FaPlusCircle /> },
           { to: '/admin-dashboard/database', label: 'Database', icon: <FaDatabase /> },
           { to: '/admin-dashboard/messages', label: 'Contact Messages', icon: <FaComments /> },
@@ -60,20 +59,46 @@ const DashboardLayout = () => {
   const links = getSidebarLinks();
 
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300">
       
-      {/* Mobile Sidebar Toggle */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed bottom-4 right-4 z-50 md:hidden bg-blue-600 text-white p-3 rounded-full shadow-lg"
-        aria-label="Toggle Sidebar"
-      >
-        {sidebarOpen ? <FaTimes className="w-5 h-5" /> : <FaBars className="w-5 h-5" />}
-      </button>
+      {/* Mobile Top Navigation Header */}
+      <div className="md:hidden sticky top-0 z-40 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800/60 px-4 py-3 flex justify-between items-center shadow-sm">
+        <Link to="/" className="flex items-center space-x-2">
+          <span className="text-xl font-black bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 bg-clip-text text-transparent tracking-wide">
+            QUIZZY
+          </span>
+          <span className="text-[9px] uppercase bg-blue-500/10 text-blue-500 font-bold px-1.5 py-0.5 rounded">
+            {user?.role}
+          </span>
+        </Link>
+
+        <div className="flex items-center space-x-3">
+          <img
+            src={user?.avatar ? `${ASSET_BASE_URL}${user.avatar}` : 'https://api.dicebear.com/7.x/adventurer/svg?seed=user'}
+            alt="Avatar"
+            className="w-8 h-8 rounded-full border border-blue-500 object-cover"
+          />
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 focus:outline-none"
+            aria-label="Toggle Navigation Drawer"
+          >
+            {sidebarOpen ? <FaTimes className="w-5 h-5 text-red-500" /> : <FaBars className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Backdrop overlay for mobile drawer */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-45 md:hidden transition-opacity"
+        />
+      )}
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed inset-y-0 left-0 z-45 w-64 glass-sidebar p-5 flex flex-col justify-between transform transition-transform duration-300 md:translate-x-0 md:static md:h-screen ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 glass-sidebar p-5 flex flex-col justify-between transform transition-transform duration-300 md:translate-x-0 md:static md:h-screen ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -145,7 +170,21 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Main Workspace Frame */}
-      <main className="flex-1 overflow-y-auto h-screen p-4 sm:p-8 relative">
+      <main className="flex-1 min-w-0 p-4 sm:p-8 relative">
+        {/* Top Header Bar with Back to Main Page Link */}
+        <div className="mb-6 flex justify-between items-center pb-4 border-b border-slate-200/60 dark:border-slate-800/60">
+          <Link
+            to="/"
+            className="inline-flex items-center space-x-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-500 dark:hover:text-blue-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-2 rounded-xl transition-all hover-scale shadow-sm"
+          >
+            <FaArrowLeft className="w-3 h-3 text-blue-500" />
+            <span>Back to Main Page</span>
+          </Link>
+          <div className="text-xs text-slate-400 font-semibold capitalize hidden sm:block">
+            Portal Access: <span className="text-blue-500 font-bold uppercase">{user?.role}</span>
+          </div>
+        </div>
+
         <Outlet />
       </main>
     </div>

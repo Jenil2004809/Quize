@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('crypto'); // We can use crypto built-in or custom hash generator
+const crypto = require('crypto');
 
 const certificateSchema = new mongoose.Schema({
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Student',
     required: true,
     index: true
   },
@@ -23,7 +23,7 @@ const certificateSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    default: () => require('crypto').randomBytes(8).toString('hex').toUpperCase()
+    default: () => crypto.randomBytes(8).toString('hex').toUpperCase()
   },
   issuedAt: {
     type: Date,

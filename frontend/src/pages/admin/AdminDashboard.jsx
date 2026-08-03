@@ -3,7 +3,29 @@ import { Link } from 'react-router-dom';
 import { FaUsers, FaUserShield, FaGamepad, FaHistory, FaQuestionCircle, FaDatabase, FaHeartbeat } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const AdminDashboard = () => {
   const [data, setData] = useState(null);
@@ -70,6 +92,13 @@ const AdminDashboard = () => {
     ]
   };
 
+  const recentUsersList = Array.isArray(data?.recentUsers)
+    ? data.recentUsers
+    : [
+        ...(data?.recentUsers?.students || []),
+        ...(data?.recentUsers?.teachers || [])
+      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+
   return (
     <div className="space-y-8 text-left">
       <div>
@@ -78,11 +107,11 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
           { icon: <FaUsers className="text-blue-500" />, title: 'Students Active', val: stats.totalStudents },
           { icon: <FaUsers className="text-indigo-500" />, title: 'Teachers Active', val: stats.totalTeachers },
-          { icon: <FaUserShield className="text-amber-500 font-bold" />, title: 'Pending Licences', val: stats.pendingTeachers, link: '/admin-dashboard/approvals' },
+          { icon: <FaUserShield className="text-amber-500 font-bold" />, title: 'Pending Licences', val: stats.pendingTeachers, link: '/admin-dashboard/users' },
           { icon: <FaGamepad className="text-purple-500" />, title: 'Quizzes Created', val: stats.totalQuizzes },
           { icon: <FaQuestionCircle className="text-cyan-500" />, title: 'Questions', val: stats.totalQuestions },
           { icon: <FaHistory className="text-emerald-500" />, title: 'Attempts', val: stats.totalResults },
@@ -149,7 +178,7 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {data?.recentUsers?.map((u) => (
+                {recentUsersList.map((u) => (
                   <tr key={u._id} className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
                     <td className="py-3 font-semibold">
                       <div className="flex items-center space-x-2">

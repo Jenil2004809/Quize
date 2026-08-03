@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const userSchema = new mongoose.Schema({
+const teacherSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Name is required'],
@@ -21,8 +21,12 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['student', 'teacher', 'admin'],
-    default: 'student'
+    default: 'teacher'
+  },
+  phone: {
+    type: String,
+    trim: true,
+    default: ''
   },
   avatar: {
     type: String,
@@ -30,35 +34,26 @@ const userSchema = new mongoose.Schema({
   },
   isApproved: {
     type: Boolean,
-    default: function() {
-      // Students and Admins are approved by default; Teachers require admin approval
-      return this.role !== 'teacher';
-    }
+    default: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   },
   isEmailVerified: {
     type: Boolean,
-    default: false
+    default: true
   },
-  otp: {
+  specialization: {
     type: String,
-    default: null
-  },
-  otpExpires: {
-    type: Date,
-    default: null
-  },
-  bookmarks: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Quiz'
-    }
-  ]
+    default: ''
+  }
 }, {
   timestamps: true
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+teacherSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   try {
     const salt = await bcrypt.genSalt(10);
@@ -70,8 +65,8 @@ userSchema.pre('save', async function(next) {
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
+teacherSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('Teacher', teacherSchema);

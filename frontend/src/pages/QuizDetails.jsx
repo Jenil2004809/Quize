@@ -114,9 +114,16 @@ const QuizDetails = () => {
         {/* Left Column - Instructions details */}
         <div className="md:col-span-2 space-y-6">
           <div className="glass-card rounded-3xl p-8 space-y-4 relative overflow-hidden">
-            <span className="px-2.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-500 font-bold uppercase tracking-wider">
-              {quiz.category?.name}
-            </span>
+            <div className="flex justify-between items-center">
+              <span className="px-2.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-500 font-bold uppercase tracking-wider">
+                {quiz.category?.name}
+              </span>
+              {quiz.creator && (
+                <span className="text-[10px] text-slate-400 font-bold">
+                  Conducted by: <strong className="text-blue-500">{quiz.creator.name}</strong>
+                </span>
+              )}
+            </div>
             <h1 className="text-3xl font-black">{quiz.title}</h1>
             <p className="text-sm text-slate-555 dark:text-slate-400 leading-relaxed">{quiz.description}</p>
           </div>

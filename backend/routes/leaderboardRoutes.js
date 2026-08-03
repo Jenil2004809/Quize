@@ -1,12 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const {
-  getQuizLeaderboard,
-  getGlobalLeaderboard
-} = require('../controllers/leaderboardController');
-const { protect } = require('../middleware/authMiddleware');
+const { getGlobalLeaderboard, getQuizLeaderboard } = require('../controllers/studentController');
+const { protect } = require('../middleware/auth');
 
-router.get('/', protect, getGlobalLeaderboard);
-router.get('/:quizId', protect, getQuizLeaderboard);
+router.use(protect);
+
+router.get('/', getGlobalLeaderboard);
+router.get('/:quizId', getQuizLeaderboard);
 
 module.exports = router;

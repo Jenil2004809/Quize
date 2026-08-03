@@ -20,7 +20,7 @@ const answerSchema = new mongoose.Schema({
 const resultSchema = new mongoose.Schema({
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Student',
     required: [true, 'Student reference is required'],
     index: true
   },

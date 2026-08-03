@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "share": "npx localtunnel --port 5173"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.1",

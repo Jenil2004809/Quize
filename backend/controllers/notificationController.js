@@ -5,9 +5,11 @@ const Notification = require('../models/Notification');
 // @access  Private
 const getNotifications = async (req, res, next) => {
   try {
+    const recipientModel = req.user.role === 'admin' ? 'Admin' : (req.user.role === 'teacher' ? 'Teacher' : 'Student');
+    
     const notifications = await Notification.find({
       $or: [
-        { recipientId: req.user._id },
+        { recipientId: req.user._id, recipientModel },
         { recipientId: null } // Broadcasts
       ]
     }).sort({ createdAt: -1 }).limit(30);
@@ -29,7 +31,7 @@ const markAsRead = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Notification not found' });
     }
 
-    // Verify ownership
+    // Verify ownership if it's not a broadcast
     if (notification.recipientId && notification.recipientId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
@@ -48,10 +50,12 @@ const markAsRead = async (req, res, next) => {
 // @access  Private
 const markAllAsRead = async (req, res, next) => {
   try {
+    const recipientModel = req.user.role === 'admin' ? 'Admin' : (req.user.role === 'teacher' ? 'Teacher' : 'Student');
+
     await Notification.updateMany(
       {
         $or: [
-          { recipientId: req.user._id },
+          { recipientId: req.user._id, recipientModel },
           { recipientId: null }
         ],
         isRead: false

@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import api from '../services/api';
 import Swal from 'sweetalert2';
-import { FaEnvelope, FaLock, FaKey, FaArrowLeft } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaKey, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ResetPasswordPage = () => {
   const [step, setStep] = useState(1); // 1: Enter Email, 2: Enter OTP & New Password
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -170,14 +171,21 @@ const ResetPasswordPage = () => {
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><FaLock className="w-4 h-4" /></span>
                     <input
-                      type="password"
+                      type={showPassword ? 'text' : 'password'}
                       {...register('newPassword', {
                         required: 'New password is required',
                         minLength: { value: 6, message: 'Password must be at least 6 characters' }
                       })}
                       placeholder="••••••••"
-                      className="w-full text-sm pl-10 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full text-sm pl-10 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                      {showPassword ? <FaEyeSlash className="w-4 h-4" /> : <FaEye className="w-4 h-4" />}
+                    </button>
                   </div>
                   {errors.newPassword && <span className="text-xs text-red-500">{errors.newPassword.message}</span>}
                 </div>

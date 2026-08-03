@@ -57,7 +57,7 @@ const Footer = () => {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-900 dark:text-white">Contact Info</h3>
             <ul className="mt-4 space-y-2 text-sm text-slate-500 dark:text-slate-400">
               <li>Email: support@quizzy.com</li>
-              <li>Phone: +1 (555) 123-4567</li>
+              <li>Phone: +91 90164 66277</li>
               <li>Location: 100 Innovation Way, Silicon Valley, CA</li>
             </ul>
           </div>

@@ -17,7 +17,14 @@ const quizSchema = new mongoose.Schema({
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
-    required: [true, 'Quiz category is required']
+    required: [true, 'Quiz category is required'],
+    index: true
+  },
+  subject: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject',
+    required: false,
+    index: true
   },
   difficulty: {
     type: String,
@@ -46,8 +53,15 @@ const quizSchema = new mongoose.Schema({
   },
   creator: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, 'Quiz creator is required']
+    required: [true, 'Quiz creator is required'],
+    refPath: 'creatorModel',
+    index: true
+  },
+  creatorModel: {
+    type: String,
+    required: true,
+    enum: ['Teacher', 'Admin'],
+    default: 'Teacher'
   },
   isPublished: {
     type: Boolean,

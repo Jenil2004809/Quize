@@ -4,7 +4,25 @@ import { useSelector } from 'react-redux';
 import { FaFolderOpen, FaCheckDouble, FaAward, FaChartBar, FaExclamationTriangle } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const TeacherDashboard = () => {
   const { user } = useSelector(state => state.auth);
@@ -71,7 +89,7 @@ const TeacherDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {[
           { icon: <FaFolderOpen className="text-blue-500" />, title: 'Total Quizzes', val: stats.totalQuizzes },
           { icon: <FaCheckDouble className="text-indigo-500" />, title: 'Student Attempts', val: stats.totalAttempts },

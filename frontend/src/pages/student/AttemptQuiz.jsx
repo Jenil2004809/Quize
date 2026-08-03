@@ -65,18 +65,21 @@ const AttemptQuiz = () => {
     startQuiz();
   }, [quizId]);
 
-  // Request Fullscreen on first loading click
+  // Request Fullscreen on first loading click with mobile browser fallback
   const enterFullscreen = () => {
     const docElm = document.documentElement;
     if (docElm.requestFullscreen) {
-      docElm.requestFullscreen();
-    } else if (docElm.mozRequestFullScreen) { /* Firefox */
-      docElm.mozRequestFullScreen();
-    } else if (docElm.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
-      docElm.webkitRequestFullscreen();
-    } else if (docElm.msRequestFullscreen) { /* IE/Edge */
-      docElm.msRequestFullscreen();
+      docElm.requestFullscreen().catch(() => {
+        setIsFullscreen(true);
+      });
+    } else if (docElm.webkitRequestFullscreen) {
+      try {
+        docElm.webkitRequestFullscreen();
+      } catch (e) {
+        console.warn(e);
+      }
     }
+    setIsFullscreen(true);
   };
 
   // Fullscreen listeners
@@ -392,7 +395,7 @@ const AttemptQuiz = () => {
       </div>
 
       {/* Main Content Workspace Grid */}
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-6 p-6">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 p-3 sm:p-6">
         
         {/* Left Area - Active Question Panel */}
         <div className="md:col-span-3 flex flex-col justify-between glass-card rounded-3xl p-6 md:p-8 space-y-6 min-h-[400px]">

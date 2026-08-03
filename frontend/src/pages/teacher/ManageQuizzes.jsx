@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaFolderOpen, FaPlus, FaTrash, FaEdit, FaEye, FaToggleOn, FaToggleOff, FaQuestionCircle } from 'react-icons/fa';
+import { FaFolderOpen, FaPlus, FaTrash, FaEdit, FaEye, FaToggleOn, FaToggleOff, FaQuestionCircle, FaArrowRight } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
@@ -155,9 +155,16 @@ const ManageQuizzes = () => {
         // Create Mode
         const res = await api.post('/quizzes', formData);
         if (res.data.success) {
-          Swal.fire('Draft Created!', 'A new quiz has been created. Go add questions now!', 'success');
+          const newQuizId = res.data.quiz._id;
+          Swal.fire({
+            title: 'Quiz Created! 🎉',
+            text: "Now, let's add questions to your new quiz.",
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+          });
           resetForm();
-          fetchQuizzes();
+          navigate(`/teacher-dashboard/quizzes/${newQuizId}/questions`);
         }
       }
     } catch (err) {
@@ -201,8 +208,27 @@ const ManageQuizzes = () => {
 
       {/* Slide-out Create Form */}
       {showCreateForm && (
-        <div className="glass-card rounded-3xl p-6">
-          <h3 className="text-lg font-bold mb-4">{editId ? 'Edit Quiz Parameters' : 'Create New Quiz Draft'}</h3>
+        <div className="glass-card rounded-3xl p-6 space-y-4">
+          {!editId && (
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-xs">1</div>
+                <div>
+                  <h4 className="font-extrabold text-sm text-slate-800 dark:text-slate-100">Step 1: Enter Quiz Details</h4>
+                  <p className="text-xs text-slate-400">Fill in title, category, timing, and score parameters</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-[2px] bg-slate-200 dark:bg-slate-800"></div>
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-400 flex items-center justify-center font-black text-xs">2</div>
+                <div className="hidden sm:block">
+                  <h4 className="font-bold text-xs text-slate-400">Step 2: Add Questions & Answers</h4>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <h3 className="text-lg font-bold">{editId ? 'Edit Quiz Parameters' : 'Step 1: General Quiz Information'}</h3>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Quiz Title</label>
@@ -303,9 +329,10 @@ const ManageQuizzes = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors disabled:bg-blue-500/50"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-bold transition-all disabled:bg-blue-500/50 flex items-center space-x-2 hover-scale shadow-lg shadow-blue-500/20"
               >
-                {editId ? 'Update Quiz Details' : 'Create Draft'}
+                <span>{editId ? 'Update Quiz Details' : 'Save Quiz Info & Proceed to Add Questions'}</span>
+                {!editId && <FaArrowRight className="w-3.5 h-3.5" />}
               </button>
               <button
                 type="button"

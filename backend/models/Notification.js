@@ -3,14 +3,24 @@ const mongoose = require('mongoose');
 const notificationSchema = new mongoose.Schema({
   recipientId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    refPath: 'recipientModel',
     default: null, // Null indicates global / all-user notification
     index: true
   },
+  recipientModel: {
+    type: String,
+    enum: ['Admin', 'Student', 'Teacher'],
+    required: function() { return this.recipientId != null; }
+  },
   senderId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    refPath: 'senderModel',
     default: null
+  },
+  senderModel: {
+    type: String,
+    enum: ['Admin', 'Student', 'Teacher'],
+    required: function() { return this.senderId != null; }
   },
   title: {
     type: String,

@@ -16,8 +16,8 @@ const StudentCertificates = () => {
       try {
         const res = await api.get(`/results/student/${user._id}`);
         if (res.data.success) {
-          // Filter only passed attempts which have certificate IDs
-          const certResults = res.data.results.filter(r => r.passed && r.certificateId);
+          // Filter attempts which have certificate IDs
+          const certResults = res.data.results.filter(r => r.certificateId);
           setResults(certResults);
         }
       } catch (err) {

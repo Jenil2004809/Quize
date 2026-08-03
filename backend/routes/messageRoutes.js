@@ -5,10 +5,14 @@ const {
   getMessages,
   resolveMessage
 } = require('../controllers/messageController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/auth');
+const admin = require('../middleware/admin');
 
+// Submit is public
 router.post('/', submitMessage);
-router.get('/', protect, authorize('admin'), getMessages);
-router.put('/:id/resolve', protect, authorize('admin'), resolveMessage);
+
+// Admin-only endpoints
+router.get('/', protect, admin, getMessages);
+router.put('/:id/resolve', protect, admin, resolveMessage);
 
 module.exports = router;

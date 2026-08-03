@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FaArrowLeft, FaQuestionCircle, FaPlus, FaTrash, FaUpload, FaDownload } from 'react-icons/fa';
+import { FaArrowLeft, FaQuestionCircle, FaPlus, FaTrash, FaUpload, FaDownload, FaEdit } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
@@ -12,6 +12,7 @@ const ManageQuestions = () => {
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingQuestionId, setEditingQuestionId] = useState(null);
 
   // Manual Form States
   const [type, setType] = useState('mcq');
@@ -94,7 +95,21 @@ const ManageQuestions = () => {
     setExplanation('');
     setMarks('1');
     setNegativeMarks('0');
+    setEditingQuestionId(null);
     setShowAddForm(false);
+  };
+
+  const handleEditClick = (q) => {
+    setEditingQuestionId(q._id);
+    setType(q.type);
+    setText(q.text);
+    setOptions(q.options && q.options.length > 0 ? q.options : ['', '']);
+    setCorrectAnswers(q.correctAnswers || []);
+    setExplanation(q.explanation || '');
+    setMarks(q.marks.toString());
+    setNegativeMarks(q.negativeMarks.toString());
+    setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleManualSubmit = async (e) => {
@@ -108,22 +123,31 @@ const ManageQuestions = () => {
       const payload = {
         type,
         text,
-        options: type === 'mcq' || type === 'multiple-correct' ? options : [],
+        options: type === 'mcq' || type === 'multiple-correct' || type === 'multiple-select' ? options : [],
         correctAnswers,
         explanation,
         marks: parseFloat(marks),
         negativeMarks: parseFloat(negativeMarks)
       };
 
-      const res = await api.post(`/quizzes/${quizId}/questions`, payload);
-      if (res.data.success) {
-        Swal.fire({ title: 'Created! 📝', text: 'Question added to quiz successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
-        resetForm();
-        fetchQuestions();
-      }
+        if (editingQuestionId) {
+          const res = await api.put(`/quizzes/questions/${editingQuestionId}`, payload);
+          if (res.data.success) {
+            Swal.fire({ title: 'Updated! 📝', text: 'Question updated successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+            resetForm();
+            await Promise.all([fetchQuizDetails(), fetchQuestions()]);
+          }
+        } else {
+          const res = await api.post(`/quizzes/${quizId}/questions`, payload);
+          if (res.data.success) {
+            Swal.fire({ title: 'Created! 📝', text: 'Question added to quiz successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+            resetForm();
+            await Promise.all([fetchQuizDetails(), fetchQuestions()]);
+          }
+        }
     } catch (err) {
       console.error(err);
-      Swal.fire({ title: 'Error Adding', text: err.response?.data?.message || 'Could not complete operations.', icon: 'error' });
+      Swal.fire({ title: 'Error Saving', text: err.response?.data?.message || 'Could not complete operations.', icon: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -151,6 +175,31 @@ const ManageQuestions = () => {
         }
       }
     });
+  };
+
+  const handlePublish = async () => {
+    if (questions.length === 0) {
+      return Swal.fire({
+        title: 'Add Questions First ⚠️',
+        text: 'Please add at least one question to the quiz before publishing.',
+        icon: 'warning'
+      });
+    }
+
+    try {
+      const res = await api.put(`/quizzes/${quizId}/publish`);
+      if (res.data.success) {
+        setQuiz(prev => ({ ...prev, isPublished: res.data.isPublished }));
+        Swal.fire({
+          title: res.data.isPublished ? 'Quiz Published! 🚀' : 'Saved as Draft 📝',
+          text: res.data.message || 'Quiz status updated.',
+          icon: 'success'
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ title: 'Error', text: err.response?.data?.message || 'Could not update status', icon: 'error' });
+    }
   };
 
   // SheetJS Excel Upload handler
@@ -283,10 +332,32 @@ const ManageQuestions = () => {
         </div>
       </div>
 
+      {/* Step 2 Progress Banner */}
+      <div className="p-5 rounded-3xl glass-card border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-9 h-9 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black text-sm shadow-md shadow-emerald-500/20">✓</div>
+          <div>
+            <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">Step 2: Add Questions & Answer Options</h4>
+            <p className="text-xs text-slate-400">Quiz info saved for <strong>{quiz?.title}</strong> ({questions.length} questions added)</p>
+          </div>
+        </div>
+
+        <button
+          onClick={handlePublish}
+          className={`px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow-lg flex items-center space-x-2 ${
+            quiz?.isPublished
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+              : 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:from-emerald-600 hover:to-teal-700 hover-scale shadow-emerald-500/20'
+          }`}
+        >
+          <span>{quiz?.isPublished ? '✓ Quiz Published (Live)' : '🚀 Publish Quiz Now'}</span>
+        </button>
+      </div>
+
       {/* Slide-out Add Form */}
       {showAddForm && (
         <div className="glass-card rounded-3xl p-6">
-          <h3 className="text-lg font-bold mb-4">Compose Question</h3>
+          <h3 className="text-lg font-bold mb-4">{editingQuestionId ? 'Edit Question' : 'Compose Question'}</h3>
           <form onSubmit={handleManualSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -482,6 +553,13 @@ const ManageQuestions = () => {
                   <div className="flex items-center space-x-4 text-xs font-bold">
                     <span className="text-emerald-500">+{q.marks} Marks</span>
                     {q.negativeMarks > 0 && <span className="text-red-500">-{q.negativeMarks} Negative</span>}
+                    <button
+                      onClick={() => handleEditClick(q)}
+                      className="text-blue-500 hover:text-blue-600 mr-2"
+                      title="Edit Question"
+                    >
+                      <FaEdit />
+                    </button>
                     <button
                       onClick={() => handleDelete(q._id)}
                       className="text-red-500 hover:text-red-600"

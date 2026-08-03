@@ -1,0 +1,34 @@
+@echo off
+title Online Quiz Management System Launcher
+echo ===================================================
+echo 🎓 Starting Online Quiz Management System...
+echo ===================================================
+echo.
+
+:: Check if MongoDB is running locally (optional print warning)
+echo 🔍 Checking local MongoDB status...
+echo Make sure MongoDB server is running on port 27017.
+echo.
+
+:: Launch Backend Server in a new command window
+echo 🚀 Launching API Backend (Port 5005)...
+start "Quiz System Backend" cmd /k "cd backend && npm run dev || node server.js"
+
+:: Give backend a second to bind
+timeout /t 2 >nul
+
+:: Launch Frontend Server in a new command window
+echo 🚀 Launching React Frontend (Port 5173)...
+start "Quiz System Frontend" cmd /k "cd frontend && npm run dev"
+
+echo.
+echo ===================================================
+echo 🎉 System started successfully!
+echo.
+echo 🌐 Frontend URL: http://localhost:5173/
+echo 🌐 Backend API:  http://localhost:5005/
+echo ===================================================
+echo.
+echo Press any key to exit this launcher terminal...
+echo (The backend and frontend windows will remain running)
+pause >nul

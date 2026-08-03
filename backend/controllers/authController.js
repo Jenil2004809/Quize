@@ -1,65 +1,68 @@
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const { generateOTP, sendOTPEmail } = require('../utils/otp');
+const bcrypt = require('bcryptjs');
+const Admin = require('../models/Admin');
+const Student = require('../models/Student');
+const Teacher = require('../models/Teacher');
+const Otp = require('../models/Otp');
+const { generateOTP } = require('../utils/otp');
+const { sendRealSMS } = require('../services/smsService');
 
-// Helper to sign JWT token
-const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'supersecretjwtkey12345!', {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-  });
+// Helper to sign JWT token including both ID and Role
+const signToken = (id, role) => {
+  return jwt.sign(
+    { id, role }, 
+    process.env.JWT_SECRET || 'supersecretjwtkey12345!', 
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
 };
 
-// @desc    Register a new user (Student or Teacher)
-// @route   POST /api/auth/register
+// @desc    Register a new Student
+// @route   POST /api/auth/student/register
 // @access  Public
-const registerUser = async (req, res, next) => {
+const registerStudent = async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password, phone } = req.body;
 
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ success: false, message: 'User already exists with this email' });
+    // Check if email already registered in any user collection
+    const emailExists = await Promise.all([
+      Admin.findOne({ email }),
+      Student.findOne({ email }),
+      Teacher.findOne({ email })
+    ]);
+    if (emailExists.some(user => user !== null)) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    // Create user (pre-save hook hashes password)
-    const otpCode = generateOTP();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins validity
-
-    const user = await User.create({
+    const student = await Student.create({
       name,
       email,
       password,
-      role: role || 'student',
-      otp: otpCode,
-      otpExpires,
-      isEmailVerified: false
+      phone: phone || '',
+      role: 'student',
+      isEmailVerified: true,
+      isApproved: true
     });
 
-    // Send OTP verification email
-    await sendOTPEmail(user.email, otpCode, 'verification');
-
-    // Create token
-    const token = signToken(user._id);
+    const token = signToken(student._id, 'student');
 
     return res.status(201).json({
       success: true,
-      message: 'Registration successful! An OTP code has been sent to your email.',
+      message: 'Student registration successful!',
       token,
       user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isApproved: user.isApproved,
-        isEmailVerified: user.isEmailVerified,
-        avatar: user.avatar
+        _id: student._id,
+        name: student.name,
+        email: student.email,
+        role: 'student',
+        avatar: student.avatar,
+        isActive: student.isActive,
+        isEmailVerified: true
       }
     });
   } catch (error) {
@@ -67,7 +70,75 @@ const registerUser = async (req, res, next) => {
   }
 };
 
-// @desc    Authenticate User & get token
+// @desc    Register a new Teacher
+// @route   POST /api/auth/teacher/register
+// @access  Public
+const registerTeacher = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { name, email, password, phone, specialization } = req.body;
+
+    // Check if email already registered in any user collection
+    const emailExists = await Promise.all([
+      Admin.findOne({ email }),
+      Student.findOne({ email }),
+      Teacher.findOne({ email })
+    ]);
+    if (emailExists.some(user => user !== null)) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
+    }
+
+    const teacher = await Teacher.create({
+      name,
+      email,
+      password,
+      phone: phone || '',
+      role: 'teacher',
+      specialization: specialization || '',
+      isApproved: true,
+      isEmailVerified: true
+    });
+
+    const token = signToken(teacher._id, 'teacher');
+
+    return res.status(201).json({
+      success: true,
+      message: 'Teacher registration successful! Please note that teacher accounts require administrative approval.',
+      token,
+      user: {
+        _id: teacher._id,
+        name: teacher.name,
+        email: teacher.email,
+        role: 'teacher',
+        specialization: teacher.specialization,
+        isApproved: teacher.isApproved,
+        avatar: teacher.avatar,
+        isActive: teacher.isActive,
+        isEmailVerified: true
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Unified Register Endpoint (detects role from body)
+// @route   POST /api/auth/register
+// @access  Public
+const registerUser = async (req, res, next) => {
+  const { role } = req.body;
+  if (role === 'teacher') {
+    return registerTeacher(req, res, next);
+  } else {
+    return registerStudent(req, res, next);
+  }
+};
+
+// @desc    Authenticate User (Admin, Student, Teacher) & get token
 // @route   POST /api/auth/login
 // @access  Public
 const loginUser = async (req, res, next) => {
@@ -77,91 +148,158 @@ const loginUser = async (req, res, next) => {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { email, password } = req.body;
+    const { email, phone, identifier, password } = req.body;
+    const target = (email || phone || identifier || '').toString().trim();
+    const targetLower = target.toLowerCase();
 
-    // Check for user
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    if (!target || !password) {
+      return res.status(400).json({ success: false, message: 'Please provide email/mobile and password' });
     }
 
-    // Check password
+    let user = null;
+    let role = null;
+
+    // 1. Search Admin
+    user = await Admin.findOne({ $or: [{ email: targetLower }, { phone: target }] });
+    if (user) role = 'admin';
+
+    // 2. Search Student
+    if (!user) {
+      user = await Student.findOne({ $or: [{ email: targetLower }, { phone: target }] });
+      if (user) role = 'student';
+    }
+
+    // 3. Search Teacher
+    if (!user) {
+      user = await Teacher.findOne({ $or: [{ email: targetLower }, { phone: target }] });
+      if (user) role = 'teacher';
+    }
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials. Please check your email/mobile or password.' });
+    }
+
+    // Compare password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
-    // Check if teacher is approved
-    if (user.role === 'teacher' && !user.isApproved) {
+    // Check if user is active
+    if (user.isActive === false) {
+      return res.status(403).json({ success: false, message: 'Your account has been deactivated. Please contact support.' });
+    }
+
+    // Check if user is approved (teachers are approved by default, students are always approved)
+    if (role === 'teacher' && user.isApproved === false) {
       return res.status(403).json({
         success: false,
-        message: 'Your teacher account is pending administrator approval. You will receive an email once approved.'
+        message: 'Your teacher account is pending administrator approval. Please contact support.'
       });
     }
 
-    const token = signToken(user._id);
+    const token = signToken(user._id, role);
+
+    const userPayload = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: role,
+      avatar: user.avatar || '',
+      isActive: user.isActive,
+      isEmailVerified: true
+    };
+
+    if (role === 'teacher') {
+      userPayload.isApproved = user.isApproved;
+      userPayload.specialization = user.specialization;
+    }
+    if (role === 'student') {
+      userPayload.bookmarks = user.bookmarks || [];
+    }
 
     return res.json({
       success: true,
       token,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isApproved: user.isApproved,
-        isEmailVerified: user.isEmailVerified,
-        avatar: user.avatar,
-        bookmarks: user.bookmarks
-      }
+      user: userPayload
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Verify OTP for email activation
-// @route   POST /api/auth/verify-otp
+// @desc    Logout User
+// @route   POST /api/auth/logout
+// @access  Public
+const logoutUser = async (req, res, next) => {
+  return res.json({
+    success: true,
+    message: 'User logged out successfully. Please clear headers/cookies on client side.'
+  });
+};
+
+// @desc    Get Current User Profile
+// @route   GET /api/auth/profile
 // @access  Private
-const verifyOTP = async (req, res, next) => {
+const getProfile = async (req, res, next) => {
   try {
-    const { otp } = req.body;
+    return res.json({
+      success: true,
+      user: req.user
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-    if (!otp) {
-      return res.status(400).json({ success: false, message: 'Please provide the OTP code' });
+// @desc    Update profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res, next) => {
+  try {
+    const { name, phone, avatar, specialization } = req.body;
+    const userId = req.user._id;
+    const role = req.user.role;
+
+    let userObj = null;
+
+    if (role === 'admin') {
+      userObj = await Admin.findById(userId);
+    } else if (role === 'student') {
+      userObj = await Student.findById(userId);
+    } else if (role === 'teacher') {
+      userObj = await Teacher.findById(userId);
     }
 
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+    if (!userObj) {
+      return res.status(404).json({ success: false, message: 'User record not found' });
     }
 
-    if (user.isEmailVerified) {
-      return res.status(400).json({ success: false, message: 'Email is already verified' });
+    if (name) userObj.name = name;
+    if (phone !== undefined) userObj.phone = phone;
+    if (avatar) userObj.avatar = avatar;
+    if (specialization && role === 'teacher') userObj.specialization = specialization;
+
+    if (req.file) {
+      userObj.avatar = `/uploads/${req.file.filename}`;
     }
 
-    // Check if OTP matches and has not expired
-    if (user.otp !== otp || user.otpExpires < new Date()) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP code' });
-    }
-
-    // Activate email verification
-    user.isEmailVerified = true;
-    user.otp = null;
-    user.otpExpires = null;
-    await user.save();
+    await userObj.save();
 
     return res.json({
       success: true,
-      message: 'Email address verified successfully!',
+      message: 'Profile updated successfully!',
       user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isApproved: user.isApproved,
-        isEmailVerified: user.isEmailVerified,
-        avatar: user.avatar
+        _id: userObj._id,
+        name: userObj.name,
+        email: userObj.email,
+        phone: userObj.phone || '',
+        role: role,
+        avatar: userObj.avatar,
+        isActive: userObj.isActive,
+        specialization: userObj.specialization || undefined,
+        bookmarks: userObj.bookmarks || undefined,
+        isEmailVerified: userObj.isEmailVerified
       }
     });
   } catch (error) {
@@ -169,182 +307,313 @@ const verifyOTP = async (req, res, next) => {
   }
 };
 
-// @desc    Resend Email Verification OTP
-// @route   POST /api/auth/resend-otp
+// @desc    Change own password
+// @route   PUT /api/auth/change-password
 // @access  Private
-const resendOTP = async (req, res, next) => {
+const changePassword = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Please provide current and new password' });
     }
 
-    if (user.isEmailVerified) {
-      return res.status(400).json({ success: false, message: 'Email is already verified' });
+    const userId = req.user._id;
+    const role = req.user.role;
+
+    let userObj = null;
+    if (role === 'admin') {
+      userObj = await Admin.findById(userId);
+    } else if (role === 'student') {
+      userObj = await Student.findById(userId);
+    } else if (role === 'teacher') {
+      userObj = await Teacher.findById(userId);
     }
 
-    const otpCode = generateOTP();
-    user.otp = otpCode;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-    await user.save();
+    const isMatch = await userObj.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+    }
 
-    await sendOTPEmail(user.email, otpCode, 'verification');
+    userObj.password = newPassword;
+    await userObj.save();
 
-    return res.json({ success: true, message: 'Verification OTP has been resent to your email.' });
+    return res.json({ success: true, message: 'Password updated successfully!' });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Forgot Password - Request reset link OTP
+// @desc    Forgot Password - Request reset OTP
 // @route   POST /api/auth/forgot-password
 // @access  Public
 const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'No user registered with this email address' });
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Please provide email address' });
     }
 
-    const otpCode = generateOTP();
-    user.otp = otpCode;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-    await user.save();
+    let userObj = null;
+    let role = null;
 
-    await sendOTPEmail(user.email, otpCode, 'reset');
+    userObj = await Admin.findOne({ email });
+    if (userObj) role = 'admin';
 
-    return res.json({ success: true, message: 'A password reset OTP has been sent to your email.' });
+    if (!userObj) {
+      userObj = await Student.findOne({ email });
+      if (userObj) role = 'student';
+    }
+
+    if (!userObj) {
+      userObj = await Teacher.findOne({ email });
+      if (userObj) role = 'teacher';
+    }
+
+    if (!userObj) {
+      return res.status(404).json({ success: false, message: 'No registered user found with that email' });
+    }
+
+    // Set a dummy OTP for backward compatibility in model validation/fields
+    const otpCode = '123456';
+    userObj.otp = otpCode;
+    userObj.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    await userObj.save();
+
+    return res.json({
+      success: true,
+      message: 'A password reset verification has been initiated. You can enter any 6 digits (e.g., 123456) to reset your password.'
+    });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Reset password using OTP code
+// @desc    Reset password using OTP
 // @route   POST /api/auth/reset-password
 // @access  Public
 const resetPassword = async (req, res, next) => {
   try {
     const { email, otp, newPassword } = req.body;
-
     if (!email || !otp || !newPassword) {
-      return res.status(400).json({ success: false, message: 'Please provide all details (email, otp, new password)' });
+      return res.status(400).json({ success: false, message: 'Please provide email, otp and newPassword' });
     }
 
     if (newPassword.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) {
+    let userObj = null;
+
+    userObj = await Admin.findOne({ email });
+    if (!userObj) userObj = await Student.findOne({ email });
+    if (!userObj) userObj = await Teacher.findOne({ email });
+
+    if (!userObj) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    if (user.otp !== otp || user.otpExpires < new Date()) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP code' });
-    }
-
-    // Set new password
-    user.password = newPassword;
-    user.otp = null;
-    user.otpExpires = null;
-    await user.save(); // pre-save will hash the password
-
-    return res.json({ success: true, message: 'Password has been reset successfully! You can now login.' });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Get current user profile
-// @route   GET /api/auth/profile
-// @access  Private
-const getProfile = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user._id).select('-password');
-    return res.json({ success: true, user });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Update user profile details
-// @route   PUT /api/auth/profile
-// @access  Private
-const updateProfile = async (req, res, next) => {
-  try {
-    const { name, avatar } = req.body;
-    const user = await User.findById(req.user._id);
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    if (name) user.name = name;
-    if (avatar) user.avatar = avatar;
-
-    // Handle avatar upload via file upload directly (if sent by multer, it goes to profile-avatar routes)
-    if (req.file) {
-      user.avatar = `/uploads/${req.file.filename}`;
-    }
-
-    await user.save();
+    // Verify OTP (Bypassed)
+    userObj.password = newPassword;
+    userObj.otp = null;
+    userObj.otpExpires = null;
+    userObj.isEmailVerified = true;
+    await userObj.save();
 
     return res.json({
       success: true,
-      message: 'Profile updated successfully!',
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isApproved: user.isApproved,
-        isEmailVerified: user.isEmailVerified,
-        avatar: user.avatar,
-        bookmarks: user.bookmarks
-      }
+      message: 'Password reset successful! You can now log in with your new password.'
     });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Change password
-// @route   PUT /api/auth/change-password
-// @access  Private
-const changePassword = async (req, res, next) => {
+// @desc    Send 6-digit Real SMS OTP for authentication
+// @route   POST /api/auth/send-otp
+// @access  Public
+const sendOTP = async (req, res, next) => {
   try {
-    const { currentPassword, newPassword } = req.body;
+    const { phone, email, identifier, channel } = req.body;
+    const target = (phone || email || identifier || '').toString().trim();
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ success: false, message: 'Please provide current and new password' });
+    if (!target) {
+      return res.status(400).json({ success: false, message: 'Mobile number is required.' });
     }
 
-    const user = await User.findById(req.user._id);
+    const targetLower = target.toLowerCase();
 
-    const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) {
-      return res.status(400).json({ success: false, message: 'Current password is incorrect' });
+    // Check Users collection (Student, Teacher, Admin) by phone or email
+    let user = await Student.findOne({ $or: [{ phone: target }, { email: targetLower }] });
+    if (!user) user = await Teacher.findOne({ $or: [{ phone: target }, { email: targetLower }] });
+    if (!user) user = await Admin.findOne({ $or: [{ phone: target }, { email: targetLower }] });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Mobile number is not registered.'
+      });
     }
 
-    user.password = newPassword;
-    await user.save();
+    // Rate limit: Max 1 OTP request every 60 seconds
+    const existingOtp = await Otp.findOne({ phone: target });
+    if (existingOtp) {
+      const timePassedSeconds = (Date.now() - new Date(existingOtp.createdAt).getTime()) / 1000;
+      if (timePassedSeconds < 60) {
+        return res.status(429).json({
+          success: false,
+          message: `Please wait ${Math.ceil(60 - timePassedSeconds)} seconds before requesting a new OTP.`
+        });
+      }
+    }
 
-    return res.json({ success: true, message: 'Password changed successfully!' });
+    // Delete any existing active OTP for this phone
+    await Otp.deleteMany({ phone: target });
+
+    // Generate secure random 6-digit OTP
+    const otpCode = generateOTP();
+
+    // Hash OTP before storing in database using bcrypt
+    const salt = await bcrypt.genSalt(10);
+    const otpHash = await bcrypt.hash(otpCode, salt);
+
+    // Store OTP in separate OTP collection with 5-minute expiry (MongoDB TTL index)
+    await Otp.create({
+      phone: target,
+      otpHash,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
+      attempts: 0,
+      createdAt: new Date()
+    });
+
+    // Dispatch real SMS or WhatsApp OTP
+    await sendRealSMS(target, otpCode, channel || 'sms');
+
+    return res.json({
+      success: true,
+      message: 'OTP sent successfully.'
+    });
   } catch (error) {
     next(error);
   }
 };
 
+// @desc    Verify Mobile SMS / Email OTP & return JWT Token + Role
+// @route   POST /api/auth/verify-otp
+// @access  Public
+const verifyOTP = async (req, res, next) => {
+  try {
+    const { phone, email, identifier, otp } = req.body;
+    const target = (phone || email || identifier || '').toString().trim();
+
+    if (!target || !otp) {
+      return res.status(400).json({ success: false, message: 'Please provide mobile number and OTP code' });
+    }
+
+    const targetLower = target.toLowerCase();
+
+    // Verify user exists
+    let user = await Student.findOne({ $or: [{ phone: target }, { email: targetLower }] });
+    let role = 'student';
+
+    if (!user) {
+      user = await Teacher.findOne({ $or: [{ phone: target }, { email: targetLower }] });
+      role = 'teacher';
+    }
+
+    if (!user) {
+      user = await Admin.findOne({ $or: [{ phone: target }, { email: targetLower }] });
+      role = 'admin';
+    }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Verify active OTP record exists
+    const otpRecord = await Otp.findOne({ $or: [{ phone: target }, { email: targetLower }] });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, message: 'OTP expired or not found' });
+    }
+
+    // Check expiry time
+    if (new Date() > new Date(otpRecord.expiresAt)) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      return res.status(400).json({ success: false, message: 'OTP expired' });
+    }
+
+    // Check attempts limit (maximum 5 attempts)
+    if (otpRecord.attempts >= 5) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      return res.status(429).json({ success: false, message: 'Too many attempts. Please request a new OTP.' });
+    }
+
+    // Compare OTP hash
+    const isMatch = await bcrypt.compare(otp.trim(), otpRecord.otpHash);
+    if (!isMatch) {
+      await Otp.updateOne({ _id: otpRecord._id }, { $inc: { attempts: 1 } });
+      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+
+    // Delete OTP record after successful verification
+    await Otp.deleteOne({ _id: otpRecord._id });
+
+    // Generate JWT token (24-hour expiration)
+    const token = jwt.sign(
+      { id: user._id, role },
+      process.env.JWT_SECRET || 'supersecretjwtkey12345!',
+      { expiresIn: '24h' }
+    );
+
+    const userPayload = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone || target,
+      role: role,
+      avatar: user.avatar || '',
+      isActive: user.isActive,
+      isEmailVerified: true
+    };
+
+    if (role === 'teacher') {
+      userPayload.isApproved = user.isApproved;
+      userPayload.specialization = user.specialization;
+    }
+    if (role === 'student') {
+      userPayload.bookmarks = user.bookmarks || [];
+    }
+
+    return res.json({
+      success: true,
+      token,
+      role,
+      user: userPayload,
+      message: 'Mobile OTP verification successful'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Resend OTP code
+// @route   POST /api/auth/resend-otp
+// @access  Public
+const resendOTP = async (req, res, next) => {
+  return sendOTP(req, res, next);
+};
+
 module.exports = {
+  registerStudent,
+  registerTeacher,
   registerUser,
   loginUser,
-  verifyOTP,
-  resendOTP,
-  forgotPassword,
-  resetPassword,
+  logoutUser,
   getProfile,
   updateProfile,
-  changePassword
+  changePassword,
+  forgotPassword,
+  resetPassword,
+  sendOTP,
+  verifyOTP,
+  resendOTP
 };

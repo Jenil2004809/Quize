@@ -1,10 +1,13 @@
-const User = require('../models/User');
+const Student = require('../models/Student');
+const Teacher = require('../models/Teacher');
+const Admin = require('../models/Admin');
 const Quiz = require('../models/Quiz');
 const Result = require('../models/Result');
 const Certificate = require('../models/Certificate');
 const Category = require('../models/Category');
 const Question = require('../models/Question');
 const Notification = require('../models/Notification');
+const Subject = require('../models/Subject');
 
 // @desc    Get dashboard analytics depending on role
 // @route   GET /api/analytics/dashboard
@@ -133,14 +136,13 @@ const getDashboardAnalytics = async (req, res, next) => {
 
     if (role === 'admin') {
       // System counts
-      const totalStudents = await User.countDocuments({ role: 'student' });
-      const totalTeachers = await User.countDocuments({ role: 'teacher' });
-      const pendingTeachers = await User.countDocuments({ role: 'teacher', isApproved: false });
-      const activeUsers = await User.countDocuments({ isApproved: true });
+      const totalStudents = await Student.countDocuments();
+      const totalTeachers = await Teacher.countDocuments();
+      const pendingTeachers = await Teacher.countDocuments({ isApproved: false });
       const totalQuizzes = await Quiz.countDocuments();
       const totalQuestions = await Question.countDocuments();
       const totalResults = await Result.countDocuments();
-      const totalSubjects = await Category.countDocuments();
+      const totalSubjects = await Subject.countDocuments();
       const totalNotifications = await Notification.countDocuments();
       const averageScoreDoc = await Result.aggregate([
         { $group: { _id: null, averagePercentage: { $avg: '$percentage' }, averageScore: { $avg: '$score' } } }
@@ -150,16 +152,22 @@ const getDashboardAnalytics = async (req, res, next) => {
         : 0;
 
       // Recent users
-      const recentUsers = await User.find().sort({ createdAt: -1 }).limit(5).select('-password');
+      const recentStudents = await Student.find().sort({ createdAt: -1 }).limit(5).select('-password');
+      const recentTeachers = await Teacher.find().sort({ createdAt: -1 }).limit(5).select('-password');
 
-      // User registrations timeline (last 6 months - simulated or calculated)
-      // For simplicity, aggregate from database
-      const users = await User.find().select('createdAt role');
+      // User registrations timeline (last 6 months)
+      const studentsList = await Student.find().select('createdAt');
+      const teachersList = await Teacher.find().select('createdAt');
+      
       const monthlyRegistrations = {};
-      users.forEach(u => {
-        const month = u.createdAt.toLocaleString('default', { month: 'short', year: '2-digit' });
-        monthlyRegistrations[month] = (monthlyRegistrations[month] || 0) + 1;
-      });
+      const processDates = (list) => {
+        list.forEach(u => {
+          const month = u.createdAt.toLocaleString('default', { month: 'short', year: '2-digit' });
+          monthlyRegistrations[month] = (monthlyRegistrations[month] || 0) + 1;
+        });
+      };
+      processDates(studentsList);
+      processDates(teachersList);
 
       const timelineData = Object.keys(monthlyRegistrations).map(month => ({
         month,
@@ -205,11 +213,13 @@ const getDashboardAnalytics = async (req, res, next) => {
           totalResults,
           totalSubjects,
           totalNotifications,
-          activeUsers,
           averagePercentage,
           systemStatus: 'Operational'
         },
-        recentUsers,
+        recentUsers: {
+          students: recentStudents,
+          teachers: recentTeachers
+        },
         timelineData,
         categoryReport,
         performanceData

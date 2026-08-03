@@ -150,7 +150,7 @@ const QuizResult = () => {
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 mt-6 md:mt-0">
-          {result.passed && certificateId && (
+          {certificateId && (
             <button
               onClick={handleDownloadCertificate}
               disabled={downloading}

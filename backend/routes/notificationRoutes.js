@@ -5,10 +5,12 @@ const {
   markAsRead,
   markAllAsRead
 } = require('../controllers/notificationController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/auth');
 
-router.get('/', protect, getNotifications);
-router.put('/:id/read', protect, markAsRead);
-router.put('/read-all', protect, markAllAsRead);
+router.use(protect);
+
+router.get('/', getNotifications);
+router.put('/read-all', markAllAsRead);
+router.put('/:id/read', markAsRead);
 
 module.exports = router;

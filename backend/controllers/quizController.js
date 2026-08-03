@@ -1,15 +1,15 @@
 const Quiz = require('../models/Quiz');
 const Question = require('../models/Question');
 const Result = require('../models/Result');
-const User = require('../models/User');
+const Student = require('../models/Student');
 const Notification = require('../models/Notification');
 
-// @desc    Get all quizzes (Filtered and Sorted)
+// @desc    Get all quizzes (Search, Filter, Pagination)
 // @route   GET /api/quizzes
 // @access  Public
 const getQuizzes = async (req, res, next) => {
   try {
-    const { search, category, difficulty, sort } = req.query;
+    const { search, category, subject, difficulty, page = 1, limit = 10, sort } = req.query;
 
     const query = { isPublished: true, visibility: 'public' };
 
@@ -21,6 +21,11 @@ const getQuizzes = async (req, res, next) => {
     // Category filter
     if (category) {
       query.category = category;
+    }
+
+    // Subject filter
+    if (subject) {
+      query.subject = subject;
     }
 
     // Difficulty level filter
@@ -38,10 +43,19 @@ const getQuizzes = async (req, res, next) => {
       sortBy = { title: -1 };
     }
 
+    // Pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skipIndex = (pageNum - 1) * limitNum;
+
+    const totalQuizzes = await Quiz.countDocuments(query);
     const quizzes = await Quiz.find(query)
       .populate('category', 'name slug')
+      .populate('subject', 'name slug')
       .populate('creator', 'name avatar')
-      .sort(sortBy);
+      .sort(sortBy)
+      .skip(skipIndex)
+      .limit(limitNum);
 
     // Attach questions counts dynamically
     const quizzesWithCount = await Promise.all(quizzes.map(async (quiz) => {
@@ -52,7 +66,17 @@ const getQuizzes = async (req, res, next) => {
       };
     }));
 
-    return res.json({ success: true, count: quizzesWithCount.length, quizzes: quizzesWithCount });
+    return res.json({
+      success: true,
+      count: quizzesWithCount.length,
+      pagination: {
+        total: totalQuizzes,
+        page: pageNum,
+        pages: Math.ceil(totalQuizzes / limitNum),
+        limit: limitNum
+      },
+      quizzes: quizzesWithCount
+    });
   } catch (error) {
     next(error);
   }
@@ -70,6 +94,7 @@ const getCreatorQuizzes = async (req, res, next) => {
 
     const quizzes = await Quiz.find(query)
       .populate('category', 'name')
+      .populate('subject', 'name')
       .populate('creator', 'name')
       .sort({ createdAt: -1 });
 
@@ -94,6 +119,7 @@ const getQuizById = async (req, res, next) => {
   try {
     const quiz = await Quiz.findById(req.params.id)
       .populate('category', 'name slug description')
+      .populate('subject', 'name slug description')
       .populate('creator', 'name email avatar');
 
     if (!quiz) {
@@ -119,7 +145,11 @@ const getQuizById = async (req, res, next) => {
 // @access  Private (Teacher/Admin)
 const createQuiz = async (req, res, next) => {
   try {
-    const { title, description, category, difficulty, timeLimit, passingMarks, maxAttempts, visibility } = req.body;
+    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied: Only authorized teachers can create quizzes.' });
+    }
+
+    const { title, description, category, subject, difficulty, timeLimit, passingMarks, maxAttempts, visibility } = req.body;
 
     if (!title || !category || !timeLimit || !passingMarks) {
       return res.status(400).json({ success: false, message: 'Please provide all required fields' });
@@ -130,16 +160,20 @@ const createQuiz = async (req, res, next) => {
       thumbnail = `/uploads/${req.file.filename}`;
     }
 
+    const creatorModel = req.user.role === 'admin' ? 'Admin' : 'Teacher';
+
     const quiz = await Quiz.create({
       title,
       description,
       category,
+      subject: subject || null,
       difficulty: difficulty || 'medium',
       timeLimit: parseInt(timeLimit),
       passingMarks: parseInt(passingMarks),
       maxAttempts: parseInt(maxAttempts || 1),
       visibility: visibility || 'public',
       creator: req.user._id,
+      creatorModel,
       isPublished: false
     });
 
@@ -166,7 +200,7 @@ const updateQuiz = async (req, res, next) => {
     }
 
     const fieldsToUpdate = [
-      'title', 'description', 'category', 'difficulty',
+      'title', 'description', 'category', 'subject', 'difficulty',
       'timeLimit', 'passingMarks', 'maxAttempts', 'visibility'
     ];
 
@@ -251,9 +285,12 @@ const togglePublishQuiz = async (req, res, next) => {
 
     // Trigger Notification for new quizzes published
     if (quiz.isPublished) {
+      const senderModel = req.user.role === 'admin' ? 'Admin' : 'Teacher';
       await Notification.create({
         recipientId: null, // Broadcast notification
+        recipientModel: 'Student', // Target audience
         senderId: req.user._id,
+        senderModel,
         title: 'New Quiz Published! 🎯',
         message: `"${quiz.title}" has been published by ${req.user.name}. Go attempt it now and claim your certificate!`,
         type: 'quiz_published'
@@ -272,7 +309,7 @@ const togglePublishQuiz = async (req, res, next) => {
 
 // @desc    Bookmark / Unbookmark a quiz
 // @route   POST /api/quizzes/:id/bookmark
-// @access  Private
+// @access  Private (Student)
 const bookmarkQuiz = async (req, res, next) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
@@ -280,24 +317,28 @@ const bookmarkQuiz = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Quiz not found' });
     }
 
-    const user = await User.findById(req.user._id);
-    const index = user.bookmarks.indexOf(quiz._id);
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ success: false, message: 'Only students can bookmark quizzes' });
+    }
+
+    const student = await Student.findById(req.user._id);
+    const index = student.bookmarks.indexOf(quiz._id);
 
     let bookmarked = false;
     if (index === -1) {
-      user.bookmarks.push(quiz._id);
+      student.bookmarks.push(quiz._id);
       bookmarked = true;
     } else {
-      user.bookmarks.splice(index, 1);
+      student.bookmarks.splice(index, 1);
     }
 
-    await user.save();
+    await student.save();
 
     return res.json({
       success: true,
       message: bookmarked ? 'Quiz bookmarked!' : 'Quiz removed from bookmarks',
       bookmarked,
-      bookmarks: user.bookmarks
+      bookmarks: student.bookmarks
     });
   } catch (error) {
     next(error);

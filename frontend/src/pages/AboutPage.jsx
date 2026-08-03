@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FaEye, FaBullhorn, FaUsers, FaHistory } from 'react-icons/fa';
+import PageTransition from '../components/PageTransition';
 
 const AboutPage = () => {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20">
+    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-20">
       
       {/* Header */}
       <div className="text-center space-y-4 max-w-xl mx-auto">
@@ -22,7 +23,7 @@ const AboutPage = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="glass-card rounded-3xl p-8 space-y-4"
+          className="glass-card rounded-3xl p-8 space-y-4 hover-lift"
         >
           <div className="p-4 bg-blue-500/10 text-blue-500 inline-block rounded-2xl"><FaBullhorn className="w-6 h-6" /></div>
           <h2 className="text-2xl font-bold">Our Mission</h2>
@@ -36,7 +37,7 @@ const AboutPage = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
-          className="glass-card rounded-3xl p-8 space-y-4"
+          className="glass-card rounded-3xl p-8 space-y-4 hover-lift"
         >
           <div className="p-4 bg-indigo-500/10 text-indigo-500 inline-block rounded-2xl"><FaEye className="w-6 h-6" /></div>
           <h2 className="text-2xl font-bold">Our Vision</h2>
@@ -56,10 +57,10 @@ const AboutPage = () => {
             { year: '2026', title: 'Enterprise Dashboards', desc: 'Introduced CSV/Excel imports, multi-coordinate analytics graphs, and fully-responsive layout designs.' }
           ].map((milestone, idx) => (
             <div key={idx} className="relative pl-8 md:pl-12">
-              <span className="absolute -left-3.5 top-1.5 bg-blue-500 w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+              <span className="absolute -left-3.5 top-1.5 bg-blue-500 w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-md shadow-blue-500/30">
                 {idx + 1}
               </span>
-              <div className="glass-card rounded-2xl p-6 space-y-1">
+              <div className="glass-card rounded-2xl p-6 space-y-1 hover-lift">
                 <span className="text-sm font-extrabold text-blue-500">{milestone.year}</span>
                 <h3 className="font-bold text-lg">{milestone.title}</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">{milestone.desc}</p>
@@ -68,7 +69,7 @@ const AboutPage = () => {
           ))}
         </div>
       </section>
-    </div>
+    </PageTransition>
   );
 };
 

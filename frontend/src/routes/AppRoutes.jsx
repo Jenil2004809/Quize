@@ -11,7 +11,6 @@ import AboutPage from '../pages/AboutPage';
 import ContactPage from '../pages/ContactPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
-import OtpPage from '../pages/OtpPage';
 import ResetPasswordPage from '../pages/ResetPasswordPage';
 import QuizzesPage from '../pages/QuizzesPage';
 import QuizDetails from '../pages/QuizDetails';
@@ -38,7 +37,6 @@ import TeacherCategories from '../pages/teacher/TeacherCategories';
 // Admin Pages
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import ManageUsers from '../pages/admin/ManageUsers';
-import TeacherApprovals from '../pages/admin/TeacherApprovals';
 import ContactMessages from '../pages/admin/ContactMessages';
 import AdminSettings from '../pages/admin/AdminSettings';
 import DatabaseManagement from '../pages/admin/DatabaseManagement';
@@ -70,7 +68,6 @@ const AppRoutes = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ResetPasswordPage />} />
-      <Route path="/otp" element={<PrivateRoute><OtpPage /></PrivateRoute>} />
       
       {/* Quizzes Public Browsing */}
       <Route path="/quizzes" element={<QuizzesPage />} />
@@ -132,7 +129,6 @@ const AppRoutes = () => {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<ManageUsers />} />
-        <Route path="approvals" element={<TeacherApprovals />} />
         <Route path="categories" element={<TeacherCategories />} />
         <Route path="database" element={<DatabaseManagement />} />
         <Route path="messages" element={<ContactMessages />} />

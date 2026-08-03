@@ -9,7 +9,7 @@ const questionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['mcq', 'true-false', 'fill-in-the-blank', 'multiple-correct'],
+    enum: ['mcq', 'true-false', 'multiple-select', 'multiple-correct', 'fill-in-the-blank', 'short-answer'],
     required: [true, 'Question type is required']
   },
   text: {
@@ -43,10 +43,6 @@ const questionSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: [0, 'Negative marks must be non-negative']
-  },
-  timer: {
-    type: Number,
-    default: 0 // Optional question-level timer in seconds
   }
 }, {
   timestamps: true

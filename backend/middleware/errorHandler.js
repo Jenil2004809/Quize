@@ -8,6 +8,9 @@ const notFound = (req, res, next) => {
 // Global error handler
 const errorHandler = (err, req, res, next) => {
   let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  if (err.statusCode) {
+    statusCode = err.statusCode;
+  }
   let message = err.message;
 
   // Handle Mongoose CastError (invalid ObjectId)

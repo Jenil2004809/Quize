@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FaDatabase, FaEdit, FaFilter, FaSearch, FaSort, FaTrash } from 'react-icons/fa';
+import { FaDatabase, FaEdit, FaFilter, FaSearch, FaSort, FaTrash, FaSeedling, FaInfoCircle, FaProjectDiagram } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
@@ -37,15 +37,18 @@ const DatabaseManagement = () => {
   const [collections, setCollections] = useState([]);
   const [activeCollection, setActiveCollection] = useState('students');
   const [records, setRecords] = useState([]);
+  const [activeMeta, setActiveMeta] = useState({});
   const [meta, setMeta] = useState({ page: 1, pages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
 
-  const activeLabel = collections.find((item) => item.key === activeCollection)?.label || 'Records';
+  const activeItem = collections.find((item) => item.key === activeCollection);
+  const activeLabel = activeItem?.label || 'Records';
   const columns = useMemo(() => pickColumns(records), [records]);
 
   const fetchCollections = useCallback(async () => {
@@ -61,6 +64,7 @@ const DatabaseManagement = () => {
       });
       if (res.data.success) {
         setRecords(res.data.records);
+        setActiveMeta(res.data.metadata || {});
         setMeta({ page: res.data.page, pages: res.data.pages, total: res.data.total });
       }
     } finally {
@@ -81,6 +85,40 @@ const DatabaseManagement = () => {
     setSearch('');
     setStatus('');
     setPage(1);
+  };
+
+  const handleSeedDatabase = async () => {
+    const confirm = await Swal.fire({
+      title: 'Seed Sample Data?',
+      text: 'This will add realistic sample categories, subjects, quizzes, and questions to your MongoDB database.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      confirmButtonText: 'Yes, Seed Database'
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    setSeeding(true);
+    try {
+      const res = await api.post('/database/seed');
+      if (res.data.success) {
+        Swal.fire({
+          title: 'Database Seeded! 🌱',
+          text: res.data.message || 'Sample data added successfully.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        fetchCollections();
+        fetchRecords();
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Error', 'Failed to seed database sample data.', 'error');
+    } finally {
+      setSeeding(false);
+    }
   };
 
   const handleEdit = async (record) => {
@@ -138,18 +176,32 @@ const DatabaseManagement = () => {
 
   return (
     <div className="space-y-6 text-left">
+      {/* Page Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center space-x-3">
-          <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-2xl"><FaDatabase className="w-6 h-6" /></div>
+          <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-2xl">
+            <FaDatabase className="w-6 h-6" />
+          </div>
           <div>
-            <h1 className="text-3xl font-black">Database Management</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Browse, search, edit, sort, paginate, and delete MongoDB records.</p>
+            <h1 className="text-3xl font-black">MongoDB Database Architecture</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Browse, search, edit, seed, and manage all collections & relationships.
+            </p>
           </div>
         </div>
-        <div className="text-sm font-bold text-slate-500">{meta.total} records</div>
+
+        <button
+          onClick={handleSeedDatabase}
+          disabled={seeding}
+          className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 text-xs transition-all hover-scale disabled:opacity-50"
+        >
+          <FaSeedling className="w-4 h-4" />
+          <span>{seeding ? 'Seeding Data...' : 'Seed Sample Data'}</span>
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 xl:grid-cols-10 gap-2">
+      {/* Collection Navigation Tabs */}
+      <div className="grid grid-cols-2 md:grid-cols-5 xl:grid-cols-11 gap-2">
         {collections.map((collection) => (
           <button
             key={collection.key}
@@ -160,12 +212,51 @@ const DatabaseManagement = () => {
                 : 'border-slate-200 bg-white text-slate-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
             }`}
           >
-            <span className="block text-[11px] font-black uppercase tracking-wide truncate">{collection.label}</span>
-            <span className="text-xs opacity-80">{collection.count}</span>
+            <span className="block text-[10px] font-black uppercase tracking-wide truncate">{collection.label}</span>
+            <span className="text-xs opacity-80 font-bold">{collection.count}</span>
           </button>
         ))}
       </div>
 
+      {/* Active Collection Architecture Meta Card */}
+      {activeItem && (
+        <div className="p-5 rounded-3xl bg-blue-500/5 border border-blue-500/20 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center space-x-2">
+              <FaInfoCircle className="text-blue-500 w-5 h-5 flex-shrink-0" />
+              <h3 className="font-extrabold text-base text-blue-600 dark:text-blue-400">
+                Collection: <span className="underline">{activeItem.label}</span>
+              </h3>
+              <span className="text-xs bg-blue-500/10 text-blue-500 font-bold px-2 py-0.5 rounded-full">
+                {meta.total} Total Documents
+              </span>
+            </div>
+            {activeMeta.relations && (
+              <div className="flex items-center space-x-1.5 text-xs text-slate-500 font-medium">
+                <FaProjectDiagram className="text-indigo-500" />
+                <span>Relations: <strong>{activeMeta.relations}</strong></span>
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            {activeMeta.description || activeItem.description}
+          </p>
+
+          {activeMeta.fields && activeMeta.fields.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">Primary Fields:</span>
+              {activeMeta.fields.map((f, idx) => (
+                <span key={idx} className="text-[10px] bg-slate-200 dark:bg-slate-800 font-mono px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">
+                  {f}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Data Records View */}
       <div className="glass-card rounded-3xl p-5 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
@@ -203,7 +294,15 @@ const DatabaseManagement = () => {
         {loading ? (
           <LoadingSkeleton type="table" count={6} />
         ) : records.length === 0 ? (
-          <p className="py-12 text-center text-sm text-slate-400">No records match the current filters.</p>
+          <div className="py-12 text-center space-y-2">
+            <p className="text-sm text-slate-400">No records match the current filters in {activeLabel}.</p>
+            <button
+              onClick={handleSeedDatabase}
+              className="text-xs text-blue-500 hover:underline font-bold"
+            >
+              Click here to seed sample data into MongoDB &rarr;
+            </button>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[900px] text-sm">

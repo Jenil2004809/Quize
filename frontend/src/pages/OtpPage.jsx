@@ -14,6 +14,18 @@ const OtpPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === 'teacher' && !user.isApproved) {
+        navigate('/login');
+      } else {
+        navigate(`/${user.role}-dashboard`);
+      }
+    } else {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (otp.length !== 6) {

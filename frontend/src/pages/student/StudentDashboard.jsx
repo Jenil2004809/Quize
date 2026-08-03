@@ -107,7 +107,7 @@ const StudentDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {[
           { icon: <FaHistory className="text-blue-500" />, title: 'Total Attempts', val: stats.totalAttempts },
           { icon: <FaCheckCircle className="text-emerald-500" />, title: 'Passed Quizzes', val: stats.passedAttempts },

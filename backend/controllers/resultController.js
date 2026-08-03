@@ -3,6 +3,7 @@ const Quiz = require('../models/Quiz');
 const Question = require('../models/Question');
 const Certificate = require('../models/Certificate');
 const Notification = require('../models/Notification');
+const Student = require('../models/Student');
 
 // @desc    Submit a quiz attempt
 // @route   POST /api/results/submit
@@ -66,7 +67,7 @@ const submitQuiz = async (req, res, next) => {
       // Check correctness
       let isCorrect = false;
 
-      if (question.type === 'multiple-correct') {
+      if (question.type === 'multiple-correct' || question.type === 'multiple-select') {
         // Must match all correct answers exactly
         const sortedCorrect = [...question.correctAnswers].sort();
         const sortedSelected = [...userSelected].sort();
@@ -119,31 +120,23 @@ const submitQuiz = async (req, res, next) => {
       passed
     });
 
-    // Generate Certificate if passed
-    let certificate = null;
-    if (passed) {
-      certificate = await Certificate.create({
-        studentId: req.user._id,
-        quizId,
-        resultId: result._id
-      });
+    // Generate Certificate for the attempt
+    const certificate = await Certificate.create({
+      studentId: req.user._id,
+      quizId,
+      resultId: result._id
+    });
 
-      // Notification to Student
-      await Notification.create({
-        recipientId: req.user._id,
-        title: 'Quiz Passed! 🎓 Certificate Ready!',
-        message: `Congratulations! You passed "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`,
-        type: 'certificate_ready'
-      });
-    } else {
-      // General Notification to Student
-      await Notification.create({
-        recipientId: req.user._id,
-        title: 'Quiz Attempt Completed 📝',
-        message: `You completed your attempt on "${quiz.title}". Score: ${score}/${totalPossibleMarks} (${percentage.toFixed(1)}%).`,
-        type: 'quiz_completed'
-      });
-    }
+    // Create Notification to Student
+    await Notification.create({
+      recipientId: req.user._id,
+      recipientModel: 'Student',
+      title: passed ? 'Quiz Passed! 🎓 Certificate Ready!' : 'Quiz Attempt Completed! 🎓 Certificate Ready!',
+      message: passed
+        ? `Congratulations! You passed "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`
+        : `You completed your attempt on "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`,
+      type: 'certificate_ready'
+    });
 
     return res.status(201).json({
       success: true,
@@ -215,7 +208,7 @@ const getQuizResults = async (req, res, next) => {
   }
 };
 
-// @desc    Get result by ID (Exposes correct keys, explanations, and certificates)
+// @desc    Get result by ID
 // @route   GET /api/results/:id
 // @access  Private (Auth required)
 const getResultById = async (req, res, next) => {
@@ -256,9 +249,34 @@ const getResultById = async (req, res, next) => {
   }
 };
 
+// @desc    Get all attempts for all quizzes created by the logged in teacher/admin
+// @route   GET /api/results/teacher/all
+// @access  Private (Teacher/Admin)
+const getTeacherAllResults = async (req, res, next) => {
+  try {
+    let quizQuery = {};
+    if (req.user.role !== 'admin') {
+      quizQuery.creator = req.user._id;
+    }
+
+    const quizzes = await Quiz.find(quizQuery).select('_id title');
+    const quizIds = quizzes.map(q => q._id);
+
+    const results = await Result.find({ quizId: { $in: quizIds } })
+      .populate('studentId', 'name email avatar')
+      .populate('quizId', 'title category difficulty passingMarks timeLimit')
+      .sort({ createdAt: -1 });
+
+    return res.json({ success: true, count: results.length, results });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   submitQuiz,
   getStudentResults,
   getQuizResults,
+  getTeacherAllResults,
   getResultById
 };

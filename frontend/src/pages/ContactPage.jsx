@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaPaperPlane } from 'react-icons/fa';
 import api from '../services/api';
 import Swal from 'sweetalert2';
+import PageTransition from '../components/PageTransition';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -39,7 +40,7 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-2 gap-12">
+    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 md:grid-cols-2 gap-12">
       
       {/* Contact Information */}
       <div className="space-y-8 text-left">
@@ -81,13 +82,14 @@ const ContactPage = () => {
         {/* Map placeholder */}
         <div className="h-60 rounded-3xl overflow-hidden shadow-xl border border-slate-200 dark:border-slate-800">
           <iframe
-            title="Office Location"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3168.6273413999946!2d-122.0837468!3d37.4224498!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x808fba02425d1f1b%3A0x62cc7087611598f8!2sGoogleplex!5e0!3m2!1sen!2sus!4v1700000000000"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14875.804935880773!2d72.84470915794371!3d21.233782289283198!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be04f33933b2623%3A0xb440e8447a399880!2zVmlqYXlob8Ku!5e0!3m2!1sen!2sin!4v1784287096584!5m2!1sen!2sin"
             width="100%"
             height="100%"
             style={{ border: 0 }}
-            allowFullScreen=""
+            allowFullScreen
             loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Google Maps"
           ></iframe>
         </div>
       </div>
@@ -163,7 +165,7 @@ const ContactPage = () => {
           </button>
         </form>
       </div>
-    </div>
+    </PageTransition>
   );
 };
 

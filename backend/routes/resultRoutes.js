@@ -4,13 +4,20 @@ const {
   submitQuiz,
   getStudentResults,
   getQuizResults,
+  getTeacherAllResults,
   getResultById
 } = require('../controllers/resultController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/auth');
 
-router.post('/submit', protect, submitQuiz);
-router.get('/student/:studentId', protect, getStudentResults);
-router.get('/quiz/:quizId', protect, authorize('teacher', 'admin'), getQuizResults);
-router.get('/:id', protect, getResultById);
+router.use(protect);
+
+// Submit quiz
+router.post('/submit', submitQuiz);
+
+// Get results history
+router.get('/student/:studentId', getStudentResults);
+router.get('/quiz/:quizId', getQuizResults);
+router.get('/teacher/all', getTeacherAllResults);
+router.get('/:id', getResultById);
 
 module.exports = router;

@@ -1,16 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const {
-  listCollections,
+  getCollections,
   getCollectionRecords,
   updateCollectionRecord,
-  deleteCollectionRecord
+  deleteCollectionRecord,
+  seedSampleData
 } = require('../controllers/databaseController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/auth');
+const admin = require('../middleware/admin');
 
-router.use(protect, authorize('admin'));
+router.use(protect);
+router.use(admin);
 
-router.get('/', listCollections);
+router.get('/', getCollections);
+router.post('/seed', seedSampleData);
 router.get('/:collection', getCollectionRecords);
 router.put('/:collection/:id', updateCollectionRecord);
 router.delete('/:collection/:id', deleteCollectionRecord);

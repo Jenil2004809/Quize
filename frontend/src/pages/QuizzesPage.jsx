@@ -6,6 +6,7 @@ import { FaClock, FaTrophy, FaSearch, FaBookmark, FaGamepad, FaFilter } from 're
 import api from '../services/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
+import PageTransition from '../components/PageTransition';
 
 const QuizzesPage = () => {
   const { user, isAuthenticated } = useSelector(state => state.auth);
@@ -93,28 +94,38 @@ const QuizzesPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 text-left">
-      <div>
-        <h1 className="text-3xl font-black">Explore Quizzes</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Search and filter active quizzes to test your understanding</p>
+    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 text-left">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-black">Explore Quizzes</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Search and filter active quizzes to test your understanding</p>
+        </div>
+        {isAuthenticated && user?.role === 'teacher' && (
+          <button
+            onClick={() => navigate('/teacher-dashboard/quizzes')}
+            className="flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold px-5 py-3 rounded-xl text-xs hover-scale shadow-lg shadow-blue-500/20 self-start sm:self-auto"
+          >
+            <FaGamepad />
+            <span>Create a Quiz</span>
+          </button>
+        )}
       </div>
 
-      {/* Filters bar */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 glass-card rounded-3xl items-center">
-        
+      {/* Filters Bar */}
+      <div className="glass-card rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {/* Search */}
-        <div className="relative">
-          <FaSearch className="absolute left-3 top-3.5 text-slate-400 text-sm" />
+        <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
+          <FaSearch className="text-slate-400 text-xs" />
           <input
             type="text"
-            placeholder="Search titles..."
+            placeholder="Search quizzes..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full text-xs pl-9 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none"
+            className="bg-transparent text-xs focus:outline-none w-full"
           />
         </div>
 
-        {/* Category */}
+        {/* Category filter */}
         <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
           <FaFilter className="text-slate-400 text-xs" />
           <select
@@ -123,11 +134,13 @@ const QuizzesPage = () => {
             className="bg-transparent text-xs font-semibold focus:outline-none pr-6 cursor-pointer w-full"
           >
             <option value="">All Categories</option>
-            {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+            {categories.map(c => (
+              <option key={c._id} value={c._id}>{c.name}</option>
+            ))}
           </select>
         </div>
 
-        {/* Difficulty */}
+        {/* Difficulty filter */}
         <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
           <FaFilter className="text-slate-400 text-xs" />
           <select
@@ -156,7 +169,6 @@ const QuizzesPage = () => {
             <option value="title-desc">Title Z-A</option>
           </select>
         </div>
-
       </div>
 
       {/* Quizzes list */}
@@ -170,7 +182,7 @@ const QuizzesPage = () => {
             <div
               key={quiz._id}
               onClick={() => navigate(`/quizzes/${quiz._id}`)}
-              className="glass-card rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-blue-500"
+              className="glass-card rounded-3xl p-6 flex flex-col justify-between hover-lift cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-blue-500"
             >
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -190,6 +202,9 @@ const QuizzesPage = () => {
                 <div>
                   <h3 className="font-black text-lg group-hover:text-blue-500 transition-colors leading-snug">{quiz.title}</h3>
                   <p className="text-slate-400 text-xs mt-1 line-clamp-2 leading-relaxed">{quiz.description}</p>
+                  {quiz.creator && (
+                    <p className="text-[10px] text-blue-500 font-bold mt-2">Conducted by: {quiz.creator.name}</p>
+                  )}
                 </div>
 
                 {/* Meta properties */}
@@ -219,7 +234,7 @@ const QuizzesPage = () => {
           ))}
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 };
 
