@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Dynamically resolve backend URL for local dev, Wi-Fi network, or remote public tunnels
+// Dynamically resolve backend URL for local dev, Wi-Fi network, or cloud deployment
 const getBackendURL = () => {
   if (import.meta.env.VITE_ASSET_URL) {
     return import.meta.env.VITE_ASSET_URL;
@@ -14,8 +14,8 @@ const getBackendURL = () => {
     if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
       return `http://${host}:5005`;
     }
-    // Remote mobile network access via public SSL tunnel (separate network / 4G / 5G / different city)
-    return 'https://386c79fbf5fe9b.lhr.life';
+    // Permanent Render Cloud API endpoint for remote mobile networks (4G / 5G / different city)
+    return 'https://quize.onrender.com';
   }
   return 'http://localhost:5005';
 };
