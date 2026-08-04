@@ -14,8 +14,8 @@ const getBackendURL = () => {
     if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
       return `http://${host}:5005`;
     }
-    // Permanent Render Cloud API endpoint for remote mobile networks (4G / 5G / different city)
-    return 'https://quize-luie.onrender.com';
+    // Encrypted SSL API Gateway for remote mobile networks (4G / 5G / separate network)
+    return 'https://ed60092a29b39f.lhr.life';
   }
   return 'http://localhost:5005';
 };
