@@ -15,7 +15,7 @@ const getBackendURL = () => {
       return `http://${host}:5005`;
     }
     // Permanent Render Cloud API endpoint for remote mobile networks (4G / 5G / different city)
-    return 'https://quize.onrender.com';
+    return 'https://quize-luie.onrender.com';
   }
   return 'http://localhost:5005';
 };
