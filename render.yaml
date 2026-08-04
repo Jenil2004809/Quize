@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: quizzy-backend-api
+    env: node
+    region: oregon
+    buildCommand: npm install --prefix backend
+    startCommand: npm start --prefix backend
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5005
+      - key: HOST
+        value: 0.0.0.0
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: web
+    name: quizzy-frontend-web
+    env: static
+    buildCommand: npm install --prefix frontend && npm run build --prefix frontend
+    staticPublishPath: ./frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

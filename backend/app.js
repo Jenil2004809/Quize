@@ -8,6 +8,9 @@ const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
+// Trust reverse proxy headers for public tunnels & mobile networks
+app.set('trust proxy', 1);
+
 // Security Middlewares
 app.use(helmet({
   crossOriginResourcePolicy: false // Allows serving local uploads cross-origin
@@ -16,7 +19,7 @@ app.use(helmet({
 app.use(cors({
   origin: true, // Dynamically allow mobile phone Wi-Fi IPs & local development origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'bypass-tunnel-reminder'],
   credentials: true
 }));
 

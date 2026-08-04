@@ -32,13 +32,13 @@ connectDB().then(async () => {
 });
 
 const PORT = process.env.PORT || 5005;
+const HOST = process.env.HOST || '0.0.0.0';
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, HOST, () => {
   console.log('');
   console.log('🚀 =============================================');
-  console.log(`🎓 Quiz Management API running on port ${PORT}`);
-  console.log(`🌐 URL: http://localhost:${PORT}`);
-  console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🎓 Quiz Management API running on ${HOST}:${PORT}`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('🚀 =============================================');
   console.log('');
 });
@@ -46,7 +46,7 @@ const server = app.listen(PORT, () => {
 // Handle EADDRINUSE and server errors gracefully
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} is already in use by another running Node process.`);
+    console.error(`❌ Port ${PORT} is already in use by another running process.`);
     console.error(`👉 Run 'npx kill-port ${PORT}' or terminate the duplicate node instance.`);
     process.exit(1);
   } else {

@@ -1,12 +1,21 @@
 import axios from 'axios';
 
-// Dynamically construct backend URL so mobile phones on local Wi-Fi connect to PC IP automatically
+// Dynamically resolve backend URL for local dev, Wi-Fi network, or remote public tunnels
 const getBackendURL = () => {
   if (import.meta.env.VITE_ASSET_URL) {
     return import.meta.env.VITE_ASSET_URL;
   }
   if (typeof window !== 'undefined' && window.location && window.location.hostname) {
-    return `http://${window.location.hostname}:5005`;
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:5005';
+    }
+    // Wi-Fi network IP check (e.g., 192.168.x.x)
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+      return `http://${host}:5005`;
+    }
+    // Remote mobile network access via public SSL tunnel (separate network / 4G / 5G / different city)
+    return 'https://386c79fbf5fe9b.lhr.life';
   }
   return 'http://localhost:5005';
 };
