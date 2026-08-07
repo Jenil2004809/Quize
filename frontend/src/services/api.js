@@ -14,8 +14,8 @@ const getBackendURL = () => {
     if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
       return `http://${host}:5005`;
     }
-    // Encrypted SSL API Gateway for remote mobile networks (4G / 5G / separate network)
-    return 'https://ed60092a29b39f.lhr.life';
+    // Encrypted SSL API Gateway for remote mobile networks & public web domains
+    return 'https://ef9bc8dbd0a042.lhr.life';
   }
   return 'http://localhost:5005';
 };
