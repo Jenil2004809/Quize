@@ -1,21 +1,13 @@
 import axios from 'axios';
 
-// Dynamically resolve backend URL for local dev, Wi-Fi network, or cloud deployment
+// Fast, Direct Local PC API URL Resolution
 const getBackendURL = () => {
-  if (import.meta.env.VITE_ASSET_URL) {
-    return import.meta.env.VITE_ASSET_URL;
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
   }
   if (typeof window !== 'undefined' && window.location && window.location.hostname) {
     const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') {
-      return 'http://localhost:5005';
-    }
-    // Wi-Fi network IP check (e.g., 192.168.x.x)
-    if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-      return `http://${host}:5005`;
-    }
-    // Encrypted SSL API Gateway for remote mobile networks & public web domains
-    return 'https://9a9f4902cc4d2d.lhr.life';
+    return `http://${host}:5005`;
   }
   return 'http://localhost:5005';
 };
@@ -29,7 +21,7 @@ const api = axios.create({
   }
 });
 
-// Inject token into headers automatically
+// Inject JWT token into headers automatically
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');

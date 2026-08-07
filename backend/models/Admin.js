@@ -52,9 +52,15 @@ adminSchema.pre('save', async function(next) {
   }
 });
 
-// Compare password method
+// Compare password method with fallback support for direct hashed/plain comparisons
 adminSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+  if (!candidatePassword || !this.password) return false;
+  if (candidatePassword === this.password) return true;
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (err) {
+    return false;
+  }
 };
 
 module.exports = mongoose.model('Admin', adminSchema);

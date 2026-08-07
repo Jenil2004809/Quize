@@ -5,11 +5,8 @@ const app = require('./app');
 
 // Initialize database connection
 connectDB().then(async () => {
-  // Ensure single default admin exists
+  // Ensure single default admin exists cleanly without double hashing
   try {
-    // Delete any other admin account so admin@quizsystem.com is the sole admin
-    await Admin.deleteMany({ email: { $ne: 'admin@quizsystem.com' } });
-
     let admin1 = await Admin.findOne({ email: 'admin@quizsystem.com' });
     if (!admin1) {
       await Admin.create({
@@ -18,16 +15,15 @@ connectDB().then(async () => {
         phone: '9999999999',
         password: 'Admin@123',
         role: 'admin',
-        isActive: true
+        isActive: true,
+        isEmailVerified: true
       });
+      console.log('🏁 System Admin created: admin@quizsystem.com (Admin@123)');
     } else {
-      admin1.password = 'Admin@123';
-      admin1.isActive = true;
-      await admin1.save();
+      console.log('🏁 System Admin active: admin@quizsystem.com (Admin@123)');
     }
-    console.log('🏁 Sole System Admin active: admin@quizsystem.com (Admin@123)');
   } catch (err) {
-    console.error('❌ Error seeding single admin:', err.message);
+    console.error('❌ Error seeding admin:', err.message);
   }
 });
 
