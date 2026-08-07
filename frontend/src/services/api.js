@@ -2,9 +2,6 @@ import axios from 'axios';
 
 // Fast, Direct Local PC API URL Resolution
 const getBackendURL = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
-  }
   if (typeof window !== 'undefined' && window.location && window.location.hostname) {
     const host = window.location.hostname;
     return `http://${host}:5005`;
