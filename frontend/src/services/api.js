@@ -15,7 +15,7 @@ const getBackendURL = () => {
       return `http://${host}:5005`;
     }
     // Encrypted SSL API Gateway for remote mobile networks & public web domains
-    return 'https://ef9bc8dbd0a042.lhr.life';
+    return 'https://9a9f4902cc4d2d.lhr.life';
   }
   return 'http://localhost:5005';
 };
