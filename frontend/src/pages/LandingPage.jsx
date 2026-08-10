@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaGraduationCap, FaChalkboardTeacher, FaClipboardCheck, FaAward, FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import api from '../services/api';
+import Swal from 'sweetalert2';
 
 import PageTransition from '../components/PageTransition';
 
@@ -12,6 +13,19 @@ const LandingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFaq, setActiveFaq] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.tabViolationDisqualified) {
+      Swal.fire({
+        title: 'Exam Terminated ⛔',
+        text: `Your attempt for "${location.state?.quizTitle || 'Quiz'}" failed due to reason of tab change violations in exam environment. Please check your Bell Icon (🔔) notification.`,
+        icon: 'error',
+        confirmButtonColor: '#ef4444'
+      });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const fetchCategories = async () => {

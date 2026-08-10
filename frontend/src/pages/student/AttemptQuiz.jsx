@@ -274,7 +274,20 @@ const AttemptQuiz = () => {
       });
 
       if (res.data.success) {
-        navigate(`/quiz-result/${res.data.resultId}`);
+        // Trigger instant Navbar Bell Icon notification refresh
+        window.dispatchEvent(new Event('notification_updated'));
+
+        if (isForced) {
+          // Direct redirection to Home Page (/) on tab violation disqualification
+          navigate('/', {
+            state: {
+              tabViolationDisqualified: true,
+              quizTitle: quiz?.title || 'Quiz'
+            }
+          });
+        } else {
+          navigate(`/quiz-result/${res.data.resultId}`);
+        }
       }
     } catch (err) {
       console.error(err);

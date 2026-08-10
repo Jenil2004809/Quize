@@ -31,8 +31,14 @@ const Navbar = () => {
         }
       };
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 60000);
-      return () => clearInterval(interval);
+
+      const interval = setInterval(fetchNotifications, 15000);
+      window.addEventListener('notification_updated', fetchNotifications);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('notification_updated', fetchNotifications);
+      };
     }
   }, [isAuthenticated]);
 
