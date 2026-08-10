@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaClock, FaTrophy, FaArrowLeft, FaGamepad, FaLock, FaExclamationTriangle } from 'react-icons/fa';
+import { FaClock, FaTrophy, FaArrowLeft, FaGamepad, FaLock, FaExclamationTriangle, FaTrash } from 'react-icons/fa';
 import api from '../services/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
@@ -23,7 +23,6 @@ const QuizDetails = () => {
           setQuiz(res.data.quiz);
           
           if (isAuthenticated && user?.role === 'student') {
-            // Check student attempts for this quiz
             const attemptsRes = await api.get(`/results/student/${user._id}`);
             if (attemptsRes.data.success) {
               const quizAttempts = attemptsRes.data.results.filter(r => r.quizId?._id === quizId);
@@ -85,6 +84,38 @@ const QuizDetails = () => {
     });
   };
 
+  const handleDeleteQuiz = () => {
+    Swal.fire({
+      title: 'Delete Quiz Permanently?',
+      text: 'This will delete the quiz and ALL associated questions/results from the database immediately. This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, Delete from Database!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.delete(`/quizzes/${quizId}`);
+          if (res.data.success) {
+            Swal.fire({
+              title: 'Deleted! 🗑️',
+              text: 'Quiz and all database records deleted.',
+              icon: 'success',
+              timer: 1500,
+              showConfirmButton: false
+            }).then(() => {
+              navigate('/quizzes');
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          Swal.fire('Error', err.response?.data?.message || 'Failed to delete quiz.', 'error');
+        }
+      }
+    });
+  };
+
   if (loading) {
     return <LoadingSkeleton type="card" count={1} />;
   }
@@ -99,15 +130,28 @@ const QuizDetails = () => {
   }
 
   const reachedLimit = attemptsCount >= quiz.maxAttempts;
+  const isCreatorOrAdmin = user && (user.role === 'admin' || user._id === quiz.creator?._id);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-left space-y-8">
       
       {/* Navigation header */}
-      <Link to="/quizzes" className="flex items-center space-x-1.5 text-xs text-slate-500 hover:text-blue-500 transition-colors w-fit">
-        <FaArrowLeft />
-        <span>Back to explore page</span>
-      </Link>
+      <div className="flex justify-between items-center">
+        <Link to="/quizzes" className="flex items-center space-x-1.5 text-xs text-slate-500 hover:text-blue-500 transition-colors w-fit">
+          <FaArrowLeft />
+          <span>Back to explore page</span>
+        </Link>
+
+        {isCreatorOrAdmin && (
+          <button
+            onClick={handleDeleteQuiz}
+            className="flex items-center space-x-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all border border-red-500/20"
+          >
+            <FaTrash />
+            <span>Delete Quiz from Database</span>
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         
