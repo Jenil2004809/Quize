@@ -86,7 +86,19 @@ const AttemptQuiz = () => {
         }
       } catch (err) {
         console.error(err);
-        setLoadError(err.response?.data?.message || 'Could not load this quiz attempt. Please sign in as a student and try again.');
+        const errorMsg = err.response?.data?.message || 'Could not load this quiz attempt.';
+        setLoadError(errorMsg);
+        if (err.response?.status === 403 || err.response?.data?.isPendingAdminApproval) {
+          Swal.fire({
+            title: 'Admin Concern & Approval Required ⛔',
+            text: errorMsg,
+            icon: 'error',
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Return to Home'
+          }).then(() => {
+            navigate('/');
+          });
+        }
       } finally {
         setLoading(false);
       }

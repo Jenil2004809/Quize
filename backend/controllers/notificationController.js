@@ -69,8 +69,32 @@ const markAllAsRead = async (req, res, next) => {
   }
 };
 
+// @desc    Send Admin Concern / Approval Request for student quiz access
+// @route   POST /api/notifications/request-admin-concern
+// @access  Private (Student)
+const requestAdminConcern = async (req, res, next) => {
+  try {
+    const { quizTitle } = req.body;
+    
+    await Notification.create({
+      recipientId: null,
+      recipientModel: 'Admin',
+      senderId: req.user._id,
+      senderModel: 'Student',
+      title: 'Quiz Unlock & Admin Concern Request 🔒',
+      message: `Student "${req.user.name}" (${req.user.email}) requested Admin concern and approval to attempt quiz "${quizTitle || 'Assessment'}".`,
+      type: 'announcement'
+    });
+
+    return res.json({ success: true, message: 'Admin concern request logged successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getNotifications,
   markAsRead,
-  markAllAsRead
+  markAllAsRead,
+  requestAdminConcern
 };

@@ -23,6 +23,15 @@ const getQuestionsForQuiz = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Quiz not found' });
     }
 
+    // Check Admin concern & approval for students attempting quizzes
+    if (req.user.role === 'student' && !req.user.isApproved) {
+      return res.status(403).json({
+        success: false,
+        isPendingAdminApproval: true,
+        message: 'Cannot attempt quiz without Admin concern and explicit approval. Please contact Admin to unlock your quiz access.'
+      });
+    }
+
     // Fetch questions
     const questions = await Question.find({ quizId }).sort({ createdAt: 1 });
 

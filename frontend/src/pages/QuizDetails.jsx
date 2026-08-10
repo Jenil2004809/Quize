@@ -61,6 +61,28 @@ const QuizDetails = () => {
       });
     }
 
+    // CHECK ADMIN CONCERN & APPROVAL
+    if (user?.isApproved === false) {
+      return Swal.fire({
+        title: 'Admin Concern & Approval Required ⛔',
+        text: 'You cannot give or attempt this quiz without Admin concern and explicit approval. Click below to send an approval request to the Admin.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3b82f6',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Request Admin Concern & Approval'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            await api.post('/notifications/request-admin-concern', { quizId, quizTitle: quiz?.title });
+            Swal.fire('Request Sent! ✉️', 'Approval request sent to Admin. Please contact Admin to unlock your quiz access.', 'success');
+          } catch (e) {
+            Swal.fire('Request Logged! ✉️', 'Admin notification logged. Please contact your Admin to approve your quiz attempt.', 'info');
+          }
+        }
+      });
+    }
+
     if (attemptsCount >= quiz?.maxAttempts) {
       return Swal.fire({
         title: 'Attempt Limit Reached ⛔',

@@ -46,7 +46,7 @@ const registerStudent = async (req, res, next) => {
       phone: phone || '',
       role: 'student',
       isEmailVerified: true,
-      isApproved: true
+      isApproved: false
     });
 
     const token = signToken(student._id, 'student');
@@ -207,11 +207,11 @@ const loginUser = async (req, res, next) => {
       role: role,
       avatar: user.avatar || '',
       isActive: user.isActive,
+      isApproved: user.isApproved === true,
       isEmailVerified: true
     };
 
     if (role === 'teacher') {
-      userPayload.isApproved = user.isApproved;
       userPayload.specialization = user.specialization;
     }
     if (role === 'student') {
