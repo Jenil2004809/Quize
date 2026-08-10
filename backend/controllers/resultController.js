@@ -10,7 +10,7 @@ const Student = require('../models/Student');
 // @access  Private (Student)
 const submitQuiz = async (req, res, next) => {
   try {
-    const { quizId, answers, timeTaken, integrityScore } = req.body; // answers: [{ questionId, selectedAnswers: [] }]
+    const { quizId, answers, timeTaken, integrityScore, wasDisqualified, disqualificationReason } = req.body;
 
     if (!quizId || !Array.isArray(answers)) {
       return res.status(400).json({ success: false, message: 'Please provide quizId and your answers' });
@@ -103,50 +103,61 @@ const submitQuiz = async (req, res, next) => {
     if (score < 0) score = 0;
 
     const percentage = totalPossibleMarks > 0 ? (score / totalPossibleMarks) * 100 : 0;
-    const passed = score >= quiz.passingMarks;
+    
+    // Check tab switch violation or explicit disqualification
+    const isTabSwitchFailure = Boolean(wasDisqualified) || Number(integrityScore) <= 40;
+    const finalPassed = isTabSwitchFailure ? false : (score >= quiz.passingMarks);
+    const failReason = disqualificationReason || (isTabSwitchFailure ? 'Failed due to excessive tab change violations in exam' : '');
 
     // Save Result
     const result = await Result.create({
       studentId: req.user._id,
       quizId,
-      score,
-      percentage: parseFloat(percentage.toFixed(2)),
+      score: isTabSwitchFailure ? 0 : score,
+      percentage: isTabSwitchFailure ? 0 : parseFloat(percentage.toFixed(2)),
       totalQuestions,
-      correctAnswers: correctAnswersCount,
-      wrongAnswers: wrongAnswersCount,
+      correctAnswers: isTabSwitchFailure ? 0 : correctAnswersCount,
+      wrongAnswers: isTabSwitchFailure ? totalQuestions : wrongAnswersCount,
       skippedAnswers: skippedAnswersCount,
       integrityScore: parseInt(integrityScore || 100),
       answers: evaluatedAnswers,
       timeTaken: parseInt(timeTaken || 0),
-      passed
+      passed: finalPassed,
+      wasDisqualified: isTabSwitchFailure,
+      disqualificationReason: failReason
     });
 
-    // Generate Certificate for the attempt
-    const certificate = await Certificate.create({
-      studentId: req.user._id,
-      quizId,
-      resultId: result._id
-    });
+    // Generate Certificate for the attempt if passed
+    if (finalPassed) {
+      await Certificate.create({
+        studentId: req.user._id,
+        quizId,
+        resultId: result._id
+      });
+    }
 
     // Create Notification to Student
     await Notification.create({
       recipientId: req.user._id,
       recipientModel: 'Student',
-      title: passed ? 'Quiz Passed! 🎓 Certificate Ready!' : 'Quiz Attempt Completed! 🎓 Certificate Ready!',
-      message: passed
-        ? `Congratulations! You passed "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`
-        : `You completed your attempt on "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`,
-      type: 'certificate_ready'
+      title: isTabSwitchFailure
+        ? 'Quiz Attempt Failed ⛔ (Tab Switch Violation)'
+        : (finalPassed ? 'Quiz Passed! 🎓 Certificate Ready!' : 'Quiz Attempt Failed ❌'),
+      message: isTabSwitchFailure
+        ? `Your attempt for "${quiz.title}" failed due to reason of tab change violations in exam.`
+        : (finalPassed
+            ? `Congratulations! You passed "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`
+            : `You scored ${percentage.toFixed(1)}% on "${quiz.title}". Passing requirement was ${quiz.passingMarks} marks.`),
+      type: isTabSwitchFailure ? 'security_warning' : 'certificate_ready'
     });
 
     return res.status(201).json({
       success: true,
-      message: passed ? 'Quiz passed! Certificate generated.' : 'Quiz completed.',
+      message: finalPassed ? 'Quiz passed! Certificate generated.' : (isTabSwitchFailure ? 'Quiz failed due to tab change violations.' : 'Quiz completed.'),
       resultId: result._id,
-      score,
       percentage,
-      passed,
-      certificateId: certificate ? certificate.certificateId : null
+      passed: finalPassed,
+      wasDisqualified: isTabSwitchFailure
     });
   } catch (error) {
     next(error);

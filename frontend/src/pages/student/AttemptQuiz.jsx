@@ -36,8 +36,8 @@ const AttemptQuiz = () => {
       const nextCount = prev + 1;
       if (nextCount >= 3) {
         Swal.fire({
-          title: 'Exam Security Disqualification ⛔',
-          text: '3 Security Violations detected (Off-Screen Focus / Malpractice). Your exam paper has been automatically force-submitted.',
+          title: 'Exam Failed & Disqualified ⛔',
+          text: 'Exam attempt failed due to reason of tab change violations in exam environment. Your paper has been auto-submitted.',
           icon: 'error',
           confirmButtonColor: '#ef4444'
         }).then(() => {
@@ -45,8 +45,8 @@ const AttemptQuiz = () => {
         });
       } else {
         Swal.fire({
-          title: 'Malpractice Alert! 🚨',
-          text: `${violationMsg}. Leaving screen focus violates exam security rules. (Violation ${nextCount}/3)`,
+          title: 'Tab Change Warning! 🚨',
+          text: `${violationMsg}. Changing tabs violates exam security rules. (Violation ${nextCount}/3)`,
           icon: 'warning',
           confirmButtonColor: '#ef4444',
           timer: 4000
@@ -268,7 +268,9 @@ const AttemptQuiz = () => {
         quizId,
         answers: formattedAnswers,
         timeTaken: elapsedSeconds,
-        integrityScore
+        integrityScore: isForced ? 0 : integrityScore,
+        wasDisqualified: isForced,
+        disqualificationReason: isForced ? 'Failed due to reason of tab change violations in exam' : ''
       });
 
       if (res.data.success) {

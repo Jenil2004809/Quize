@@ -34,7 +34,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['quiz_published', 'quiz_completed', 'certificate_ready', 'announcement', 'teacher_approved'],
+    enum: ['quiz_published', 'quiz_completed', 'certificate_ready', 'announcement', 'teacher_approved', 'security_warning', 'exam_failed'],
     default: 'announcement'
   },
   isRead: {

@@ -111,13 +111,25 @@ const QuizResult = () => {
           </span>
           <h1 className="text-3xl font-black">{quiz?.title}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {result.passed ? (
+            {result.wasDisqualified ? (
+              <span className="text-red-500 font-bold">Exam Attempt Failed due to reason of tab change violations during exam.</span>
+            ) : result.passed ? (
               <span className="text-emerald-500 font-bold">Congratulations! You passed the quiz and cleared the threshold!</span>
             ) : (
               <span className="text-red-500 font-bold">You did not meet the passing marks threshold of {quiz?.passingMarks}. Try again!</span>
             )}
           </p>
         </div>
+
+        {result.wasDisqualified && (
+          <div className="w-full mt-4 bg-red-500/10 border-2 border-red-500/30 p-3 rounded-2xl flex items-center space-x-3 text-red-500">
+            <FaTimesCircle className="w-5 h-5 flex-shrink-0" />
+            <div className="text-xs">
+              <strong className="font-black uppercase block">Disqualification Reason:</strong>
+              <span>{result.disqualificationReason || 'Failed due to reason of tab change violations in exam.'}</span>
+            </div>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 mt-6 md:mt-0">

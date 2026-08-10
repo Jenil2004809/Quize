@@ -66,6 +66,14 @@ const resultSchema = new mongoose.Schema({
   passed: {
     type: Boolean,
     required: true
+  },
+  wasDisqualified: {
+    type: Boolean,
+    default: false
+  },
+  disqualificationReason: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true
