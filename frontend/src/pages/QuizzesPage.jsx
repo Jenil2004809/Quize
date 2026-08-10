@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { bookmarkToggleSuccess } from '../redux/authSlice';
-import { FaClock, FaTrophy, FaSearch, FaBookmark, FaGamepad, FaFilter } from 'react-icons/fa';
+import { FaClock, FaTrophy, FaSearch, FaBookmark, FaGamepad, FaFilter, FaTrash } from 'react-icons/fa';
 import api from '../services/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
@@ -87,6 +87,42 @@ const QuizzesPage = () => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleDeleteQuiz = async (e, quizId, title) => {
+    e.stopPropagation();
+    Swal.fire({
+      title: `Delete "${title}"?`,
+      text: 'This will permanently delete this quiz and ALL associated questions/results from the database in real time!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, Delete from Database!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.delete(`/quizzes/${quizId}`);
+          if (res.data.success) {
+            setQuizzes(prev => prev.filter(q => q._id !== quizId));
+            Swal.fire({
+              title: 'Deleted! 🗑️',
+              text: 'Quiz and all database records removed.',
+              icon: 'success',
+              timer: 1500,
+              showConfirmButton: false
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          Swal.fire({
+            title: 'Delete Error ⚠️',
+            text: err.response?.data?.message || 'Could not delete quiz.',
+            icon: 'error'
+          });
+        }
+      }
+    });
   };
 
   const isBookmarked = (id) => {
@@ -178,66 +214,93 @@ const QuizzesPage = () => {
         <p className="text-slate-400 text-center py-16 text-sm">No quizzes found matching your parameters.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {quizzes.map((quiz) => (
-            <div
-              key={quiz._id}
-              onClick={() => navigate(`/quizzes/${quiz._id}`)}
-              className="glass-card rounded-3xl p-6 flex flex-col justify-between hover-lift cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-blue-500"
-            >
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                    quiz.isSystemQuiz ? 'bg-indigo-500/10 text-indigo-500 border border-indigo-500/20' : 'bg-blue-500/10 text-blue-500'
-                  }`}>
-                    {quiz.isSystemQuiz ? 'System Curriculum Quiz' : quiz.category?.name}
-                  </span>
-                  
+          {quizzes.map((quiz) => {
+            const canDelete = user && (user.role === 'admin' || user._id === quiz.creator?._id);
+
+            return (
+              <div
+                key={quiz._id}
+                onClick={() => navigate(`/quizzes/${quiz._id}`)}
+                className="glass-card rounded-3xl p-6 flex flex-col justify-between hover-lift cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-blue-500"
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      quiz.isSystemQuiz ? 'bg-indigo-500/10 text-indigo-500 border border-indigo-500/20' : 'bg-blue-500/10 text-blue-500'
+                    }`}>
+                      {quiz.isSystemQuiz ? 'System Curriculum Quiz' : quiz.category?.name}
+                    </span>
+                    
+                    <div className="flex items-center space-x-2">
+                      {canDelete && (
+                        <button
+                          onClick={(e) => handleDeleteQuiz(e, quiz._id, quiz.title)}
+                          className="p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                          title="Delete Quiz from Database"
+                        >
+                          <FaTrash className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      <button
+                        onClick={(e) => handleBookmarkToggle(e, quiz._id)}
+                        className="text-slate-400 hover:text-blue-500 transition-colors focus:outline-none"
+                        aria-label="Toggle Bookmark"
+                      >
+                        <FaBookmark className={`w-4 h-4 ${isBookmarked(quiz._id) ? 'text-blue-500' : ''}`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-black text-lg group-hover:text-blue-500 transition-colors leading-snug">{quiz.title}</h3>
+                    <p className="text-slate-400 text-xs mt-1 line-clamp-2 leading-relaxed">{quiz.description}</p>
+                    {quiz.isSystemQuiz ? (
+                      <p className="text-[10px] text-indigo-500 font-bold mt-2 flex items-center space-x-1">
+                        <span>🎓 Official System Curriculum (Automated System Quiz)</span>
+                      </p>
+                    ) : quiz.creator ? (
+                      <p className="text-[10px] text-blue-500 font-bold mt-2">Conducted by: {quiz.creator.name}</p>
+                    ) : null}
+                  </div>
+
+                  {/* Meta properties */}
+                  <div className="flex space-x-4 text-xs text-slate-400 pt-1">
+                    <span className="flex items-center space-x-1">
+                      <FaClock /> <span>{quiz.timeLimit} mins</span>
+                    </span>
+                    <span className="flex items-center space-x-1">
+                      <FaTrophy /> <span>Passing: {quiz.passingMarks}</span>
+                    </span>
+                    <span className="capitalize font-bold text-slate-500">
+                      {quiz.difficulty}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-6 flex space-x-2">
                   <button
-                    onClick={(e) => handleBookmarkToggle(e, quiz._id)}
-                    className="text-slate-400 hover:text-blue-500 transition-colors focus:outline-none"
-                    aria-label="Toggle Bookmark"
+                    type="button"
+                    className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 group-hover:bg-blue-600 group-hover:text-white text-slate-700 dark:text-slate-350 font-bold flex items-center justify-center space-x-2 transition-all text-xs hover-scale"
                   >
-                    <FaBookmark className={`w-4 h-4 ${isBookmarked(quiz._id) ? 'text-blue-500' : ''}`} />
+                    <FaGamepad />
+                    <span>Start Attempt</span>
                   </button>
-                </div>
 
-                <div>
-                  <h3 className="font-black text-lg group-hover:text-blue-500 transition-colors leading-snug">{quiz.title}</h3>
-                  <p className="text-slate-400 text-xs mt-1 line-clamp-2 leading-relaxed">{quiz.description}</p>
-                  {quiz.isSystemQuiz ? (
-                    <p className="text-[10px] text-indigo-500 font-bold mt-2 flex items-center space-x-1">
-                      <span>🎓 Official System Curriculum (Automated System Quiz)</span>
-                    </p>
-                  ) : quiz.creator ? (
-                    <p className="text-[10px] text-blue-500 font-bold mt-2">Conducted by: {quiz.creator.name}</p>
-                  ) : null}
-                </div>
-
-                {/* Meta properties */}
-                <div className="flex space-x-4 text-xs text-slate-400 pt-1">
-                  <span className="flex items-center space-x-1">
-                    <FaClock /> <span>{quiz.timeLimit} mins</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <FaTrophy /> <span>Passing: {quiz.passingMarks}</span>
-                  </span>
-                  <span className="capitalize font-bold text-slate-500">
-                    {quiz.difficulty}
-                  </span>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteQuiz(e, quiz._id, quiz.title)}
+                      className="px-3 py-2.5 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white font-bold transition-all text-xs flex items-center justify-center"
+                      title="Delete Quiz"
+                    >
+                      <FaTrash className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
-
-              <div className="pt-6">
-                <button
-                  type="button"
-                  className="w-full py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 group-hover:bg-blue-600 group-hover:text-white text-slate-700 dark:text-slate-350 font-bold flex items-center justify-center space-x-2 transition-all text-xs hover-scale"
-                >
-                  <FaGamepad />
-                  <span>Start Attempt</span>
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </PageTransition>
