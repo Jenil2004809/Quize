@@ -30,6 +30,8 @@ connectDB().then(async () => {
 const PORT = process.env.PORT || 5005;
 const HOST = process.env.HOST || '0.0.0.0';
 
+const { initSocket } = require('./config/socket');
+
 const server = app.listen(PORT, HOST, () => {
   console.log('');
   console.log('🚀 =============================================');
@@ -38,6 +40,9 @@ const server = app.listen(PORT, HOST, () => {
   console.log('🚀 =============================================');
   console.log('');
 });
+
+// Initialize Socket.IO
+initSocket(server);
 
 // Handle EADDRINUSE and server errors gracefully
 server.on('error', (err) => {

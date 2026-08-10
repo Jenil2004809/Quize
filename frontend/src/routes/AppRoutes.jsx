@@ -41,6 +41,8 @@ import ContactMessages from '../pages/admin/ContactMessages';
 import AdminSettings from '../pages/admin/AdminSettings';
 import DatabaseManagement from '../pages/admin/DatabaseManagement';
 
+import PolicyViolations from '../pages/admin/PolicyViolations';
+
 // Route Guards
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -129,10 +131,12 @@ const AppRoutes = () => {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<ManageUsers />} />
+        <Route path="policy-violations" element={<PolicyViolations />} />
         <Route path="categories" element={<TeacherCategories />} />
         <Route path="database" element={<DatabaseManagement />} />
         <Route path="messages" element={<ContactMessages />} />
         <Route path="settings" element={<AdminSettings />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
 
       {/* Fallback */}

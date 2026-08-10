@@ -39,7 +39,7 @@ const QuizDetails = () => {
     fetchQuizDetails();
   }, [quizId, isAuthenticated, user]);
 
-  const handleStartQuiz = () => {
+  const handleStartQuiz = async () => {
     if (!isAuthenticated) {
       return Swal.fire({
         title: 'Authentication Required',
@@ -59,6 +59,28 @@ const QuizDetails = () => {
         text: 'Only student accounts are authorized to attempt exams.',
         icon: 'warning'
       });
+    }
+
+    // CHECK POLICY VIOLATION & TAB CHANGE LOCK
+    try {
+      const statusRes = await api.get(`/student/quiz-status/${quizId}`);
+      if (statusRes.data && statusRes.data.canAttempt === false) {
+        return Swal.fire({
+          title: 'Access Denied',
+          text: statusRes.data.message || 'You exceeded the allowed tab change limit. Please wait until the administrator reviews your request.',
+          icon: 'error',
+          confirmButtonColor: '#ef4444'
+        });
+      }
+    } catch (statusErr) {
+      if (statusErr.response && statusErr.response.status === 403) {
+        return Swal.fire({
+          title: 'Access Denied',
+          text: statusErr.response.data?.message || 'You exceeded the allowed tab change limit. Please wait until the administrator reviews your request.',
+          icon: 'error',
+          confirmButtonColor: '#ef4444'
+        });
+      }
     }
 
     // CHECK ADMIN CONCERN & APPROVAL

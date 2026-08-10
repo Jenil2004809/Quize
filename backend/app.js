@@ -52,6 +52,7 @@ app.use('/api/results', require('./routes/resultRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/leaderboard', require('./routes/leaderboardRoutes'));
 app.use('/api/settings', require('./routes/settingRoutes'));
+app.use('/api', require('./routes/policyViolationRoutes'));
 
 // ─── Health Check ──────────────────────────────────────────────────────────
 app.get('/', (req, res) => {

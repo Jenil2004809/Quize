@@ -82,6 +82,44 @@ const resultSchema = new mongoose.Schema({
   isAuthorizedForRetake: {
     type: Boolean,
     default: false
+  },
+  tabChangeCount: {
+    type: Number,
+    default: 0
+  },
+  terminatedDueToViolation: {
+    type: Boolean,
+    default: false
+  },
+  terminationReason: {
+    type: String,
+    enum: ['NONE', 'TAB_CHANGE_LIMIT_EXCEEDED'],
+    default: 'NONE'
+  },
+  terminatedAt: {
+    type: Date,
+    default: null
+  },
+  status: {
+    type: String,
+    enum: ['ACTIVE', 'COMPLETED', 'TERMINATED'],
+    default: 'COMPLETED'
+  },
+  approvalStatus: {
+    type: String,
+    enum: ['NONE', 'PENDING', 'APPROVED', 'REJECTED'],
+    default: 'NONE'
+  },
+  violationHistory: [{
+    timestamp: { type: Date, default: Date.now },
+    browser: { type: String, default: '' },
+    ip: { type: String, default: '' },
+    device: { type: String, default: '' },
+    eventType: { type: String, default: 'TAB_CHANGE' }
+  }],
+  adminNotes: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

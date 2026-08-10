@@ -5,6 +5,7 @@ import { logout, toggleTheme } from '../redux/authSlice';
 import { FaSun, FaMoon, FaBell, FaUser, FaSignOutAlt, FaBars, FaTimes, FaTrophy, FaArrowLeft, FaGamepad } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { ASSET_BASE_URL } from '../services/api';
+import { io } from 'socket.io-client';
 
 const Navbar = () => {
   const { isAuthenticated, user, theme } = useSelector((state) => state.auth);
@@ -16,6 +17,28 @@ const Navbar = () => {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  // Socket.IO real-time notification sync
+  useEffect(() => {
+    if (isAuthenticated && user?._id) {
+      const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5005' : window.location.origin;
+      const socket = io(backendUrl);
+
+      socket.emit('join_room', user._id);
+
+      socket.on('notification_received', () => {
+        window.dispatchEvent(new Event('notification_updated'));
+      });
+
+      socket.on('policy_violation_update', () => {
+        window.dispatchEvent(new Event('notification_updated'));
+      });
+
+      return () => {
+        socket.disconnect();
+      };
+    }
+  }, [isAuthenticated, user]);
 
   // Fetch notifications if logged in
   useEffect(() => {

@@ -126,7 +126,13 @@ const submitQuiz = async (req, res, next) => {
       wasDisqualified: isTabSwitchFailure,
       disqualificationReason: failReason,
       tabViolationLocked: isTabSwitchFailure,
-      isAuthorizedForRetake: false
+      isAuthorizedForRetake: false,
+      tabChangeCount: isTabSwitchFailure ? 3 : (req.body.tabChangeCount || 0),
+      terminatedDueToViolation: isTabSwitchFailure,
+      terminationReason: isTabSwitchFailure ? 'TAB_CHANGE_LIMIT_EXCEEDED' : 'NONE',
+      terminatedAt: isTabSwitchFailure ? new Date() : null,
+      status: isTabSwitchFailure ? 'TERMINATED' : 'COMPLETED',
+      approvalStatus: isTabSwitchFailure ? 'PENDING' : 'NONE'
     });
 
     // Generate Certificate for the attempt if passed
@@ -143,10 +149,10 @@ const submitQuiz = async (req, res, next) => {
       recipientId: req.user._id,
       recipientModel: 'Student',
       title: isTabSwitchFailure
-        ? 'Error Submitting ⚠️'
+        ? 'Quiz Removed'
         : (finalPassed ? 'Quiz Passed! 🎓 Certificate Ready!' : 'Quiz Attempt Failed ❌'),
       message: isTabSwitchFailure
-        ? `Failed to record attempts for "${quiz.title}". Please contact admin.`
+        ? 'You have been removed from the quiz because you exceeded the maximum allowed tab changes. Please contact the administrator to request authorization.'
         : (finalPassed
             ? `Congratulations! You passed "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`
             : `You scored ${percentage.toFixed(1)}% on "${quiz.title}". Passing requirement was ${quiz.passingMarks} marks.`),

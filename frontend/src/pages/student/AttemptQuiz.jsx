@@ -26,29 +26,92 @@ const AttemptQuiz = () => {
   const [timeLeft, setTimeLeft] = useState(0); // in seconds
   const timerRef = useRef(null);
 
-  // Fullscreen States
+  // Fullscreen & Violation States
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [warningsCount, setWarningsCount] = useState(0);
 
+  // Initialize violation count from LocalStorage to prevent bypass by refresh
+  useEffect(() => {
+    const savedCount = parseInt(localStorage.getItem(`quiz_violations_${quizId}`) || '0', 10);
+    setWarningsCount(savedCount);
+  }, [quizId]);
+
   // Handle Cheating / Off-Screen Focus Violations
   const handleProctorViolation = (violationMsg) => {
-    Swal.fire({
-      title: 'Error Submitting ⚠️',
-      text: 'Failed to record attempts. Please contact admin.',
-      icon: 'error',
-      confirmButtonColor: '#6366f1',
-      confirmButtonText: 'OK',
-      allowOutsideClick: false,
-      allowEscapeKey: false
-    }).then(() => {
-      submitExamPayload(true);
-    });
+    const savedCount = parseInt(localStorage.getItem(`quiz_violations_${quizId}`) || '0', 10);
+    const currentCount = savedCount + 1;
+    localStorage.setItem(`quiz_violations_${quizId}`, currentCount.toString());
+    setWarningsCount(currentCount);
+
+    if (currentCount === 1) {
+      Swal.fire({
+        title: '⚠ Warning',
+        text: 'You switched away from the quiz. This is violation 1 of 3. If you exceed 3 violations, your quiz will be terminated automatically.',
+        icon: 'warning',
+        confirmButtonColor: '#f59e0b',
+        confirmButtonText: 'Continue Quiz',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      });
+    } else if (currentCount === 2) {
+      Swal.fire({
+        title: '⚠ Second Warning',
+        text: 'This is your second warning. One more violation will terminate your quiz permanently.',
+        icon: 'warning',
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Continue Quiz',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      });
+    } else if (currentCount >= 3) {
+      Swal.fire({
+        title: 'Error Submitting ⚠️',
+        text: 'Failed to record attempts. You exceeded the maximum allowed tab changes. Please contact admin.',
+        icon: 'error',
+        confirmButtonColor: '#6366f1',
+        confirmButtonText: 'OK',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      }).then(() => {
+        submitExamPayload(true);
+      });
+    }
   };
 
-  // Load questions and recover state
+  // Load questions and verify security status
   useEffect(() => {
     const startQuiz = async () => {
       try {
+        // Security check: verify if student is blocked/terminated for this quiz
+        try {
+          const statusRes = await api.get(`/student/quiz-status/${quizId}`);
+          if (statusRes.data && statusRes.data.canAttempt === false) {
+            Swal.fire({
+              title: 'Access Denied',
+              text: statusRes.data.message || 'You exceeded the allowed tab change limit. Please wait until the administrator reviews your request.',
+              icon: 'error',
+              confirmButtonColor: '#ef4444',
+              confirmButtonText: 'Return Home'
+            }).then(() => {
+              navigate('/', { replace: true });
+            });
+            return;
+          }
+        } catch (statusErr) {
+          if (statusErr.response && statusErr.response.status === 403) {
+            Swal.fire({
+              title: 'Access Denied',
+              text: statusErr.response.data?.message || 'You exceeded the allowed tab change limit. Please wait until the administrator reviews your request.',
+              icon: 'error',
+              confirmButtonColor: '#ef4444',
+              confirmButtonText: 'Return Home'
+            }).then(() => {
+              navigate('/', { replace: true });
+            });
+            return;
+          }
+        }
+
         const quizRes = await api.get(`/quizzes/${quizId}`);
         const qRes = await api.get(`/quizzes/${quizId}/questions`);
 
@@ -78,13 +141,13 @@ const AttemptQuiz = () => {
         setLoadError(errorMsg);
         if (err.response?.status === 403 || err.response?.data?.isPendingAdminApproval) {
           Swal.fire({
-            title: 'Admin Concern & Approval Required ⛔',
+            title: 'Access Denied',
             text: errorMsg,
             icon: 'error',
             confirmButtonColor: '#ef4444',
-            confirmButtonText: 'Return to Home'
+            confirmButtonText: 'Return Home'
           }).then(() => {
-            navigate('/');
+            navigate('/', { replace: true });
           });
         }
       } finally {
@@ -92,7 +155,7 @@ const AttemptQuiz = () => {
       }
     };
     startQuiz();
-  }, [quizId]);
+  }, [quizId, navigate]);
 
   // Request Fullscreen on first loading click with mobile browser fallback
   const enterFullscreen = () => {

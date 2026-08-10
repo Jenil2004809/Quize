@@ -6,7 +6,7 @@ import { ASSET_BASE_URL } from '../services/api';
 import {
   FaTrophy, FaAward, FaHistory, FaBookmark, FaCog, FaUser, FaSignOutAlt,
   FaPlusCircle, FaFolderOpen, FaChartPie, FaCheckDouble, FaUsers,
-  FaComments, FaBars, FaTimes, FaHome, FaGamepad, FaDatabase, FaArrowLeft
+  FaComments, FaBars, FaTimes, FaHome, FaGamepad, FaDatabase, FaArrowLeft, FaShieldAlt
 } from 'react-icons/fa';
 
 const DashboardLayout = () => {
@@ -45,6 +45,7 @@ const DashboardLayout = () => {
       case 'admin':
         return [
           { to: '/admin-dashboard', label: 'Overview', icon: <FaChartPie /> },
+          { to: '/admin-dashboard/policy-violations', label: 'Policy Violations', icon: <FaShieldAlt /> },
           { to: '/admin-dashboard/users', label: 'Manage Users', icon: <FaUsers /> },
           { to: '/admin-dashboard/categories', label: 'Categories', icon: <FaPlusCircle /> },
           { to: '/admin-dashboard/database', label: 'Database', icon: <FaDatabase /> },
