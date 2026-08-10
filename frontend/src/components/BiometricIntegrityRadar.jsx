@@ -1,30 +1,37 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaShieldAlt, FaEye, FaVideo, FaExclamationTriangle, FaCheckCircle, FaLock, FaExclamationCircle } from 'react-icons/fa';
+import { FaShieldAlt, FaEye, FaVideo, FaVideoSlash, FaExclamationTriangle, FaCheckCircle, FaLock, FaExclamationCircle } from 'react-icons/fa';
 
 const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive }) => {
   const [integrityScore, setIntegrityScore] = useState(100);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraChecked, setCameraChecked] = useState(false);
   const [attentionStatus, setAttentionStatus] = useState('Focused (On Screen)');
   const [violationCount, setViolationCount] = useState(0);
   const [logs, setLogs] = useState([]);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  // Initialize HD WebCam Proctoring Feed
+  // Initialize WebCam Proctoring Feed with graceful fallback if camera fails
   useEffect(() => {
     let stream = null;
     const startCamera = async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          setCameraActive(true);
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+          });
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            setCameraActive(true);
+          }
+        } else {
+          setCameraActive(false);
         }
       } catch (err) {
-        console.warn('Camera access denied or unmounted; using synthetic biometric radar sensor:', err.message);
+        console.warn('Camera access unavailable or denied. Falling back to Tab-Switch & Focus Violation monitor:', err.message);
         setCameraActive(false);
+      } finally {
+        setCameraChecked(true);
       }
     };
 
@@ -50,12 +57,12 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
     setViolationCount(prev => {
       const nextCount = prev + 1;
       const time = new Date().toLocaleTimeString();
-      const newLog = `[${time}] 🚨 VIOLATION: ${reason} (-20%)`;
+      const newLog = `[${time}] 🚨 TAB SWITCH VIOLATION: ${reason} (-20%)`;
       setLogs(p => [newLog, ...p.slice(0, 3)]);
-      setAttentionStatus('OFF-SCREEN / CHEATING VIOLATION!');
+      setAttentionStatus('OFF-SCREEN / TAB SWITCH VIOLATION!');
 
       if (onViolation) {
-        onViolation(`🚨 CHEATING VIOLATION #${nextCount}: ${reason}`);
+        onViolation(`🚨 TAB SWITCH VIOLATION #${nextCount}: ${reason}`);
       }
       return nextCount;
     });
@@ -74,7 +81,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
     };
 
     const handleMouseLeave = () => {
-      triggerSecurityViolation('Cursor Left Examination Boundary');
+      triggerSecurityViolation('Cursor Exited Exam Window Boundary');
     };
 
     const handleKeyDown = (e) => {
@@ -85,7 +92,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
         (e.altKey && e.key === 'Tab')
       ) {
         e.preventDefault();
-        triggerSecurityViolation(`Forbidden Key combination pressed (${e.key})`);
+        triggerSecurityViolation(`Forbidden Shortcut Key (${e.key})`);
       }
     };
 
@@ -102,7 +109,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
     };
   }, [isExamActive]);
 
-  // Continuous Canvas Drawing for Dynamic Face Grid & Eye Attention Radar
+  // Continuous Canvas Drawing for Eye/Focus Radar
   useEffect(() => {
     if (!isExamActive) return;
 
@@ -126,7 +133,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
         ctx.lineTo(width, height / 2);
         ctx.stroke();
 
-        // Draw AI Eye Tracking Bounding Box
+        // Draw Focus Tracking Box
         ctx.strokeStyle = integrityScore > 60 ? '#10b981' : '#ef4444';
         ctx.lineWidth = 2;
         ctx.strokeRect(width / 2 - 25, height / 2 - 20, 50, 40);
@@ -153,8 +160,12 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
             <FaShieldAlt className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">AI Proctor Camera</h4>
-            <p className="text-[10px] text-slate-400">Live Attention & Anti-Cheat Sensor</p>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              {cameraActive ? 'AI Proctor Camera' : 'Tab Switch & Focus Monitor'}
+            </h4>
+            <p className="text-[10px] text-slate-400">
+              {cameraActive ? 'Live Camera & Focus Security' : 'Active Tab Violation Security'}
+            </p>
           </div>
         </div>
         
@@ -167,37 +178,43 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
         </div>
       </div>
 
-      {/* Camera Video & AI Radar Display */}
-      <div className="grid grid-cols-2 gap-2 items-center">
-        
-        {/* WebCam Feed */}
-        <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex items-center justify-center">
-          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
-          
-          {!cameraActive && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center bg-slate-950/80">
-              <FaVideo className="w-5 h-5 text-slate-500 mb-1" />
-              <span className="text-[9px] text-slate-400 font-semibold">AI Motion Proctor Active</span>
+      {/* Camera Video or Fallback Focus Monitor Display */}
+      {cameraActive ? (
+        <div className="grid grid-cols-2 gap-2 items-center">
+          {/* WebCam Feed */}
+          <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex items-center justify-center">
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
+            <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-600/90 text-[8px] font-bold rounded uppercase tracking-wider text-white flex items-center space-x-1">
+              <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+              <span>HD PROCTOR</span>
+            </span>
+          </div>
+
+          {/* Attention Radar Heatmap Canvas */}
+          <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex flex-col items-center justify-center p-2">
+            <canvas ref={canvasRef} width={120} height={80} className="w-full h-full" />
+            <div className={`absolute bottom-1 right-1 text-[8px] font-bold px-1 rounded ${
+              violationCount > 0 ? 'bg-red-900/90 text-red-300' : 'bg-slate-900/90 text-emerald-400'
+            }`}>
+              {attentionStatus}
             </div>
-          )}
-
-          <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-600/90 text-[8px] font-bold rounded uppercase tracking-wider text-white flex items-center space-x-1">
-            <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
-            <span>HD PROCTOR</span>
-          </span>
-        </div>
-
-        {/* Attention Radar Heatmap Canvas */}
-        <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex flex-col items-center justify-center p-2">
-          <canvas ref={canvasRef} width={120} height={80} className="w-full h-full" />
-          <div className={`absolute bottom-1 right-1 text-[8px] font-bold px-1 rounded ${
-            violationCount > 0 ? 'bg-red-900/90 text-red-300' : 'bg-slate-900/90 text-emerald-400'
-          }`}>
-            {attentionStatus}
           </div>
         </div>
-
-      </div>
+      ) : (
+        /* CAMERA REMOVED / FALLBACK: TAB SWITCH MONITOR CARD */
+        <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2 text-center">
+          <div className="flex items-center justify-center space-x-2 text-amber-400">
+            <FaVideoSlash className="w-4 h-4" />
+            <span className="text-xs font-bold">Camera Feature Removed (Tab Switch Security Active)</span>
+          </div>
+          <div className="flex items-center justify-between bg-slate-900 px-3 py-2 rounded-lg text-xs">
+            <span className="text-slate-400">Current Focus Status:</span>
+            <span className={`font-black ${violationCount > 0 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+              {attentionStatus}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Security Violation Alerts Log */}
       {logs.length > 0 && (
@@ -215,10 +232,10 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
       <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/80">
         <span className="flex items-center space-x-1">
           <FaLock className="w-2.5 h-2.5 text-blue-400" />
-          <span>Fisher-Yates Anti-Cheat Active</span>
+          <span>Tab-Switch Violation Security Active</span>
         </span>
         <span className={`font-bold ${violationCount > 0 ? 'text-red-400' : 'text-slate-300'}`}>
-          Violations: {violationCount}/3
+          Tab Violations: {violationCount}/3
         </span>
       </div>
     </div>
