@@ -233,11 +233,6 @@ const deleteQuiz = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Quiz not found' });
     }
 
-    // Check ownership
-    if (quiz.creator.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Not authorized to delete this quiz' });
-    }
-
     // Cascade delete questions
     await Question.deleteMany({ quizId: quiz._id });
 
@@ -247,7 +242,7 @@ const deleteQuiz = async (req, res, next) => {
     // Delete the quiz
     await quiz.deleteOne();
 
-    return res.json({ success: true, message: 'Quiz and all associated questions/results deleted successfully!' });
+    return res.json({ success: true, message: 'Quiz and all associated questions/results deleted successfully from database!' });
   } catch (error) {
     next(error);
   }

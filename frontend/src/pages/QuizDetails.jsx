@@ -84,6 +84,7 @@ const QuizDetails = () => {
     });
   };
 
+  // Instant Database Deletion Trigger
   const handleDeleteQuiz = () => {
     Swal.fire({
       title: 'Delete Quiz Permanently?',
@@ -99,8 +100,8 @@ const QuizDetails = () => {
           const res = await api.delete(`/quizzes/${quizId}`);
           if (res.data.success) {
             Swal.fire({
-              title: 'Deleted! 🗑️',
-              text: 'Quiz and all database records deleted.',
+              title: 'Deleted from Database! 🗑️',
+              text: 'Quiz and all associated database records removed.',
               icon: 'success',
               timer: 1500,
               showConfirmButton: false
@@ -130,7 +131,6 @@ const QuizDetails = () => {
   }
 
   const reachedLimit = attemptsCount >= quiz.maxAttempts;
-  const isCreatorOrAdmin = user && (user.role === 'admin' || user._id === quiz.creator?._id);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-left space-y-8">
@@ -142,15 +142,14 @@ const QuizDetails = () => {
           <span>Back to explore page</span>
         </Link>
 
-        {isCreatorOrAdmin && (
-          <button
-            onClick={handleDeleteQuiz}
-            className="flex items-center space-x-1.5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all border border-red-500/20"
-          >
-            <FaTrash />
-            <span>Delete Quiz from Database</span>
-          </button>
-        )}
+        {/* ALWAYS VISIBLE RED DELETE BUTTON */}
+        <button
+          onClick={handleDeleteQuiz}
+          className="flex items-center space-x-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-red-500/20"
+        >
+          <FaTrash />
+          <span>Delete Quiz from Database</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -235,6 +234,14 @@ const QuizDetails = () => {
             >
               {reachedLimit ? <FaLock /> : <FaGamepad />}
               <span>{reachedLimit ? 'Attempt Blocked' : 'Start Assessment'}</span>
+            </button>
+
+            <button
+              onClick={handleDeleteQuiz}
+              className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold flex items-center justify-center space-x-2 text-xs transition-colors hover-scale shadow-lg shadow-red-500/20"
+            >
+              <FaTrash />
+              <span>Delete Quiz from Database</span>
             </button>
           </div>
 
