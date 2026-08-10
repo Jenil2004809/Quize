@@ -9,7 +9,7 @@ const Notification = require('../models/Notification');
 // @access  Public
 const getQuizzes = async (req, res, next) => {
   try {
-    const { search, category, subject, difficulty, page = 1, limit = 10, sort } = req.query;
+    const { search, category, subject, difficulty, page = 1, limit = 500, sort } = req.query;
 
     const query = { isPublished: true, visibility: 'public' };
 

@@ -47,7 +47,7 @@ const QuizzesPage = () => {
   const fetchQuizzes = async () => {
     setLoading(true);
     try {
-      const params = {};
+      const params = { limit: 500 };
       if (search) params.search = search;
       if (category) params.category = category;
       if (difficulty) params.difficulty = difficulty;
