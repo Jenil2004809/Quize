@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { bookmarkToggleSuccess } from '../redux/authSlice';
-import { FaClock, FaTrophy, FaSearch, FaBookmark, FaGamepad, FaFilter, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
+import { FaClock, FaTrophy, FaSearch, FaBookmark, FaGamepad, FaFilter, FaTrash } from 'react-icons/fa';
 import api from '../services/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
@@ -219,7 +219,7 @@ const QuizzesPage = () => {
             <div
               key={quiz._id}
               onClick={() => navigate(`/quizzes/${quiz._id}`)}
-              className="glass-card rounded-3xl p-6 flex flex-col justify-between hover-lift cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-blue-500"
+              className="glass-card rounded-3xl p-6 flex flex-col justify-between hover-lift cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-red-500"
             >
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -229,29 +229,17 @@ const QuizzesPage = () => {
                     {quiz.isSystemQuiz ? 'System Curriculum Quiz' : quiz.category?.name}
                   </span>
                   
-                  <div className="flex items-center space-x-2">
-                    {/* ALWAYS VISIBLE RED DELETE BUTTON */}
-                    <button
-                      onClick={(e) => handleDeleteQuiz(e, quiz._id, quiz.title)}
-                      className="px-2 py-1 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-600 hover:text-white transition-all text-xs font-bold flex items-center space-x-1 border border-red-500/30"
-                      title="Delete Quiz from Database"
-                    >
-                      <FaTrash className="w-3 h-3" />
-                      <span>Delete</span>
-                    </button>
-
-                    <button
-                      onClick={(e) => handleBookmarkToggle(e, quiz._id)}
-                      className="text-slate-400 hover:text-blue-500 transition-colors focus:outline-none"
-                      aria-label="Toggle Bookmark"
-                    >
-                      <FaBookmark className={`w-4 h-4 ${isBookmarked(quiz._id) ? 'text-blue-500' : ''}`} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={(e) => handleBookmarkToggle(e, quiz._id)}
+                    className="text-slate-400 hover:text-blue-500 transition-colors focus:outline-none"
+                    aria-label="Toggle Bookmark"
+                  >
+                    <FaBookmark className={`w-4 h-4 ${isBookmarked(quiz._id) ? 'text-blue-500' : ''}`} />
+                  </button>
                 </div>
 
                 <div>
-                  <h3 className="font-black text-lg group-hover:text-blue-500 transition-colors leading-snug">{quiz.title}</h3>
+                  <h3 className="font-black text-lg group-hover:text-red-500 transition-colors leading-snug">{quiz.title}</h3>
                   <p className="text-slate-400 text-xs mt-1 line-clamp-2 leading-relaxed">{quiz.description}</p>
                   {quiz.isSystemQuiz ? (
                     <p className="text-[10px] text-indigo-500 font-bold mt-2 flex items-center space-x-1">
@@ -276,23 +264,15 @@ const QuizzesPage = () => {
                 </div>
               </div>
 
-              {/* Bottom Action Bar with Start & Red Delete Quiz Button */}
-              <div className="pt-6 flex space-x-2">
-                <button
-                  type="button"
-                  className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center space-x-2 transition-all text-xs hover-scale shadow"
-                >
-                  <FaGamepad />
-                  <span>Start Attempt</span>
-                </button>
-
+              {/* ONLY ONE SINGLE RED BUTTON ON BOTTOM */}
+              <div className="pt-6">
                 <button
                   type="button"
                   onClick={(e) => handleDeleteQuiz(e, quiz._id, quiz.title)}
-                  className="px-3 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold transition-all text-xs flex items-center justify-center space-x-1 shadow-lg shadow-red-500/20"
+                  className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black flex items-center justify-center space-x-2 transition-all text-xs hover-scale shadow-lg shadow-red-500/20"
                   title="Delete Quiz from Database"
                 >
-                  <FaTrash className="w-3.5 h-3.5" />
+                  <FaTrash className="w-4 h-4" />
                   <span>Delete Quiz</span>
                 </button>
               </div>
