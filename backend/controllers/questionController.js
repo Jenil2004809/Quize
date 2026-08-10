@@ -32,6 +32,24 @@ const getQuestionsForQuiz = async (req, res, next) => {
       });
     }
 
+    // Check if student is locked due to tab violation and requires Admin authorization
+    if (req.user.role === 'student') {
+      const Result = require('../models/Result');
+      const lockedResult = await Result.findOne({
+        studentId: req.user._id,
+        quizId,
+        $or: [{ tabViolationLocked: true }, { wasDisqualified: true }]
+      }).sort({ createdAt: -1 });
+
+      if (lockedResult && !lockedResult.isAuthorizedForRetake) {
+        return res.status(403).json({
+          success: false,
+          isTabViolationLocked: true,
+          message: 'Failed to record attempts. Please contact admin.'
+        });
+      }
+    }
+
     // Fetch questions
     const questions = await Question.find({ quizId }).sort({ createdAt: 1 });
 

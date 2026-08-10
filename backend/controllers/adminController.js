@@ -456,6 +456,70 @@ const approveUser = async (req, res, next) => {
   }
 };
 
+// @desc    Get all tab violation disqualifications for Admin authorization
+// @route   GET /api/admin/tab-violations
+// @access  Private (Admin)
+const getTabViolations = async (req, res, next) => {
+  try {
+    const violations = await Result.find({
+      $or: [
+        { wasDisqualified: true },
+        { tabViolationLocked: true },
+        { disqualificationReason: { $regex: /tab change|attempts/i } }
+      ]
+    })
+      .populate('studentId', 'name email phone avatar isApproved')
+      .populate('quizId', 'title category subject maxAttempts')
+      .sort({ createdAt: -1 });
+
+    return res.json({ success: true, count: violations.length, violations });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Authorize a student to re-attempt quiz after tab violation lock
+// @route   PUT /api/admin/tab-violations/:resultId/authorize
+// @access  Private (Admin)
+const authorizeTabViolationRetake = async (req, res, next) => {
+  try {
+    const { resultId } = req.params;
+    const resultDoc = await Result.findById(resultId)
+      .populate('quizId', 'title')
+      .populate('studentId', 'name email');
+
+    if (!resultDoc) {
+      return res.status(404).json({ success: false, message: 'Violation record not found' });
+    }
+
+    resultDoc.isAuthorizedForRetake = true;
+    resultDoc.tabViolationLocked = false;
+    await resultDoc.save();
+
+    // Ensure student account isApproved = true
+    if (resultDoc.studentId && resultDoc.studentId._id) {
+      await Student.findByIdAndUpdate(resultDoc.studentId._id, { isApproved: true });
+    }
+
+    // Send in-app notification to Student
+    await Notification.create({
+      recipientId: resultDoc.studentId._id,
+      recipientModel: 'Student',
+      title: 'Quiz Re-attempt Authorized! 🔓',
+      message: `Admin has authorized your account for "${resultDoc.quizId?.title || 'Quiz'}". You can now attempt the quiz again!`,
+      type: 'announcement'
+    });
+
+    return res.json({
+      success: true,
+      message: `Authorized retake for ${resultDoc.studentId?.name}. Student can now attempt the quiz second time!`,
+      result: resultDoc
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getStudents,
@@ -469,5 +533,7 @@ module.exports = {
   deleteUser,
   getDatabaseCollections,
   getCollectionRecords,
-  approveUser
+  approveUser,
+  getTabViolations,
+  authorizeTabViolationRetake
 };

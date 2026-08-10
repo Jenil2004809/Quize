@@ -74,6 +74,14 @@ const resultSchema = new mongoose.Schema({
   disqualificationReason: {
     type: String,
     default: ''
+  },
+  tabViolationLocked: {
+    type: Boolean,
+    default: false
+  },
+  isAuthorizedForRetake: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

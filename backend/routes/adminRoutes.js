@@ -12,7 +12,9 @@ const {
   resetUserPassword,
   deleteUser,
   getDatabaseCollections,
-  getCollectionRecords
+  getCollectionRecords,
+  getTabViolations,
+  authorizeTabViolationRetake
 } = require('../controllers/adminController');
 const { protect } = require('../middleware/auth');
 const admin = require('../middleware/admin');
@@ -33,6 +35,10 @@ router.get('/teachers', getTeachers);
 router.get('/teachers/:id', getTeacherById);
 router.put('/teachers/:id/approve', approveTeacher);
 router.put('/teachers/:id/reject', rejectTeacher);
+
+// Tab Violation Authorizations
+router.get('/tab-violations', getTabViolations);
+router.put('/tab-violations/:resultId/authorize', authorizeTabViolationRetake);
 
 // User Controls (Students + Teachers)
 router.put('/users/:id/toggle-status', toggleUserStatus);

@@ -18,11 +18,11 @@ const LandingPage = () => {
   useEffect(() => {
     if (location.state?.tabViolationDisqualified) {
       Swal.fire({
-        title: 'Exam Terminated & Locked ⛔',
-        text: location.state?.message || 'Please contact admin to submit the quiz due to tab change violations in the exam.',
+        title: 'Error Submitting ⚠️',
+        text: 'Failed to record attempts. Please contact admin.',
         icon: 'error',
-        confirmButtonColor: '#ef4444',
-        confirmButtonText: 'OK, Understood'
+        confirmButtonColor: '#6366f1',
+        confirmButtonText: 'OK'
       });
       window.history.replaceState({}, document.title);
     }

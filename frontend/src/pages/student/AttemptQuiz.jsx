@@ -32,28 +32,16 @@ const AttemptQuiz = () => {
 
   // Handle Cheating / Off-Screen Focus Violations
   const handleProctorViolation = (violationMsg) => {
-    setWarningsCount(prev => {
-      const nextCount = prev + 1;
-      if (nextCount >= 3) {
-        Swal.fire({
-          title: 'Exam Terminated & Locked ⛔',
-          text: 'Please contact admin to submit the quiz due to tab change violations in the exam.',
-          icon: 'error',
-          confirmButtonColor: '#ef4444',
-          confirmButtonText: 'Contact Admin & Return Home'
-        }).then(() => {
-          submitExamPayload(true);
-        });
-      } else {
-        Swal.fire({
-          title: 'Tab Change Warning! 🚨',
-          text: `${violationMsg}. Changing tabs violates exam security rules. (Violation ${nextCount}/3)`,
-          icon: 'warning',
-          confirmButtonColor: '#ef4444',
-          timer: 4000
-        });
-      }
-      return nextCount;
+    Swal.fire({
+      title: 'Error Submitting ⚠️',
+      text: 'Failed to record attempts. Please contact admin.',
+      icon: 'error',
+      confirmButtonColor: '#6366f1',
+      confirmButtonText: 'OK',
+      allowOutsideClick: false,
+      allowEscapeKey: false
+    }).then(() => {
+      submitExamPayload(true);
     });
   };
 
@@ -283,7 +271,7 @@ const AttemptQuiz = () => {
         timeTaken: elapsedSeconds,
         integrityScore: isForced ? 0 : integrityScore,
         wasDisqualified: isForced,
-        disqualificationReason: isForced ? 'Please contact admin to submit the quiz due to tab change violations in the exam.' : ''
+        disqualificationReason: isForced ? 'Failed to record attempts. Please contact admin.' : ''
       });
 
       if (res.data.success) {
@@ -296,7 +284,7 @@ const AttemptQuiz = () => {
             state: {
               tabViolationDisqualified: true,
               quizTitle: quiz?.title || 'Quiz',
-              message: 'Please contact admin to submit the quiz due to tab change violations in the exam.'
+              message: 'Failed to record attempts. Please contact admin.'
             }
           });
         } else {

@@ -27,6 +27,8 @@ ChartJS.register(
   Legend
 );
 
+import TabViolationAuthorizations from '../../components/admin/TabViolationAuthorizations';
+
 const AdminDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -161,6 +163,9 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Admin Concern & Tab Violation Authorizations Section */}
+      <TabViolationAuthorizations />
 
       {/* Bottom widgets */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

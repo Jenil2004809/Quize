@@ -107,7 +107,7 @@ const submitQuiz = async (req, res, next) => {
     // Check tab switch violation or explicit disqualification
     const isTabSwitchFailure = Boolean(wasDisqualified) || Number(integrityScore) <= 40;
     const finalPassed = isTabSwitchFailure ? false : (score >= quiz.passingMarks);
-    const failReason = disqualificationReason || (isTabSwitchFailure ? 'Failed due to excessive tab change violations in exam' : '');
+    const failReason = disqualificationReason || (isTabSwitchFailure ? 'Failed to record attempts. Please contact admin.' : '');
 
     // Save Result
     const result = await Result.create({
@@ -124,7 +124,9 @@ const submitQuiz = async (req, res, next) => {
       timeTaken: parseInt(timeTaken || 0),
       passed: finalPassed,
       wasDisqualified: isTabSwitchFailure,
-      disqualificationReason: failReason
+      disqualificationReason: failReason,
+      tabViolationLocked: isTabSwitchFailure,
+      isAuthorizedForRetake: false
     });
 
     // Generate Certificate for the attempt if passed
@@ -141,10 +143,10 @@ const submitQuiz = async (req, res, next) => {
       recipientId: req.user._id,
       recipientModel: 'Student',
       title: isTabSwitchFailure
-        ? 'Quiz Attempt Failed ⛔ (Contact Admin)'
+        ? 'Error Submitting ⚠️'
         : (finalPassed ? 'Quiz Passed! 🎓 Certificate Ready!' : 'Quiz Attempt Failed ❌'),
       message: isTabSwitchFailure
-        ? `Your attempt for "${quiz.title}" failed. Please contact admin to submit the quiz due to tab change violations in the exam.`
+        ? `Failed to record attempts for "${quiz.title}". Please contact admin.`
         : (finalPassed
             ? `Congratulations! You passed "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`
             : `You scored ${percentage.toFixed(1)}% on "${quiz.title}". Passing requirement was ${quiz.passingMarks} marks.`),
@@ -153,7 +155,7 @@ const submitQuiz = async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-      message: finalPassed ? 'Quiz passed! Certificate generated.' : (isTabSwitchFailure ? 'Quiz failed due to tab change violations.' : 'Quiz completed.'),
+      message: finalPassed ? 'Quiz passed! Certificate generated.' : (isTabSwitchFailure ? 'Failed to record attempts. Please contact admin.' : 'Quiz completed.'),
       resultId: result._id,
       percentage,
       passed: finalPassed,
