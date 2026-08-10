@@ -219,7 +219,7 @@ const QuizzesPage = () => {
             <div
               key={quiz._id}
               onClick={() => navigate(`/quizzes/${quiz._id}`)}
-              className="glass-card rounded-3xl p-6 flex flex-col justify-between hover-lift cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-red-500"
+              className="glass-card rounded-3xl p-6 flex flex-col justify-between hover-lift cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-blue-500"
             >
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -239,7 +239,7 @@ const QuizzesPage = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-black text-lg group-hover:text-red-500 transition-colors leading-snug">{quiz.title}</h3>
+                  <h3 className="font-black text-lg group-hover:text-blue-500 transition-colors leading-snug">{quiz.title}</h3>
                   <p className="text-slate-400 text-xs mt-1 line-clamp-2 leading-relaxed">{quiz.description}</p>
                   {quiz.isSystemQuiz ? (
                     <p className="text-[10px] text-indigo-500 font-bold mt-2 flex items-center space-x-1">
@@ -264,15 +264,27 @@ const QuizzesPage = () => {
                 </div>
               </div>
 
-              {/* ONLY ONE SINGLE RED BUTTON ON BOTTOM */}
-              <div className="pt-6">
+              {/* BOTH BUTTONS SIDE-BY-SIDE ON BOTTOM */}
+              <div className="pt-6 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/quizzes/${quiz._id}`);
+                  }}
+                  className="py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center justify-center space-x-1.5 transition-all text-xs hover-scale shadow-lg shadow-blue-500/20"
+                >
+                  <FaGamepad className="w-4 h-4" />
+                  <span>Start Attempt</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={(e) => handleDeleteQuiz(e, quiz._id, quiz.title)}
-                  className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black flex items-center justify-center space-x-2 transition-all text-xs hover-scale shadow-lg shadow-red-500/20"
+                  className="py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold flex items-center justify-center space-x-1.5 transition-all text-xs hover-scale shadow-lg shadow-red-500/20"
                   title="Delete Quiz from Database"
                 >
-                  <FaTrash className="w-4 h-4" />
+                  <FaTrash className="w-3.5 h-3.5" />
                   <span>Delete Quiz</span>
                 </button>
               </div>
