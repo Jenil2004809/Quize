@@ -10,7 +10,7 @@ const Student = require('../models/Student');
 // @access  Private (Student)
 const submitQuiz = async (req, res, next) => {
   try {
-    const { quizId, answers, timeTaken } = req.body; // answers: [{ questionId, selectedAnswers: [] }]
+    const { quizId, answers, timeTaken, integrityScore } = req.body; // answers: [{ questionId, selectedAnswers: [] }]
 
     if (!quizId || !Array.isArray(answers)) {
       return res.status(400).json({ success: false, message: 'Please provide quizId and your answers' });
@@ -115,6 +115,7 @@ const submitQuiz = async (req, res, next) => {
       correctAnswers: correctAnswersCount,
       wrongAnswers: wrongAnswersCount,
       skippedAnswers: skippedAnswersCount,
+      integrityScore: parseInt(integrityScore || 100),
       answers: evaluatedAnswers,
       timeTaken: parseInt(timeTaken || 0),
       passed

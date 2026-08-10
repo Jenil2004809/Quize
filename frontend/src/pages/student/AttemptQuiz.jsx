@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaClock, FaCheckCircle, FaChevronLeft, FaChevronRight, FaFlag, FaTimesCircle, FaDesktop } from 'react-icons/fa';
+import { FaClock, FaCheckCircle, FaChevronLeft, FaChevronRight, FaFlag, FaTimesCircle, FaDesktop, FaShieldAlt } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import BiometricIntegrityRadar from '../../components/BiometricIntegrityRadar';
 import Swal from 'sweetalert2';
 
 const AttemptQuiz = () => {
@@ -19,6 +20,7 @@ const AttemptQuiz = () => {
   const [userAnswers, setUserAnswers] = useState({}); // questionId -> selectedAnswers: []
   const [flagged, setFlagged] = useState({}); // questionId -> boolean
   const [visited, setVisited] = useState({}); // questionId -> boolean
+  const [integrityScore, setIntegrityScore] = useState(100);
 
   // Timer States
   const [timeLeft, setTimeLeft] = useState(0); // in seconds
@@ -92,14 +94,13 @@ const AttemptQuiz = () => {
         setWarningsCount(prev => {
           const nextVal = prev + 1;
           if (nextVal >= 2) {
-            // Auto submit on second warning
             Swal.fire({
               title: 'Exam Security Violation ⛔',
               text: 'You have exited fullscreen mode multiple times. Your active progress has been automatically submitted.',
               icon: 'error',
               confirmButtonColor: '#ef4444'
             }).then(() => {
-              submitExamPayload(true); // force submit
+              submitExamPayload(true);
             });
           } else {
             Swal.fire({
@@ -224,13 +225,12 @@ const AttemptQuiz = () => {
     // Clear autosave cache
     localStorage.removeItem(`autosave_${quizId}`);
 
-    // If fullscreen is active, exit it
+    // Exit fullscreen
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(err => console.error(err));
     }
 
     try {
-      // Structure answers list
       const formattedAnswers = questions.map(q => ({
         questionId: q._id,
         selectedAnswers: userAnswers[q._id] || []
@@ -241,7 +241,8 @@ const AttemptQuiz = () => {
       const res = await api.post('/results/submit', {
         quizId,
         answers: formattedAnswers,
-        timeTaken: elapsedSeconds
+        timeTaken: elapsedSeconds,
+        integrityScore
       });
 
       if (res.data.success) {
@@ -270,6 +271,7 @@ const AttemptQuiz = () => {
           <p>• Answered: <strong>${totalAnswered}</strong></p>
           <p>• Skipped / Blank: <strong>${totalSkipped}</strong></p>
           <p>• Flagged for review: <strong>${totalFlagged}</strong></p>
+          <p>• AI Integrity Rating: <strong>${integrityScore}% Trust Score</strong></p>
         </div>
       `,
       icon: 'question',
@@ -327,18 +329,15 @@ const AttemptQuiz = () => {
   const qId = currentQuestion._id;
   const currentAnswers = userAnswers[qId] || [];
 
-  // Calculate stats for top progress bar
   const totalAnsweredCount = Object.keys(userAnswers).filter(k => userAnswers[k].length > 0).length;
   const progressPercent = (totalAnsweredCount / questions.length) * 100;
 
-  // Format timer values
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Determine color coding for question palette buttons
   const getPaletteBtnClass = (idx) => {
     const id = questions[idx]._id;
     const isCurrent = idx === currentIndex;
@@ -370,9 +369,16 @@ const AttemptQuiz = () => {
       
       {/* Top Banner Header */}
       <header className="glass-navbar border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center h-16">
-        <div>
-          <h2 className="font-extrabold text-sm truncate max-w-[200px] md:max-w-md">{quiz?.title}</h2>
-          <span className="text-[10px] text-slate-400">Total: {questions.length} questions</span>
+        <div className="flex items-center space-x-3">
+          {quiz?.isSystemQuiz && (
+            <span className="px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 text-[10px] font-black uppercase tracking-wider">
+              System Curriculum Quiz
+            </span>
+          )}
+          <div>
+            <h2 className="font-extrabold text-sm truncate max-w-[200px] md:max-w-md">{quiz?.title}</h2>
+            <span className="text-[10px] text-slate-400">Total: {questions.length} questions (Randomized Order)</span>
+          </div>
         </div>
 
         {/* Timer */}
@@ -434,7 +440,7 @@ const AttemptQuiz = () => {
                 >
                   <span className={`w-5 h-5 rounded-full flex items-center justify-center border font-bold text-[10px] ${
                     currentAnswers.includes(opt) ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-300 dark:border-slate-800 text-slate-400'
-                  }`}>{i + 1}</span>
+                  }`}>{String.fromCharCode(65 + i)}</span>
                   <span>{opt}</span>
                 </button>
               ))}
@@ -453,7 +459,7 @@ const AttemptQuiz = () => {
                 >
                   <span className={`w-5 h-5 rounded flex items-center justify-center border font-bold text-[10px] ${
                     currentAnswers.includes(opt) ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-300 dark:border-slate-800 text-slate-400'
-                  }`}>{currentAnswers.includes(opt) ? '✓' : ''}</span>
+                  }`}>{currentAnswers.includes(opt) ? '✓' : String.fromCharCode(65 + i)}</span>
                   <span>{opt}</span>
                 </button>
               ))}
@@ -544,42 +550,51 @@ const AttemptQuiz = () => {
 
         </div>
 
-        {/* Right Area - Question Navigation Palette */}
-        <div className="md:col-span-1 glass-card rounded-3xl p-6 flex flex-col justify-between space-y-6">
-          <div className="space-y-4">
-            <h3 className="font-bold text-base border-b border-slate-100 dark:border-slate-800 pb-2">Question Palette</h3>
-            
-            {/* Palette dots grid */}
-            <div className="grid grid-cols-4 gap-2">
-              {questions.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handlePaletteClick(idx)}
-                  className={getPaletteBtnClass(idx)}
-                >
-                  {idx + 1}
-                </button>
-              ))}
-            </div>
-          </div>
+        {/* Right Area - Biometric Radar + Question Navigation Palette */}
+        <div className="md:col-span-1 space-y-4">
+          
+          {/* World-First Feature: AI Biometric Integrity Radar */}
+          <BiometricIntegrityRadar
+            isExamActive={isFullscreen}
+            onIntegrityChange={(score) => setIntegrityScore(score)}
+          />
 
-          {/* Palette status keys guide */}
-          <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4 text-[10px] font-bold text-slate-400 space-y-3">
-            <div className="flex items-center space-x-2">
-              <span className="w-3.5 h-3.5 rounded bg-emerald-500 flex-shrink-0"></span>
-              <span>Answered / Saved</span>
+          <div className="glass-card rounded-3xl p-6 flex flex-col justify-between space-y-6">
+            <div className="space-y-4">
+              <h3 className="font-bold text-base border-b border-slate-100 dark:border-slate-800 pb-2">Question Palette</h3>
+              
+              {/* Palette dots grid */}
+              <div className="grid grid-cols-4 gap-2">
+                {questions.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handlePaletteClick(idx)}
+                    className={getPaletteBtnClass(idx)}
+                  >
+                    {idx + 1}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-3.5 h-3.5 rounded bg-amber-500 flex-shrink-0"></span>
-              <span>Flagged / Bookmarked</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-3.5 h-3.5 rounded bg-blue-500/10 border border-blue-300 flex-shrink-0"></span>
-              <span>Visited (Not Answered)</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-3.5 h-3.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex-shrink-0"></span>
-              <span>Not Visited</span>
+
+            {/* Palette status keys guide */}
+            <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4 text-[10px] font-bold text-slate-400 space-y-3">
+              <div className="flex items-center space-x-2">
+                <span className="w-3.5 h-3.5 rounded bg-emerald-500 flex-shrink-0"></span>
+                <span>Answered / Saved</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-3.5 h-3.5 rounded bg-amber-500 flex-shrink-0"></span>
+                <span>Flagged / Bookmarked</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-3.5 h-3.5 rounded bg-blue-500/10 border border-blue-300 flex-shrink-0"></span>
+                <span>Visited (Not Answered)</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="w-3.5 h-3.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex-shrink-0"></span>
+                <span>Not Visited</span>
+              </div>
             </div>
           </div>
 

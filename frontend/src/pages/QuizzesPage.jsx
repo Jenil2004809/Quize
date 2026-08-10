@@ -186,8 +186,10 @@ const QuizzesPage = () => {
             >
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="px-2.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-500 font-bold uppercase tracking-wider">
-                    {quiz.category?.name}
+                  <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                    quiz.isSystemQuiz ? 'bg-indigo-500/10 text-indigo-500 border border-indigo-500/20' : 'bg-blue-500/10 text-blue-500'
+                  }`}>
+                    {quiz.isSystemQuiz ? 'System Curriculum Quiz' : quiz.category?.name}
                   </span>
                   
                   <button
@@ -202,9 +204,13 @@ const QuizzesPage = () => {
                 <div>
                   <h3 className="font-black text-lg group-hover:text-blue-500 transition-colors leading-snug">{quiz.title}</h3>
                   <p className="text-slate-400 text-xs mt-1 line-clamp-2 leading-relaxed">{quiz.description}</p>
-                  {quiz.creator && (
+                  {quiz.isSystemQuiz ? (
+                    <p className="text-[10px] text-indigo-500 font-bold mt-2 flex items-center space-x-1">
+                      <span>🎓 Official System Curriculum (Automated System Quiz)</span>
+                    </p>
+                  ) : quiz.creator ? (
                     <p className="text-[10px] text-blue-500 font-bold mt-2">Conducted by: {quiz.creator.name}</p>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Meta properties */}

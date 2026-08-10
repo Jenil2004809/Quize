@@ -54,6 +54,10 @@ const resultSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  integrityScore: {
+    type: Number,
+    default: 100
+  },
   answers: [answerSchema],
   timeTaken: {
     type: Number, // In seconds

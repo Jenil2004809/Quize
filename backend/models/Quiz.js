@@ -26,6 +26,15 @@ const quizSchema = new mongoose.Schema({
     required: false,
     index: true
   },
+  unitName: {
+    type: String,
+    default: ''
+  },
+  isSystemQuiz: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
   difficulty: {
     type: String,
     enum: ['easy', 'medium', 'hard'],
@@ -61,11 +70,11 @@ const quizSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: ['Teacher', 'Admin'],
-    default: 'Teacher'
+    default: 'Admin'
   },
   isPublished: {
     type: Boolean,
-    default: false
+    default: true
   }
 }, {
   timestamps: true

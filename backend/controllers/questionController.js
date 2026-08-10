@@ -1,7 +1,17 @@
 const Question = require('../models/Question');
 const Quiz = require('../models/Quiz');
 
-// @desc    Get questions for a quiz (Stripped details for students during attempt)
+// Helper Fisher-Yates shuffle algorithm for anti-cheating randomness
+const shuffleArray = (array) => {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+// @desc    Get questions for a quiz (Stripped details for students during attempt + Fisher-Yates Shuffling)
 // @route   GET /api/quizzes/:id/questions
 // @access  Private (Auth required)
 const getQuestionsForQuiz = async (req, res, next) => {
@@ -16,18 +26,33 @@ const getQuestionsForQuiz = async (req, res, next) => {
     // Fetch questions
     const questions = await Question.find({ quizId }).sort({ createdAt: 1 });
 
-    // Security Filter: If role is student, strip correct answers and explanations
+    // Anti-Cheating Security Filter for Students:
+    // 1. Strip correct answers and explanations to prevent client-side inspection.
+    // 2. Randomly shuffle question order via Fisher-Yates algorithm.
+    // 3. Randomly shuffle option choices for each question so choice positions vary per candidate.
     if (req.user.role === 'student') {
       const sanitizedQuestions = questions.map(q => {
         const qObj = q.toObject();
         delete qObj.correctAnswers;
         delete qObj.explanation;
+        if (qObj.options && Array.isArray(qObj.options) && qObj.options.length > 0) {
+          qObj.options = shuffleArray(qObj.options);
+        }
         return qObj;
       });
-      return res.json({ success: true, count: sanitizedQuestions.length, questions: sanitizedQuestions });
+
+      // Shuffle question order for the candidate attempt
+      const shuffledQuestions = shuffleArray(sanitizedQuestions);
+
+      return res.json({
+        success: true,
+        count: shuffledQuestions.length,
+        shuffled: true,
+        questions: shuffledQuestions
+      });
     }
 
-    // Teachers / Admins see the full details (including keys & explanations)
+    // Teachers / Admins see the full details in creation order
     return res.json({ success: true, count: questions.length, questions });
   } catch (error) {
     next(error);

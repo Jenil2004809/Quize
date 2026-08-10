@@ -181,7 +181,7 @@ const QuizResult = () => {
             { icon: <FaTrophy className="text-yellow-500" />, title: 'Marks Obtained', val: `${result.score}` },
             { icon: <FaCheckCircle className="text-emerald-500" />, title: 'Percentage', val: `${result.percentage}%` },
             { icon: <FaHourglass className="text-blue-500" />, title: 'Time taken', val: `${Math.floor(result.timeTaken / 60)}m ${result.timeTaken % 60}s` },
-            { icon: <FaCheckCircle className="text-indigo-500" />, title: 'Questions Passed', val: `${result.correctAnswers} / ${result.totalQuestions}` }
+            { icon: <FaShieldAlt className="text-purple-500" />, title: 'AI Integrity Score', val: `${result.integrityScore || 100}% Trust` }
           ].map((stat, i) => (
             <div key={i} className="p-4 bg-slate-100/50 dark:bg-slate-900/50 rounded-2xl flex items-center space-x-3">
               <div className="p-3 bg-white dark:bg-slate-950 rounded-xl text-lg">{stat.icon}</div>
