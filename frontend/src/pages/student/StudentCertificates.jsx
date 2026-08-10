@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaAward, FaDownload, FaCertificate } from 'react-icons/fa';
+import { FaAward, FaDownload, FaCertificate, FaEye } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import CertificateModal from '../../components/CertificateModal';
 
 const StudentCertificates = () => {
   const { user } = useSelector(state => state.auth);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedResult, setSelectedResult] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,8 +19,8 @@ const StudentCertificates = () => {
       try {
         const res = await api.get(`/results/student/${user._id}`);
         if (res.data.success) {
-          // Filter attempts which have certificate IDs
-          const certResults = res.data.results.filter(r => r.certificateId);
+          // Filter attempts which have certificate IDs or passed
+          const certResults = res.data.results.filter(r => r.certificateId || r.passed);
           setResults(certResults);
         }
       } catch (err) {
@@ -29,14 +32,32 @@ const StudentCertificates = () => {
     if (user?._id) fetchCertificates();
   }, [user]);
 
+  const handleOpenCertificate = (resultObj) => {
+    setSelectedResult(resultObj);
+    setShowModal(true);
+  };
+
   if (loading) {
     return <LoadingSkeleton type="card" count={3} />;
   }
 
   return (
     <div className="space-y-6 text-left">
+      
+      {/* Certificate Modal */}
+      {selectedResult && (
+        <CertificateModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          result={selectedResult}
+          quiz={selectedResult.quizId}
+          student={user}
+          certificateId={selectedResult.certificateId}
+        />
+      )}
+
       <div className="flex items-center space-x-3">
-        <div className="p-3 bg-purple-500/10 text-purple-500 rounded-2xl"><FaAward className="w-6 h-6" /></div>
+        <div className="p-3 bg-amber-500/10 text-amber-500 rounded-2xl"><FaAward className="w-6 h-6" /></div>
         <div>
           <h1 className="text-3xl font-black">My Certificates</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">View and download your earned credentials</p>
@@ -47,7 +68,7 @@ const StudentCertificates = () => {
         <div className="glass-card rounded-3xl p-12 text-center space-y-4">
           <FaCertificate className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto" />
           <h3 className="text-lg font-bold">No Certificates Earned Yet</h3>
-          <p className="text-slate-400 text-sm max-w-sm mx-auto">You will receive a certificate when you pass a quiz with scores exceeding its passing threshold.</p>
+          <p className="text-slate-400 text-sm max-w-sm mx-auto">You will receive an official certificate when you pass a quiz with scores exceeding its passing threshold.</p>
           <Link to="/quizzes" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-xl hover-scale">
             Explore Quizzes
           </Link>
@@ -55,12 +76,12 @@ const StudentCertificates = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {results.map((r) => (
-            <div key={r._id} className="glass-card rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl transition-all border-l-4 border-purple-500">
+            <div key={r._id} className="glass-card rounded-3xl p-6 flex flex-col justify-between hover:shadow-2xl transition-all border-l-4 border-amber-500">
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
-                  <div className="p-3 bg-purple-500/10 text-purple-500 rounded-xl"><FaCertificate className="w-6 h-6" /></div>
+                  <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl"><FaCertificate className="w-6 h-6" /></div>
                   <span className="text-[10px] bg-slate-100 dark:bg-slate-900 text-slate-400 font-bold px-2 py-0.5 rounded">
-                    ID: {r.certificateId}
+                    ID: {r.certificateId || 'VERIFIED'}
                   </span>
                 </div>
                 <div>
@@ -69,18 +90,27 @@ const StudentCertificates = () => {
                 </div>
                 <div className="flex justify-between items-center text-xs pt-2">
                   <span className="text-slate-400">Score: <strong className="text-slate-800 dark:text-slate-100">{r.score}</strong></span>
-                  <span className="text-purple-500 font-bold bg-purple-500/10 px-2 py-0.5 rounded">{r.percentage}% Marks</span>
+                  <span className="text-amber-500 font-bold bg-amber-500/10 px-2 py-0.5 rounded">{r.percentage}% Marks</span>
                 </div>
               </div>
-              <div className="pt-6">
+
+              <div className="pt-6 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleOpenCertificate(r)}
+                  className="py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold flex items-center justify-center space-x-1.5 transition-colors text-xs hover-scale shadow"
+                >
+                  <FaEye />
+                  <span>View PDF</span>
+                </button>
+
                 <button
                   onClick={() => navigate(`/quiz-result/${r._id}`)}
-                  className="w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold flex items-center justify-center space-x-2 transition-colors text-sm hover-scale"
+                  className="py-2.5 rounded-xl border border-slate-300 dark:border-slate-800 text-slate-400 hover:text-white font-bold flex items-center justify-center space-x-1 transition-colors text-xs"
                 >
-                  <FaDownload />
-                  <span>Download PDF</span>
+                  <span>Solutions</span>
                 </button>
               </div>
+
             </div>
           ))}
         </div>

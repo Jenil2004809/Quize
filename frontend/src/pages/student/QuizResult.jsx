@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FaCheckCircle, FaTimesCircle, FaHourglass, FaDownload, FaShareAlt, FaTrophy, FaArrowLeft } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaHourglass, FaDownload, FaShareAlt, FaTrophy, FaArrowLeft, FaShieldAlt, FaAward } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import CertificateModal from '../../components/CertificateModal';
 import Swal from 'sweetalert2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
@@ -16,7 +17,7 @@ const QuizResult = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [showCertModal, setShowCertModal] = useState(false);
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -81,49 +82,19 @@ const QuizResult = () => {
     });
   };
 
-  // Convert HTML certificate to PDF
-  const handleDownloadCertificate = async () => {
-    setDownloading(true);
-    const input = document.getElementById('certificate-template');
-
-    // Force style visibility for rendering
-    input.style.display = 'block';
-
-    try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf')
-      ]);
-      const canvas = await html2canvas(input, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('l', 'mm', 'a4'); // landscape
-      const imgWidth = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`Quizzy_Certificate_${certificateId}.pdf`);
-      
-      // Hide template again
-      input.style.display = 'none';
-      setDownloading(false);
-      
-      Swal.fire({
-        title: 'Downloaded! 🎓',
-        text: 'Your PDF Certificate has been saved.',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false
-      });
-    } catch (err) {
-      console.error(err);
-      input.style.display = 'none';
-      setDownloading(false);
-      Swal.fire('Error', 'Certificate PDF generation failed.', 'error');
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-left space-y-8 relative">
       
+      {/* Certificate Modal */}
+      <CertificateModal
+        isOpen={showCertModal}
+        onClose={() => setShowCertModal(false)}
+        result={result}
+        quiz={quiz}
+        student={result.studentId}
+        certificateId={certificateId}
+      />
+
       {/* Return link */}
       <button onClick={() => navigate('/student-dashboard')} className="flex items-center space-x-1.5 text-xs text-slate-500 hover:text-blue-500 transition-colors">
         <FaArrowLeft />
@@ -136,7 +107,7 @@ const QuizResult = () => {
       }`}>
         <div className="space-y-3 text-center md:text-left">
           <span className="px-2.5 py-0.5 rounded text-[10px] bg-blue-500/10 text-blue-500 font-bold uppercase tracking-wider">
-            {quiz?.category?.name}
+            {quiz?.category?.name || 'General Assessment'}
           </span>
           <h1 className="text-3xl font-black">{quiz?.title}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -150,14 +121,13 @@ const QuizResult = () => {
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2 mt-6 md:mt-0">
-          {certificateId && (
+          {(certificateId || result.passed) && (
             <button
-              onClick={handleDownloadCertificate}
-              disabled={downloading}
-              className="flex items-center space-x-1.5 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all hover-scale shadow shadow-purple-500/10"
+              onClick={() => setShowCertModal(true)}
+              className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 px-5 py-2.5 rounded-xl text-xs font-black transition-all hover-scale shadow-lg shadow-amber-500/20"
             >
-              <FaDownload />
-              <span>{downloading ? 'Downloading...' : 'PDF Certificate'}</span>
+              <FaAward className="w-4 h-4" />
+              <span>View & Download Certificate</span>
             </button>
           )}
 
@@ -289,68 +259,6 @@ const QuizResult = () => {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Hidden Corporate PDF Certificate Template Container */}
-      <div
-        id="certificate-template"
-        style={{
-          display: 'none',
-          width: '800px',
-          height: '565px', // Landscape aspect ratio
-          padding: '40px',
-          backgroundColor: '#ffffff',
-          color: '#1e293b',
-          fontFamily: 'serif',
-          position: 'fixed',
-          top: '-9999px',
-          left: '-9999px',
-          boxSizing: 'border-box'
-        }}
-      >
-        <div style={{
-          border: '10px double #b45309', // gold border
-          height: '100%',
-          padding: '30px',
-          boxSizing: 'border-box',
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          backgroundImage: 'radial-gradient(circle, #fefbf3 0%, #fff 100%)'
-        }}>
-          <div>
-            <h2 style={{ color: '#b45309', fontSize: '32px', margin: '0 0 5px 0', letterSpacing: '2px', fontWeight: 'bold' }}>CERTIFICATE OF COMPLETION</h2>
-            <p style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic', margin: '0' }}>This credential is officially issued by Quizzy International Academy</p>
-          </div>
-
-          <div style={{ margin: '20px 0' }}>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: '0 0 10px 0' }}>This is to certify that</p>
-            <h3 style={{ fontSize: '30px', fontWeight: 'bold', textTransform: 'uppercase', margin: '0 0 10px 0', borderBottom: '2px solid #b45309', display: 'inline-block', paddingBottom: '5px', color: '#1e3a8a' }}>
-              {result.studentId?.name}
-            </h3>
-            <p style={{ fontSize: '13px', color: '#64748b', width: '80%', margin: '10px auto 0 auto', lineHeight: '1.6' }}>
-              has successfully completed and passed the online assessment for <br />
-              <strong style={{ color: '#1e293b', fontSize: '15px' }}>"{quiz?.title}"</strong> <br />
-              earning a final score of <strong style={{ color: '#1e293b' }}>{result.score}</strong> points, representing a total passing grade of <strong style={{ color: '#b45309', fontSize: '16px' }}>{result.percentage}%</strong>.
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '0 40px' }}>
-            <div style={{ textAlign: 'left' }}>
-              <p style={{ fontSize: '10px', color: '#94a3b8', margin: '0' }}>Verification ID: {certificateId}</p>
-              <p style={{ fontSize: '11px', color: '#64748b', margin: '3px 0 0 0' }}>Date Issued: {new Date(result.createdAt).toLocaleDateString()}</p>
-            </div>
-            
-            {/* Institute signature logo mock */}
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontStyle: 'italic', fontFamily: 'cursive', fontSize: '18px', color: '#1e3a8a', borderBottom: '1px solid #94a3b8', paddingBottom: '3px' }}>
-                System Verification
-              </div>
-              <p style={{ fontSize: '10px', color: '#94a3b8', margin: '5px 0 0 0' }}>Quizzy Assessment Director</p>
-            </div>
-          </div>
         </div>
       </div>
 
