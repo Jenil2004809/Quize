@@ -36,10 +36,11 @@ const AttemptQuiz = () => {
       const nextCount = prev + 1;
       if (nextCount >= 3) {
         Swal.fire({
-          title: 'Exam Failed & Disqualified ⛔',
-          text: 'Exam attempt failed due to reason of tab change violations in exam environment. Your paper has been auto-submitted.',
+          title: 'Exam Terminated & Locked ⛔',
+          text: 'Please contact admin to submit the quiz due to tab change violations in the exam.',
           icon: 'error',
-          confirmButtonColor: '#ef4444'
+          confirmButtonColor: '#ef4444',
+          confirmButtonText: 'Contact Admin & Return Home'
         }).then(() => {
           submitExamPayload(true);
         });
@@ -270,7 +271,7 @@ const AttemptQuiz = () => {
         timeTaken: elapsedSeconds,
         integrityScore: isForced ? 0 : integrityScore,
         wasDisqualified: isForced,
-        disqualificationReason: isForced ? 'Failed due to reason of tab change violations in exam' : ''
+        disqualificationReason: isForced ? 'Please contact admin to submit the quiz due to tab change violations in the exam.' : ''
       });
 
       if (res.data.success) {
@@ -278,11 +279,12 @@ const AttemptQuiz = () => {
         window.dispatchEvent(new Event('notification_updated'));
 
         if (isForced) {
-          // Direct redirection to Home Page (/) on tab violation disqualification
+          // Direct redirection to Home Screen (/) ONLY
           navigate('/', {
             state: {
               tabViolationDisqualified: true,
-              quizTitle: quiz?.title || 'Quiz'
+              quizTitle: quiz?.title || 'Quiz',
+              message: 'Please contact admin to submit the quiz due to tab change violations in the exam.'
             }
           });
         } else {

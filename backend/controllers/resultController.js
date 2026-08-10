@@ -141,10 +141,10 @@ const submitQuiz = async (req, res, next) => {
       recipientId: req.user._id,
       recipientModel: 'Student',
       title: isTabSwitchFailure
-        ? 'Quiz Attempt Failed ⛔ (Tab Switch Violation)'
+        ? 'Quiz Attempt Failed ⛔ (Contact Admin)'
         : (finalPassed ? 'Quiz Passed! 🎓 Certificate Ready!' : 'Quiz Attempt Failed ❌'),
       message: isTabSwitchFailure
-        ? `Your attempt for "${quiz.title}" failed due to reason of tab change violations in exam.`
+        ? `Your attempt for "${quiz.title}" failed. Please contact admin to submit the quiz due to tab change violations in the exam.`
         : (finalPassed
             ? `Congratulations! You passed "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`
             : `You scored ${percentage.toFixed(1)}% on "${quiz.title}". Passing requirement was ${quiz.passingMarks} marks.`),

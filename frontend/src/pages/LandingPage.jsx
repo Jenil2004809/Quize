@@ -18,10 +18,11 @@ const LandingPage = () => {
   useEffect(() => {
     if (location.state?.tabViolationDisqualified) {
       Swal.fire({
-        title: 'Exam Terminated ⛔',
-        text: `Your attempt for "${location.state?.quizTitle || 'Quiz'}" failed due to reason of tab change violations in exam environment. Please check your Bell Icon (🔔) notification.`,
+        title: 'Exam Terminated & Locked ⛔',
+        text: location.state?.message || 'Please contact admin to submit the quiz due to tab change violations in the exam.',
         icon: 'error',
-        confirmButtonColor: '#ef4444'
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'OK, Understood'
       });
       window.history.replaceState({}, document.title);
     }
