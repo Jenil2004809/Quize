@@ -30,6 +30,32 @@ const AttemptQuiz = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [warningsCount, setWarningsCount] = useState(0);
 
+  // Handle Cheating / Off-Screen Focus Violations
+  const handleProctorViolation = (violationMsg) => {
+    setWarningsCount(prev => {
+      const nextCount = prev + 1;
+      if (nextCount >= 3) {
+        Swal.fire({
+          title: 'Exam Security Disqualification ⛔',
+          text: '3 Security Violations detected (Off-Screen Focus / Malpractice). Your exam paper has been automatically force-submitted.',
+          icon: 'error',
+          confirmButtonColor: '#ef4444'
+        }).then(() => {
+          submitExamPayload(true);
+        });
+      } else {
+        Swal.fire({
+          title: 'Malpractice Alert! 🚨',
+          text: `${violationMsg}. Leaving screen focus violates exam security rules. (Violation ${nextCount}/3)`,
+          icon: 'warning',
+          confirmButtonColor: '#ef4444',
+          timer: 4000
+        });
+      }
+      return nextCount;
+    });
+  };
+
   // Load questions and recover state
   useEffect(() => {
     const startQuiz = async () => {
@@ -557,6 +583,7 @@ const AttemptQuiz = () => {
           <BiometricIntegrityRadar
             isExamActive={isFullscreen}
             onIntegrityChange={(score) => setIntegrityScore(score)}
+            onViolation={(msg) => handleProctorViolation(msg)}
           />
 
           <div className="glass-card rounded-3xl p-6 flex flex-col justify-between space-y-6">
