@@ -184,16 +184,31 @@ const explainQuestionWithAI = async (req, res, next) => {
 
     const userAns = Array.isArray(selectedAnswers) ? selectedAnswers.join(', ') : (selectedAnswers || 'None');
     const correctAns = Array.isArray(correctAnswers) ? correctAnswers.join(', ') : (correctAnswers || 'Not Specified');
-
     const isUserCorrect = userAns === correctAns;
 
+    // Extract key topic from question text for a rich topic deep-dive
+    let topicDetail = 'This topic evaluates core principles, standards, and architecture specifications.';
+    const qLower = questionText.toLowerCase();
+
+    if (qLower.includes('mqtt') || qLower.includes('protocol') || qLower.includes('sensor')) {
+      topicDetail = 'IoT Communication Protocols: Protocols like MQTT, CoAP, and Zigbee are engineered for constrained sensor networks with minimal header overhead, low power consumption, and publish-subscribe asynchronous messaging.';
+    } else if (qLower.includes('agile') || qLower.includes('scrum') || qLower.includes('sprint') || qLower.includes('sdlc')) {
+      topicDetail = 'Agile Software Development Lifecycle (SDLC): Iterative methodologies prioritize continuous customer feedback, time-boxed Sprints (1-4 weeks), adaptive planning, and rapid feature delivery over rigid upfront documentation.';
+    } else if (qLower.includes('soap') || qLower.includes('wsdl') || qLower.includes('rest') || qLower.includes('http')) {
+      topicDetail = 'Web Services Architecture: Service-Oriented Architecture (SOA) relies on standardized contracts (SOAP XML envelopes with WSDL descriptors or RESTful JSON APIs with idempotent HTTP verbs) to achieve seamless interoperability across heterogeneous platforms.';
+    } else if (qLower.includes('security') || qLower.includes('encrypt') || qLower.includes('privilege')) {
+      topicDetail = 'Cybersecurity & Least Privilege: Multi-layered defense requires enforcing minimal access permissions, strict authorization tokens (JWT/OAuth2), and encryption at rest and in transit.';
+    } else if (qLower.includes('layer') || qLower.includes('perception') || qLower.includes('sensing')) {
+      topicDetail = 'IoT Architecture Layers: The Perception/Sensing Layer acquires real-world physical data via sensors/actuators; the Network Layer transmits packets; the Application Layer delivers end-user analytics.';
+    }
+
     const aiBreakdown = {
-      conceptSummary: `Core Concept: This question tests your understanding of foundational principles regarding "${questionText.slice(0, 50)}...".`,
-      whyCorrect: `The correct choice "${correctAns}" directly aligns with authoritative specifications. ${explanation || ''}`,
+      conceptSummary: `📘 Topic Overview:\n${topicDetail}\n\n📌 Question Context:\n"${questionText}"`,
+      whyCorrect: `✅ Correct Choice: "${correctAns}"\n\nExplanation:\n${explanation || 'This option directly satisfies the theoretical and operational criteria defined by domain standards.'}`,
       whyUserWrong: isUserCorrect
-        ? 'Great job! You selected the exact correct option.'
-        : `You selected "${userAns}". This choice is incorrect because it misses key architectural boundaries or requirements satisfied by "${correctAns}".`,
-      proTip: '💡 AI Pro Tip: Focus on memorizing key terms and standards. Re-reading unit lecture slides will solidify this topic!'
+        ? '🎉 Excellent work! Your selection was 100% accurate.'
+        : `⚠️ Your Selection: "${userAns}"\n\nAnalysis:\nThis option is incorrect because it represents a different layer, protocol, or anti-pattern that does not satisfy the requirements of "${correctAns}".`,
+      proTip: '💡 AI Mentor Advice: Focus on understanding the core concept rather than memorizing options. Reviewing this unit’s summary will help solidify this topic!'
     };
 
     return res.json({

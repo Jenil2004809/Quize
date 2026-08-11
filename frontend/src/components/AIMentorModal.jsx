@@ -108,31 +108,31 @@ const AIMentorModal = ({ isOpen, onClose, questionData }) => {
             </div>
 
             {/* Tab Contents */}
-            <div className="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 min-h-[120px] text-xs leading-relaxed">
+            <div className="p-4 rounded-2xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 min-h-[140px] text-xs leading-relaxed">
               {activeTab === 'concept' && (
                 <div className="space-y-2">
                   <h4 className="font-extrabold text-indigo-500 flex items-center">
-                    <FaBookOpen className="mr-1.5" /> Foundational Concept
+                    <FaBookOpen className="mr-1.5" /> Topic Deep-Dive & Foundational Concept
                   </h4>
-                  <p className="text-slate-600 dark:text-slate-300">{breakdown.conceptSummary}</p>
+                  <p className="text-slate-600 dark:text-slate-300 whitespace-pre-line">{breakdown.conceptSummary}</p>
                 </div>
               )}
 
               {activeTab === 'correct' && (
                 <div className="space-y-2">
                   <h4 className="font-extrabold text-emerald-500 flex items-center">
-                    <FaCheckCircle className="mr-1.5" /> Why Option Wins
+                    <FaCheckCircle className="mr-1.5" /> Why Correct Option Wins
                   </h4>
-                  <p className="text-slate-600 dark:text-slate-300">{breakdown.whyCorrect}</p>
+                  <p className="text-slate-600 dark:text-slate-300 whitespace-pre-line">{breakdown.whyCorrect}</p>
                 </div>
               )}
 
               {activeTab === 'wrong' && (
                 <div className="space-y-2">
                   <h4 className="font-extrabold text-red-500 flex items-center">
-                    <FaExclamationCircle className="mr-1.5" /> Answer Diagnostic
+                    <FaExclamationCircle className="mr-1.5" /> Answer Choice Diagnostic
                   </h4>
-                  <p className="text-slate-600 dark:text-slate-300">{breakdown.whyUserWrong}</p>
+                  <p className="text-slate-600 dark:text-slate-300 whitespace-pre-line">{breakdown.whyUserWrong}</p>
                 </div>
               )}
 
@@ -141,7 +141,7 @@ const AIMentorModal = ({ isOpen, onClose, questionData }) => {
                   <h4 className="font-extrabold text-amber-500 flex items-center">
                     <FaLightbulb className="mr-1.5" /> Study Tip & Revision Advice
                   </h4>
-                  <p className="text-slate-600 dark:text-slate-300">{breakdown.proTip}</p>
+                  <p className="text-slate-600 dark:text-slate-300 whitespace-pre-line">{breakdown.proTip}</p>
                 </div>
               )}
             </div>
