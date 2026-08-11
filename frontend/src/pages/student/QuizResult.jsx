@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FaCheckCircle, FaTimesCircle, FaHourglass, FaDownload, FaShareAlt, FaTrophy, FaArrowLeft, FaShieldAlt, FaAward, FaRobot } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaHourglass, FaDownload, FaShareAlt, FaTrophy, FaArrowLeft, FaShieldAlt, FaAward, FaRobot, FaComments } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import CertificateModal from '../../components/CertificateModal';
 import AIMentorModal from '../../components/AIMentorModal';
+import AIChatModal from '../../components/AIChatModal';
 import Swal from 'sweetalert2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
@@ -21,6 +22,10 @@ const QuizResult = () => {
   const [showCertModal, setShowCertModal] = useState(false);
   const [selectedAiQuestion, setSelectedAiQuestion] = useState(null);
   const [aiModalOpen, setAiModalOpen] = useState(false);
+
+  // Live Interactive AI Chat Modal State
+  const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [chatQuestionContext, setChatQuestionContext] = useState(null);
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -103,6 +108,13 @@ const QuizResult = () => {
         isOpen={aiModalOpen}
         onClose={() => setAiModalOpen(false)}
         questionData={selectedAiQuestion}
+      />
+
+      {/* Live Interactive AI Chat Modal */}
+      <AIChatModal
+        isOpen={chatModalOpen}
+        onClose={() => setChatModalOpen(false)}
+        questionContext={chatQuestionContext}
       />
 
       {/* Return link */}
@@ -239,6 +251,22 @@ const QuizResult = () => {
                     >
                       <FaRobot className="w-3 h-3" />
                       <span>Ask AI Mentor</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setChatQuestionContext({
+                          text: q.text,
+                          options: q.options,
+                          selectedAnswers: studentSelected,
+                          correctAnswers: q.correctAnswers
+                        });
+                        setChatModalOpen(true);
+                      }}
+                      className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-500/20 hover-scale"
+                    >
+                      <FaComments className="w-3 h-3" />
+                      <span>💬 Chat with AI</span>
                     </button>
                   </div>
                 </div>

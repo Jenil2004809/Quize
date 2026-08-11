@@ -3,7 +3,8 @@ const router = express.Router();
 const {
   generateAIQuiz,
   explainQuestionWithAI,
-  getAdaptiveQuestions
+  getAdaptiveQuestions,
+  chatWithAI
 } = require('../controllers/aiController');
 const { protect } = require('../middleware/auth');
 const admin = require('../middleware/admin');
@@ -14,5 +15,6 @@ router.use(protect);
 router.post('/generate-quiz', generateAIQuiz);
 router.post('/explain-question', explainQuestionWithAI);
 router.get('/adaptive-questions/:quizId', getAdaptiveQuestions);
+router.post('/chat', chatWithAI);
 
 module.exports = router;

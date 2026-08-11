@@ -1,5 +1,6 @@
 const Question = require('../models/Question');
 const Quiz = require('../models/Quiz');
+const AIService = require('../services/aiService');
 
 // Intelligent Knowledge Base Templates for Instant High-Quality AI Generation
 const AI_TOPIC_TEMPLATES = {
@@ -251,8 +252,31 @@ const getAdaptiveQuestions = async (req, res, next) => {
   }
 };
 
+// @desc    Interactive 1-on-1 Chat with AI Tutor for a specific question
+// @route   POST /api/ai/chat
+// @access  Private (Student)
+const chatWithAI = async (req, res, next) => {
+  try {
+    const { questionContext, history, userMessage } = req.body;
+
+    if (!userMessage || !userMessage.trim()) {
+      return res.status(400).json({ success: false, message: 'Message is required for AI chat.' });
+    }
+
+    const reply = await AIService.chatWithAITutor(questionContext, history || [], userMessage);
+
+    return res.json({
+      success: true,
+      reply
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   generateAIQuiz,
   explainQuestionWithAI,
-  getAdaptiveQuestions
+  getAdaptiveQuestions,
+  chatWithAI
 };
