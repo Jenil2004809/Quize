@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FaArrowLeft, FaQuestionCircle, FaPlus, FaTrash, FaUpload, FaDownload, FaEdit } from 'react-icons/fa';
+import { FaArrowLeft, FaQuestionCircle, FaPlus, FaTrash, FaUpload, FaDownload, FaEdit, FaRobot } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import AIGeneratorModal from '../../components/AIGeneratorModal';
 import Swal from 'sweetalert2';
 
 const ManageQuestions = () => {
@@ -13,6 +14,7 @@ const ManageQuestions = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState(null);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
 
   // Manual Form States
   const [type, setType] = useState('mcq');
@@ -309,6 +311,14 @@ const ManageQuestions = () => {
 
         <div className="flex flex-wrap gap-2">
           <button
+            onClick={() => setAiModalOpen(true)}
+            className="flex items-center space-x-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-4 py-2.5 rounded-xl font-bold text-xs hover-scale shadow-lg shadow-purple-500/20"
+          >
+            <FaRobot className="w-3.5 h-3.5" />
+            <span>✨ Generate AI Quiz</span>
+          </button>
+
+          <button
             onClick={downloadTemplate}
             className="flex items-center space-x-1.5 border border-slate-350 dark:border-slate-800 text-slate-500 hover:text-blue-500 px-3.5 py-2.5 rounded-xl text-xs font-semibold hover-scale"
           >
@@ -331,6 +341,14 @@ const ManageQuestions = () => {
           </button>
         </div>
       </div>
+
+      {/* AI Generator Modal */}
+      <AIGeneratorModal
+        isOpen={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
+        quizId={quizId}
+        onQuestionsAdded={() => Promise.all([fetchQuizDetails(), fetchQuestions()])}
+      />
 
       {/* Step 2 Progress Banner */}
       <div className="p-5 rounded-3xl glass-card border border-blue-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
