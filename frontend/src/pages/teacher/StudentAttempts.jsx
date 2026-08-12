@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaCheckDouble, FaExclamationCircle, FaCheckCircle, FaFilter, FaSearch, FaEye, FaTimes, FaUser, FaClock, FaTrophy, FaAward } from 'react-icons/fa';
+import { FaCheckDouble, FaExclamationCircle, FaCheckCircle, FaFilter, FaSearch, FaEye, FaTimes, FaUser, FaClock, FaTrophy, FaAward, FaFileExcel } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import Swal from 'sweetalert2';
 
 const StudentAttempts = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -100,6 +101,53 @@ const StudentAttempts = () => {
     ? ((passedAttempts / totalAttempts) * 100).toFixed(1)
     : 0;
 
+  // Export Class Results to Excel Spreadsheet with Student Email IDs
+  const handleExportExcel = async () => {
+    if (filteredAttempts.length === 0) {
+      return Swal.fire('No Records', 'There are no student attempt records to export.', 'warning');
+    }
+
+    try {
+      const XLSX = await import('xlsx');
+
+      const excelRows = filteredAttempts.map((a, idx) => ({
+        'S.No': idx + 1,
+        'Student Name': a.studentId?.name || 'N/A',
+        'Student Email ID': a.studentId?.email || 'N/A',
+        'Student ID': a.studentId?._id ? a.studentId._id.toString() : 'N/A',
+        'Quiz Title': a.quizId?.title || 'N/A',
+        'Subject / Category': a.quizId?.subject || a.quizId?.category?.name || 'N/A',
+        'Score (Marks)': a.score || 0,
+        'Percentage (%)': `${a.percentage || 0}%`,
+        'Correct Answers': a.correctAnswers || 0,
+        'Wrong Answers': a.wrongAnswers || 0,
+        'Skipped Answers': a.skippedAnswers || 0,
+        'Time Taken': `${Math.floor((a.timeTaken || 0) / 60)}m ${(a.timeTaken || 0) % 60}s`,
+        'Result Status': a.passed ? 'PASSED' : 'FAILED',
+        'Tab Switch Disqualified': a.wasDisqualified ? 'YES' : 'NO',
+        'Integrity Score': `${a.integrityScore || 100}%`,
+        'Attempt Date & Time': new Date(a.createdAt).toLocaleString()
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(excelRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Student Class Results');
+
+      const filename = `Class_Quiz_Results_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      XLSX.writeFile(wb, filename);
+
+      Swal.fire({
+        title: 'Excel Report Downloaded! 📊',
+        text: `Exported ${filteredAttempts.length} student records with Email IDs to ${filename}`,
+        icon: 'success',
+        confirmButtonColor: '#10b981'
+      });
+    } catch (err) {
+      console.error('Error exporting Excel:', err);
+      Swal.fire('Export Error', 'Could not generate Excel spreadsheet.', 'error');
+    }
+  };
+
   if (quizzesLoading) {
     return <LoadingSkeleton type="table" count={5} />;
   }
@@ -117,8 +165,16 @@ const StudentAttempts = () => {
           </div>
         </div>
 
-        {/* Filter controls */}
+        {/* Filter controls & Excel Export Button */}
         <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center space-x-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-emerald-500/20 hover-scale"
+          >
+            <FaFileExcel className="w-3.5 h-3.5" />
+            <span>Export Results (Excel)</span>
+          </button>
+
           {/* Quiz selector */}
           <div className="flex items-center space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl text-xs font-semibold">
             <FaFilter className="text-slate-400" />

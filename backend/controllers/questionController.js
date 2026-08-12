@@ -1,17 +1,39 @@
 const Question = require('../models/Question');
 const Quiz = require('../models/Quiz');
 
-// Helper Fisher-Yates shuffle algorithm for anti-cheating randomness
-const shuffleArray = (array) => {
+// Seeded pseudo-random generator (Mulberry32) for 100% reproducible per-student shuffling
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Convert string ID to a numeric 32-bit seed
+function stringToSeed(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+// Seeded Fisher-Yates Shuffle algorithm for candidate uniqueness across 60+ concurrent exam sessions
+const seededShuffleArray = (array, seedVal) => {
   const arr = [...array];
+  const random = mulberry32(seedVal);
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
 };
 
-// @desc    Get questions for a quiz (Stripped details for students during attempt + Fisher-Yates Shuffling)
+// @desc    Get questions for a quiz (Stripped details for students during attempt + Per-Student Unique Shuffling)
 // @route   GET /api/quizzes/:id/questions
 // @access  Private (Auth required)
 const getQuestionsForQuiz = async (req, res, next) => {
@@ -53,28 +75,38 @@ const getQuestionsForQuiz = async (req, res, next) => {
     // Fetch questions
     const questions = await Question.find({ quizId }).sort({ createdAt: 1 });
 
-    // Anti-Cheating Security Filter for Students:
+    // Anti-Cheating Per-Student Unique Shuffle Filter for 60+ Concurrent Exam Candidates:
     // 1. Strip correct answers and explanations to prevent client-side inspection.
-    // 2. Randomly shuffle question order via Fisher-Yates algorithm.
-    // 3. Randomly shuffle option choices for each question so choice positions vary per candidate.
+    // 2. Uniquely shuffle question order per candidate using candidate's unique student ID seed.
+    // 3. Uniquely shuffle option choices for each question so choice positions vary per candidate.
     if (req.user.role === 'student') {
+      const studentIdStr = req.user._id.toString();
+      const quizIdStr = quizId.toString();
+
+      // Unique seed for question sequence per student attempt
+      const questionSeed = stringToSeed(`${studentIdStr}_qseq_${quizIdStr}`);
+
       const sanitizedQuestions = questions.map(q => {
         const qObj = q.toObject();
         delete qObj.correctAnswers;
         delete qObj.explanation;
+
+        // Unique seed for option sequence per student per question
         if (qObj.options && Array.isArray(qObj.options) && qObj.options.length > 0) {
-          qObj.options = shuffleArray(qObj.options);
+          const optSeed = stringToSeed(`${studentIdStr}_opt_${q._id.toString()}`);
+          qObj.options = seededShuffleArray(qObj.options, optSeed);
         }
         return qObj;
       });
 
-      // Shuffle question order for the candidate attempt
-      const shuffledQuestions = shuffleArray(sanitizedQuestions);
+      // Shuffle question order for the candidate attempt using unique student seed
+      const shuffledQuestions = seededShuffleArray(sanitizedQuestions, questionSeed);
 
       return res.json({
         success: true,
         count: shuffledQuestions.length,
         shuffled: true,
+        candidateSeed: questionSeed,
         questions: shuffledQuestions
       });
     }
