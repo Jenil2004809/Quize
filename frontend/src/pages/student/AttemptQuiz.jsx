@@ -321,7 +321,10 @@ const AttemptQuiz = () => {
     }
 
     try {
-      const formattedAnswers = questions.map(q => ({
+      const isForced = force || warningsCount >= 3 || parseInt(localStorage.getItem(`quiz_violations_${quizId}`) || '0', 10) >= 3;
+
+      // On 3rd violation, student CANNOT submit their answers (answers sent as empty array)
+      const formattedAnswers = isForced ? [] : questions.map(q => ({
         questionId: q._id,
         selectedAnswers: userAnswers[q._id] || []
       }));
@@ -334,7 +337,12 @@ const AttemptQuiz = () => {
         timeTaken: elapsedSeconds,
         integrityScore: isForced ? 0 : integrityScore,
         wasDisqualified: isForced,
-        disqualificationReason: isForced ? 'Failed to record attempts. Please contact admin.' : ''
+        disqualificationReason: isForced ? 'TAB_CHANGE_LIMIT_EXCEEDED' : '',
+        tabChangeCount: isForced ? 3 : warningsCount,
+        status: isForced ? 'TERMINATED' : 'COMPLETED',
+        terminationReason: isForced ? 'TAB_CHANGE_LIMIT_EXCEEDED' : 'NONE',
+        terminatedDueToViolation: isForced,
+        approvalStatus: isForced ? 'PENDING' : 'NONE'
       });
 
       if (res.data.success) {
@@ -344,6 +352,7 @@ const AttemptQuiz = () => {
         if (isForced) {
           // Direct redirection to Home Screen (/) ONLY
           navigate('/', {
+            replace: true,
             state: {
               tabViolationDisqualified: true,
               quizTitle: quiz?.title || 'Quiz',
@@ -359,13 +368,33 @@ const AttemptQuiz = () => {
       Swal.fire({
         title: 'Error Submitting ⚠️',
         text: err.response?.data?.message || 'Failed to record attempts. Please contact admin.',
-        icon: 'error'
+        icon: 'error',
+        confirmButtonColor: '#6366f1',
+        confirmButtonText: 'OK'
+      }).then(() => {
+        navigate('/', { replace: true });
       });
     }
   };
 
-  const handleSubmitConfirmation = () => {
-    const totalAnswered = Object.keys(userAnswers).filter(k => userAnswers[k].length > 0).length;
+  const handleSubmitExam = () => {
+    const savedCount = parseInt(localStorage.getItem(`quiz_violations_${quizId}`) || '0', 10);
+    if (warningsCount >= 3 || savedCount >= 3) {
+      return Swal.fire({
+        title: 'Error Submitting ⚠️',
+        text: 'Failed to record attempts. You exceeded the maximum allowed tab changes. Please contact admin.',
+        icon: 'error',
+        confirmButtonColor: '#6366f1',
+        confirmButtonText: 'OK',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      }).then(() => {
+        submitExamPayload(true);
+      });
+    }
+
+    const totalAnswered = Object.keys(userAnswers)
+      .filter(k => userAnswers[k].length > 0).length;
     const totalSkipped = questions.length - totalAnswered;
     const totalFlagged = Object.keys(flagged).filter(k => flagged[k]).length;
 

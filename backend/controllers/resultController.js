@@ -21,6 +21,21 @@ const submitQuiz = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Quiz not found' });
     }
 
+    // Verify if student is locked/terminated due to 3rd tab violation
+    const existingLock = await Result.findOne({
+      studentId: req.user._id,
+      quizId,
+      $or: [{ tabViolationLocked: true }, { wasDisqualified: true }, { status: 'TERMINATED' }]
+    }).sort({ createdAt: -1 });
+
+    if (existingLock && !existingLock.isAuthorizedForRetake) {
+      return res.status(403).json({
+        success: false,
+        isTabViolationLocked: true,
+        message: 'Submission blocked due to policy violation. You cannot submit the quiz after 3rd violation. Please contact admin.'
+      });
+    }
+
     // Verify student attempt limit
     const attemptsCount = await Result.countDocuments({ studentId: req.user._id, quizId });
     if (attemptsCount >= quiz.maxAttempts) {
