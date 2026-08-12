@@ -45,28 +45,28 @@ const AttemptQuiz = () => {
 
     if (currentCount === 1) {
       Swal.fire({
-        title: '⚠ Warning',
-        text: 'You switched away from the quiz. This is violation 1 of 3. If you exceed 3 violations, your quiz will be terminated automatically.',
+        title: '⚠ Policy Violation Warning (1/3)',
+        text: violationMsg || 'You looked away from the exam screen or switched tabs. Please keep your eyes focused on the screen. (Violation 1 of 3)',
         icon: 'warning',
         confirmButtonColor: '#f59e0b',
-        confirmButtonText: 'Continue Quiz',
+        confirmButtonText: 'I Understand & Continue',
         allowOutsideClick: false,
         allowEscapeKey: false
       });
     } else if (currentCount === 2) {
       Swal.fire({
-        title: '⚠ Second Warning',
-        text: 'This is your second warning. One more violation will terminate your quiz permanently.',
+        title: '⚠ Second Warning (2/3)',
+        text: violationMsg || 'Second policy violation detected! One more off-screen eye gaze or tab switch will terminate your exam permanently.',
         icon: 'warning',
         confirmButtonColor: '#ef4444',
-        confirmButtonText: 'Continue Quiz',
+        confirmButtonText: 'Resume Exam',
         allowOutsideClick: false,
         allowEscapeKey: false
       });
     } else if (currentCount >= 3) {
       Swal.fire({
         title: 'Error Submitting ⚠️',
-        text: 'Failed to record attempts. You exceeded the maximum allowed tab changes. Please contact admin.',
+        text: 'Failed to record attempts. You exceeded the maximum allowed policy violations (off-screen eye gaze / tab change). Please contact admin.',
         icon: 'error',
         confirmButtonColor: '#6366f1',
         confirmButtonText: 'OK',
