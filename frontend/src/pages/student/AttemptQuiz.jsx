@@ -183,38 +183,11 @@ const AttemptQuiz = () => {
     setIsFullscreen(true);
   };
 
-  // Fullscreen listeners
+  // Optional fullscreen change listener (non-blocking)
   useEffect(() => {
     const handleFullscreenChange = () => {
       const active = !!document.fullscreenElement;
       setIsFullscreen(active);
-
-      if (!active && !loading && quiz) {
-        setWarningsCount(prev => {
-          const nextVal = prev + 1;
-          if (nextVal >= 2) {
-            Swal.fire({
-              title: 'Exam Security Violation ⛔',
-              text: 'You have exited fullscreen mode multiple times. Your active progress has been automatically submitted.',
-              icon: 'error',
-              confirmButtonColor: '#ef4444'
-            }).then(() => {
-              submitExamPayload(true);
-            });
-          } else {
-            Swal.fire({
-              title: 'Security Warning! ⚠️',
-              text: 'Exiting fullscreen mode violates testing rules. Returning to windowed mode again will trigger immediate submission.',
-              icon: 'warning',
-              confirmButtonText: 'Return to fullscreen',
-              confirmButtonColor: '#3b82f6'
-            }).then(() => {
-              enterFullscreen();
-            });
-          }
-          return nextVal;
-        });
-      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -452,22 +425,7 @@ const AttemptQuiz = () => {
     );
   }
 
-  // If not fullscreen, display entrance block
-  if (!isFullscreen) {
-    return (
-      <div className="max-w-md mx-auto my-20 px-4 text-center space-y-6">
-        <FaDesktop className="w-16 h-16 text-blue-500 mx-auto animate-bounce" />
-        <h2 className="text-2xl font-black">Secure Testing Environment</h2>
-        <p className="text-slate-500 text-sm">You must enter fullscreen mode to proceed with the examination. Navigating away or resizing windowed tabs will trigger warnings.</p>
-        <button
-          onClick={enterFullscreen}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-xl hover-scale shadow-lg shadow-blue-500/20 text-sm"
-        >
-          Enter Fullscreen Mode
-        </button>
-      </div>
-    );
-  }
+
 
   const currentQuestion = questions[currentIndex];
   const qId = currentQuestion._id;
