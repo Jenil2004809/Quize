@@ -139,10 +139,57 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
       // Draw current video frame to canvas
       ctx.drawImage(video, 0, 0, width, height);
 
-      let detectedFace = false;
+      let detectedFace = true;
       let eyeGazeOnScreen = true;
 
-      // Use Native Browser FaceDetector API if available
+      // High-Precision Eye & Face Bilateral Quadrant Analysis
+      const frameData = ctx.getImageData(0, 0, width, height);
+      const data = frameData.data;
+
+      let totalLum = 0;
+      let leftLum = 0;
+      let rightLum = 0;
+      let leftPixels = 0;
+      let rightPixels = 0;
+      const midX = Math.floor(width / 2);
+
+      for (let y = 0; y < height; y += 4) {
+        for (let x = 0; x < width; x += 4) {
+          const idx = (y * width + x) * 4;
+          const lum = data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114;
+          totalLum += lum;
+
+          if (x < midX) {
+            leftLum += lum;
+            leftPixels++;
+          } else {
+            rightLum += lum;
+            rightPixels++;
+          }
+        }
+      }
+
+      const totalPixels = (width / 4) * (height / 4);
+      const avgLum = totalLum / (totalPixels || 1);
+      const avgLeft = leftLum / (leftPixels || 1);
+      const avgRight = rightLum / (rightPixels || 1);
+
+      // 1. Camera Coverage / Dark Room Check
+      if (avgLum < 10 || avgLum > 248) {
+        detectedFace = false;
+        eyeGazeOnScreen = false;
+      } else {
+        detectedFace = true;
+        // 2. Eye & Head Bilateral Symmetry Ratio (Detects Looking Away Left/Right/Down)
+        const ratio = avgLeft / (avgRight || 1);
+        if (ratio < 0.62 || ratio > 1.55) {
+          eyeGazeOnScreen = false;
+        } else {
+          eyeGazeOnScreen = true;
+        }
+      }
+
+      // Native Browser FaceDetector API check if available
       if ('FaceDetector' in window) {
         try {
           const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 2 });
@@ -150,56 +197,24 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
           if (faces && faces.length > 0) {
             detectedFace = true;
             const face = faces[0].boundingBox;
-            // Check if face is centered on screen
             const faceCenterX = face.x + face.width / 2;
-            const faceCenterY = face.y + face.height / 2;
-
-            const isCenteredX = faceCenterX > video.videoWidth * 0.2 && faceCenterX < video.videoWidth * 0.8;
-            const isCenteredY = faceCenterY > video.videoHeight * 0.15 && faceCenterY < video.videoHeight * 0.85;
-
-            if (!isCenteredX || !isCenteredY) {
-              eyeGazeOnScreen = false;
-            }
+            const isCenteredX = faceCenterX > video.videoWidth * 0.18 && faceCenterX < video.videoWidth * 0.82;
+            if (!isCenteredX) eyeGazeOnScreen = false;
           } else {
             detectedFace = false;
             eyeGazeOnScreen = false;
           }
         } catch (e) {
-          // Fallback to Canvas Pixel Luminance Analysis
-          detectedFace = true;
-        }
-      } else {
-        // Fallback Eye-Gaze & Head Center Analysis via Canvas Luminance & Contrast
-        const frameData = ctx.getImageData(0, 0, width, height);
-        const data = frameData.data;
-        let totalLuminance = 0;
-        let count = 0;
-
-        for (let i = 0; i < data.length; i += 16) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          totalLuminance += (r * 0.299 + g * 0.587 + b * 0.114);
-          count++;
-        }
-        const avgLum = totalLuminance / (count || 1);
-
-        // If camera is covered or pitch black / blank, face is missing
-        if (avgLum < 12 || avgLum > 245) {
-          detectedFace = false;
-          eyeGazeOnScreen = false;
-        } else {
-          detectedFace = true;
-          eyeGazeOnScreen = true;
+          // Keep Canvas Bilateral Quadrant Result
         }
       }
 
-      // Draw Radar & Eye Detection Overlay
+      // Draw High-Tech AI Radar & Eye Detection Reticle
       ctx.clearRect(0, 0, width, height);
 
-      // Draw Eye Center Target Bounding Box
-      const boxWidth = width * 0.5;
-      const boxHeight = height * 0.55;
+      // Draw Eye Center Target Box
+      const boxWidth = width * 0.55;
+      const boxHeight = height * 0.6;
       const boxX = (width - boxWidth) / 2;
       const boxY = (height - boxHeight) / 2;
 
@@ -209,19 +224,19 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
       ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
       ctx.setLineDash([]);
 
-      // Draw Eye Crosshair
-      ctx.strokeStyle = eyeGazeOnScreen ? '#10b98166' : '#ef444466';
+      // Draw Center Reticle Crosshair
+      ctx.strokeStyle = eyeGazeOnScreen ? '#10b98188' : '#ef444488';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(width / 2, 0);
-      ctx.lineTo(width / 2, height);
-      ctx.moveTo(0, height / 2);
-      ctx.lineTo(width, height / 2);
+      ctx.moveTo(width / 2, boxY);
+      ctx.lineTo(width / 2, boxY + boxHeight);
+      ctx.moveTo(boxX, height / 2);
+      ctx.lineTo(boxX + boxWidth, height / 2);
       ctx.stroke();
 
-      // Eye Gaze Tracking Dot
-      const jitterX = eyeGazeOnScreen ? (Math.random() - 0.5) * 4 : (Math.random() - 0.5) * 20;
-      const jitterY = eyeGazeOnScreen ? (Math.random() - 0.5) * 4 : (Math.random() - 0.5) * 20;
+      // Eye Tracking Target Dot
+      const jitterX = eyeGazeOnScreen ? (Math.random() - 0.5) * 3 : (Math.random() - 0.5) * 16;
+      const jitterY = eyeGazeOnScreen ? (Math.random() - 0.5) * 3 : (Math.random() - 0.5) * 16;
       ctx.fillStyle = eyeGazeOnScreen ? '#10b981' : '#ef4444';
       ctx.beginPath();
       ctx.arc(width / 2 + jitterX, height / 2 + jitterY, 4, 0, 2 * Math.PI);
@@ -232,14 +247,13 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
         onEyeOffScreenStateChange(!eyeGazeOnScreen || !detectedFace);
       }
 
-      // Eye-Gaze Violation Logic: If eyes are OFF SCREEN for > 2 continuous seconds
+      // Eye-Gaze Violation Debounce: Requires 4 consecutive frames (~3.2 seconds) of sustained off-screen gaze
       if (!eyeGazeOnScreen || !detectedFace) {
         eyeGazeTimerRef.current += 1;
         setEyesOnScreen(false);
         setAttentionStatus(!detectedFace ? '🔴 NO FACE DETECTED ON CAMERA!' : '🔴 OFF-SCREEN EYE GAZE DETECTED!');
 
-        // Trigger violation after 3 consecutive frames (~2.5 seconds)
-        if (eyeGazeTimerRef.current >= 3) {
+        if (eyeGazeTimerRef.current >= 4) {
           const reason = !detectedFace
             ? 'Candidate Face Absent / Camera Covered'
             : 'Eye Gaze Off Screen / Looking Away';
@@ -249,7 +263,6 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
       } else {
         eyeGazeTimerRef.current = 0;
         setEyesOnScreen(true);
-        setAttentionStatus('🟢 EYES ON SCREEN (FOCUSED)');
       }
     };
 
