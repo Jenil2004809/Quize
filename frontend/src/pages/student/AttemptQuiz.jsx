@@ -41,6 +41,7 @@ const AttemptQuiz = () => {
   // Fullscreen & Violation States
   const [isFullscreen, setIsFullscreen] = useState(true);
   const [warningsCount, setWarningsCount] = useState(0);
+  const [isRedScreenAlert, setIsRedScreenAlert] = useState(false);
   const lastViolationReasonRef = useRef('');
 
   // Initialize violation count from LocalStorage to prevent bypass by refresh
@@ -49,7 +50,7 @@ const AttemptQuiz = () => {
     setWarningsCount(savedCount);
   }, [quizId]);
 
-  // Handle Cheating / Off-Screen Focus Violations
+  // Handle Cheating / Off-Screen Focus Violations (4-Strikes System)
   const handleProctorViolation = (violationMsg) => {
     if (violationMsg) lastViolationReasonRef.current = violationMsg;
     const savedCount = parseInt(localStorage.getItem(`quiz_violations_${quizId}`) || '0', 10);
@@ -57,10 +58,13 @@ const AttemptQuiz = () => {
     localStorage.setItem(`quiz_violations_${quizId}`, currentCount.toString());
     setWarningsCount(currentCount);
 
+    setIsRedScreenAlert(true);
+    setTimeout(() => setIsRedScreenAlert(false), 4000);
+
     if (currentCount === 1) {
       Swal.fire({
-        title: '⚠ Policy Violation Warning (1/3)',
-        text: violationMsg || 'You looked away from the exam screen or switched tabs. Please keep your eyes focused on the screen. (Violation 1 of 3)',
+        title: '⚠ Warning 1 of 3',
+        text: violationMsg || 'You looked away from the exam screen. Please keep your eyes focused on the screen. (Warning 1 of 3)',
         icon: 'warning',
         confirmButtonColor: '#f59e0b',
         confirmButtonText: 'I Understand & Continue',
@@ -69,18 +73,28 @@ const AttemptQuiz = () => {
       });
     } else if (currentCount === 2) {
       Swal.fire({
-        title: '⚠ Second Warning (2/3)',
-        text: violationMsg || 'Second policy violation detected! One more off-screen eye gaze or tab switch will terminate your exam permanently.',
+        title: '⚠ Warning 2 of 3',
+        text: violationMsg || 'Second warning! Please keep your eyes on the exam screen. (Warning 2 of 3)',
         icon: 'warning',
         confirmButtonColor: '#ef4444',
         confirmButtonText: 'Resume Exam',
         allowOutsideClick: false,
         allowEscapeKey: false
       });
-    } else if (currentCount >= 3) {
+    } else if (currentCount === 3) {
       Swal.fire({
-        title: 'Error Submitting ⚠️',
-        text: 'Failed to record attempts. You exceeded the maximum allowed policy violations (off-screen eye gaze / tab change). Please contact admin.',
+        title: '⚠ FINAL WARNING (3/3)',
+        text: violationMsg || 'THIS IS YOUR FINAL WARNING! One more off-screen eye gaze or cheating violation (4th strike) will terminate your quiz permanently and remove you from the exam!',
+        icon: 'error',
+        confirmButtonColor: '#dc2626',
+        confirmButtonText: 'I Promise to Keep Eyes on Screen',
+        allowOutsideClick: false,
+        allowEscapeKey: false
+      });
+    } else if (currentCount >= 4) {
+      Swal.fire({
+        title: 'Quiz Terminated 🚨',
+        text: 'Failed to record attempts. You exceeded the 3 allowed warnings. You have been caught cheating on your 4th violation and removed from the quiz.',
         icon: 'error',
         confirmButtonColor: '#6366f1',
         confirmButtonText: 'OK',
@@ -442,7 +456,19 @@ const AttemptQuiz = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors duration-300 text-left">
+    <div className={`min-h-screen flex flex-col transition-all duration-300 relative ${
+      isRedScreenAlert 
+        ? 'ring-8 ring-red-600 border-8 border-red-600 bg-red-950/30 animate-pulse' 
+        : 'bg-slate-50 dark:bg-slate-950'
+    }`}>
+
+      {/* Full-Screen Flashing Red Alert Top Banner */}
+      {isRedScreenAlert && (
+        <div className="bg-red-600 text-white font-black text-center py-2.5 px-4 text-xs md:text-sm tracking-widest uppercase animate-bounce flex items-center justify-center space-x-2 shadow-2xl z-50 sticky top-0 border-b-2 border-red-800">
+          <FaExclamationTriangle className="w-4 h-4 text-yellow-300 animate-spin flex-shrink-0" />
+          <span>🚨 ALERT: EYES OFF SCREEN DETECTED! PLEASE LOOK BACK AT THE EXAM SCREEN NOW! 🚨</span>
+        </div>
+      )}
       
       {/* Top Banner Header */}
       <header className="glass-navbar border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center h-16">
@@ -631,6 +657,7 @@ const AttemptQuiz = () => {
             isExamActive={!loading && !!quiz}
             onViolation={handleProctorViolation}
             onIntegrityChange={setIntegrityScore}
+            onEyeOffScreenStateChange={setIsRedScreenAlert}
           />
 
           {/* Palette Card */}

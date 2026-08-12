@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaShieldAlt, FaEye, FaVideo, FaVideoSlash, FaExclamationTriangle, FaCheckCircle, FaLock, FaExclamationCircle, FaUserCheck, FaUserSlash } from 'react-icons/fa';
 
-const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive }) => {
+const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScreenStateChange, isExamActive }) => {
   const [integrityScore, setIntegrityScore] = useState(100);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraChecked, setCameraChecked] = useState(false);
@@ -86,10 +86,12 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
     if (!isExamActive) return;
 
     const handleBlur = () => {
+      if (onEyeOffScreenStateChange) onEyeOffScreenStateChange(true);
       triggerSecurityViolation('Window Focus Lost / Tab Switched');
     };
 
     const handleMouseLeave = () => {
+      if (onEyeOffScreenStateChange) onEyeOffScreenStateChange(true);
       triggerSecurityViolation('Cursor Exited Exam Window Boundary');
     };
 
@@ -220,6 +222,11 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
       ctx.arc(width / 2 + jitterX, height / 2 + jitterY, 4, 0, 2 * Math.PI);
       ctx.fill();
 
+      // Notify parent about screen red alert state
+      if (onEyeOffScreenStateChange) {
+        onEyeOffScreenStateChange(!eyeGazeOnScreen || !detectedFace);
+      }
+
       // Eye-Gaze Violation Logic: If eyes are OFF SCREEN for > 2 continuous seconds
       if (!eyeGazeOnScreen || !detectedFace) {
         eyeGazeTimerRef.current += 1;
@@ -243,7 +250,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
 
     const eyeInterval = setInterval(processEyeFrame, 800);
     return () => clearInterval(eyeInterval);
-  }, [isExamActive, cameraActive]);
+  }, [isExamActive, cameraActive, onEyeOffScreenStateChange]);
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-white shadow-xl space-y-3 text-left">
@@ -338,7 +345,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
           <span>AI Eye-Gaze Security Active</span>
         </span>
         <span className={`font-bold ${violationCount > 0 ? 'text-red-400' : 'text-slate-300'}`}>
-          Violations: {violationCount}/3
+          Violations: {violationCount}/4
         </span>
       </div>
     </div>
