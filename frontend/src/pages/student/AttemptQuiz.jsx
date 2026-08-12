@@ -27,7 +27,7 @@ const AttemptQuiz = () => {
   const timerRef = useRef(null);
 
   // Fullscreen & Violation States
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(true);
   const [warningsCount, setWarningsCount] = useState(0);
 
   // Initialize violation count from LocalStorage to prevent bypass by refresh
@@ -123,6 +123,15 @@ const AttemptQuiz = () => {
           // Mark first question as visited
           if (qRes.data.questions.length > 0) {
             setVisited({ [qRes.data.questions[0]._id]: true });
+          }
+
+          // Auto-request fullscreen environment
+          try {
+            if (document.documentElement.requestFullscreen) {
+              document.documentElement.requestFullscreen().catch(() => {});
+            }
+          } catch (fsErr) {
+            console.warn('Fullscreen request auto-handled:', fsErr);
           }
 
           // Recover autosave from localStorage if matching
