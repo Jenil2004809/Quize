@@ -153,10 +153,14 @@ const generateAIQuiz = async (req, res, next) => {
     const numRequested = Math.max(1, Math.min(parseInt(count || 5), 15));
     const generated = [];
 
+    const { randomizeQuestionOptions } = require('../utils/shuffleUtils');
+
     for (let i = 0; i < numRequested; i++) {
       const template = baseQuestions[i % baseQuestions.length];
+      const shuffledOptions = randomizeQuestionOptions(template.options || []);
       generated.push({
         ...template,
+        options: shuffledOptions,
         text: i >= baseQuestions.length ? `${template.text} (Variation ${Math.floor(i / baseQuestions.length) + 1})` : template.text
       });
     }

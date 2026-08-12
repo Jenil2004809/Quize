@@ -145,11 +145,15 @@ const createQuestion = async (req, res, next) => {
       image = `/uploads/${req.file.filename}`;
     }
 
+    const rawOptions = Array.isArray(options) ? options : (options ? JSON.parse(options) : []);
+    const { randomizeQuestionOptions } = require('../utils/shuffleUtils');
+    const shuffledOptions = randomizeQuestionOptions(rawOptions);
+
     const question = await Question.create({
       quizId,
       type,
       text,
-      options: Array.isArray(options) ? options : (options ? JSON.parse(options) : []),
+      options: shuffledOptions,
       correctAnswers: Array.isArray(correctAnswers) ? correctAnswers : [correctAnswers],
       explanation: explanation || '',
       marks: parseFloat(marks || 1),
