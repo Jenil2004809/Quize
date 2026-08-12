@@ -307,15 +307,36 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, isExamActive 
           </div>
         </div>
       ) : (
-        /* Camera Permission Required Warning Card */
-        <div className="bg-slate-950 border border-red-500/40 rounded-xl p-3 space-y-2 text-center">
-          <div className="flex items-center justify-center space-x-2 text-red-400">
+        /* Camera Permission Required Warning Card with 1-Click Permission Trigger Button */
+        <div className="bg-slate-950 border border-amber-500/40 rounded-xl p-3 space-y-2 text-center">
+          <div className="flex items-center justify-center space-x-2 text-amber-400">
             <FaVideoSlash className="w-4 h-4 animate-bounce" />
-            <span className="text-xs font-bold">Camera Permission Required</span>
+            <span className="text-xs font-bold">WebCam Camera Permission Needed</span>
           </div>
           <p className="text-[10px] text-slate-400 leading-relaxed">
-            {cameraPermissionError || 'Please allow webcam camera access to enable AI Eye-Gaze anti-cheating protection.'}
+            {cameraPermissionError || 'Click below to grant WebCam camera permission for AI Eye-Gaze Proctoring.'}
           </p>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                  video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+                });
+                if (videoRef.current) {
+                  videoRef.current.srcObject = stream;
+                  setCameraActive(true);
+                  setCameraPermissionError('');
+                }
+              } catch (err) {
+                alert('Camera access was blocked. Please click the 📷 Camera icon in your browser address bar and select "Allow".');
+              }
+            }}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2 px-3 rounded-lg shadow-lg transition-all flex items-center justify-center space-x-2"
+          >
+            <FaVideo className="w-3 h-3" />
+            <span>📷 Click Here to Allow Camera Permission</span>
+          </button>
         </div>
       )}
 
