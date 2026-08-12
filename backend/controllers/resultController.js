@@ -60,7 +60,7 @@ const submitQuiz = async (req, res, next) => {
     // Map user answers for fast lookup
     const userAnswersMap = {};
     answers.forEach(ans => {
-      userAnswersMap[ans.questionId] = ans.selectedAnswers || [];
+      userAnswersMap[ans.questionId] = ans.selectedAnswers || ans.selectedOptions || [];
     });
 
     questions.forEach(question => {
@@ -82,7 +82,7 @@ const submitQuiz = async (req, res, next) => {
       // Check correctness
       let isCorrect = false;
 
-      if (question.type === 'multiple-correct' || question.type === 'multiple-select') {
+      if (['multiple-correct', 'multiple-select', 'multiple'].includes(question.type)) {
         // Must match all correct answers exactly
         const sortedCorrect = [...question.correctAnswers].sort();
         const sortedSelected = [...userSelected].sort();

@@ -1,9 +1,21 @@
 import axios from 'axios';
 
-// Fast, Direct Local PC API URL Resolution
+// Fast, Direct API URL Resolution (Local PC, Mobile Wi-Fi & Public Internet Tunnels)
 const getBackendURL = () => {
   if (typeof window !== 'undefined' && window.location && window.location.hostname) {
     const host = window.location.hostname;
+    // When accessed via public tunnel (loca.lt, trycloudflare, pinggy, etc.) or port 80/443, use relative path so Vite proxy forwards to backend
+    if (
+      host.includes('loca.lt') ||
+      host.includes('trycloudflare.com') ||
+      host.includes('pinggy') ||
+      host.includes('serveo') ||
+      window.location.port === '' ||
+      window.location.port === '443' ||
+      window.location.port === '80'
+    ) {
+      return '';
+    }
     return `http://${host}:5005`;
   }
   return 'http://localhost:5005';
@@ -12,7 +24,7 @@ const getBackendURL = () => {
 export const ASSET_BASE_URL = getBackendURL();
 
 const api = axios.create({
-  baseURL: `${ASSET_BASE_URL}/api`,
+  baseURL: ASSET_BASE_URL ? `${ASSET_BASE_URL}/api` : '/api',
   headers: {
     'Content-Type': 'application/json'
   }

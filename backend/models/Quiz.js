@@ -38,6 +38,7 @@ const quizSchema = new mongoose.Schema({
   difficulty: {
     type: String,
     enum: ['easy', 'medium', 'hard'],
+    lowercase: true,
     default: 'medium'
   },
   timeLimit: {

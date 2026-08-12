@@ -5,9 +5,22 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,
+    host: '0.0.0.0',
     port: 5173,
-    allowedHosts: 'all'
+    allowedHosts: true,
+    cors: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5005',
+        changeOrigin: true,
+        secure: false
+      },
+      '/uploads': {
+        target: 'http://localhost:5005',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   },
   build: {
     rollupOptions: {

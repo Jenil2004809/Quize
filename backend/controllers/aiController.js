@@ -257,13 +257,14 @@ const getAdaptiveQuestions = async (req, res, next) => {
 // @access  Private (Student)
 const chatWithAI = async (req, res, next) => {
   try {
-    const { questionContext, history, userMessage } = req.body;
+    const { questionContext, history, userMessage, message, userPrompt } = req.body;
+    const msg = userMessage || message || userPrompt;
 
-    if (!userMessage || !userMessage.trim()) {
+    if (!msg) {
       return res.status(400).json({ success: false, message: 'Message is required for AI chat.' });
     }
 
-    const reply = await AIService.chatWithAITutor(questionContext, history || [], userMessage);
+    const reply = await AIService.chatWithAITutor(questionContext, history || [], msg);
 
     return res.json({
       success: true,

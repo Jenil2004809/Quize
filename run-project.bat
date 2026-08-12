@@ -25,10 +25,13 @@ echo.
 echo ===================================================
 echo 🎉 System started successfully!
 echo.
-echo 🌐 Frontend URL: http://localhost:5173/
-echo 🌐 Backend API:  http://localhost:5005/
+echo 🌐 Local Frontend URL: http://localhost:5173/
+echo 🌐 Local Backend API:  http://localhost:5005/
+echo 🌐 Same Wi-Fi Access:   http://192.168.1.4:5173/
 echo ===================================================
 echo.
-echo Press any key to exit this launcher terminal...
-echo (The backend and frontend windows will remain running)
+echo To share over the internet with anyone outside Wi-Fi:
+echo Double click share-project.bat in this folder!
+echo.
+echo Press any key to exit launcher...
 pause >nul
