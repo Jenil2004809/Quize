@@ -93,7 +93,7 @@ const resultSchema = new mongoose.Schema({
   },
   terminationReason: {
     type: String,
-    enum: ['NONE', 'TAB_CHANGE_LIMIT_EXCEEDED'],
+    enum: ['NONE', 'TAB_CHANGE_LIMIT_EXCEEDED', 'POLICY_VIOLATION', 'EYE_GAZE_OFF_SCREEN'],
     default: 'NONE'
   },
   terminatedAt: {

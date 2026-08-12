@@ -119,10 +119,11 @@ const submitQuiz = async (req, res, next) => {
 
     const percentage = totalPossibleMarks > 0 ? (score / totalPossibleMarks) * 100 : 0;
     
-    // Check tab switch violation or explicit disqualification
+    // Check if score calculations or violations trigger tab-switch disqualification or explicit disqualification
+    const exactReason = req.body.disqualificationReason || disqualificationReason || 'Exceeded Maximum Allowed Policy Violations';
     const isTabSwitchFailure = Boolean(wasDisqualified) || Number(integrityScore) <= 40;
     const finalPassed = isTabSwitchFailure ? false : (score >= quiz.passingMarks);
-    const failReason = disqualificationReason || (isTabSwitchFailure ? 'Failed to record attempts. Please contact admin.' : '');
+    const failReason = isTabSwitchFailure ? exactReason : '';
 
     // Save Result
     const result = await Result.create({
@@ -144,7 +145,7 @@ const submitQuiz = async (req, res, next) => {
       isAuthorizedForRetake: false,
       tabChangeCount: isTabSwitchFailure ? 3 : (req.body.tabChangeCount || 0),
       terminatedDueToViolation: isTabSwitchFailure,
-      terminationReason: isTabSwitchFailure ? 'TAB_CHANGE_LIMIT_EXCEEDED' : 'NONE',
+      terminationReason: isTabSwitchFailure ? 'POLICY_VIOLATION' : 'NONE',
       terminatedAt: isTabSwitchFailure ? new Date() : null,
       status: isTabSwitchFailure ? 'TERMINATED' : 'COMPLETED',
       approvalStatus: isTabSwitchFailure ? 'PENDING' : 'NONE'
@@ -159,20 +160,35 @@ const submitQuiz = async (req, res, next) => {
       });
     }
 
-    // Create Notification to Student
+    // Create Notification to Student with EXACT REASON
     await Notification.create({
       recipientId: req.user._id,
       recipientModel: 'Student',
       title: isTabSwitchFailure
-        ? 'Quiz Removed'
+        ? `Quiz Terminated 🚨: ${exactReason}`
         : (finalPassed ? 'Quiz Passed! 🎓 Certificate Ready!' : 'Quiz Attempt Failed ❌'),
       message: isTabSwitchFailure
-        ? 'You have been removed from the quiz because you exceeded the maximum allowed tab changes. Please contact the administrator to request authorization.'
+        ? `You were removed from "${quiz.title}" due to policy violation: "${exactReason}". Please contact your administrator to request retake authorization.`
         : (finalPassed
             ? `Congratulations! You passed "${quiz.title}" with ${percentage.toFixed(1)}%. Your certificate is available for download.`
             : `You scored ${percentage.toFixed(1)}% on "${quiz.title}". Passing requirement was ${quiz.passingMarks} marks.`),
       type: isTabSwitchFailure ? 'security_warning' : 'certificate_ready'
     });
+
+    // Create Notification to Admin if student was terminated due to violation
+    if (isTabSwitchFailure) {
+      const Admin = require('../models/Admin');
+      const admins = await Admin.find().select('_id');
+      for (const admin of admins) {
+        await Notification.create({
+          recipientId: admin._id,
+          recipientModel: 'Admin',
+          title: `Student Disqualified 🚨: ${exactReason}`,
+          message: `Student "${req.user.name || 'Candidate'}" (${req.user.email || ''}) was removed from quiz "${quiz.title}" due to: "${exactReason}".`,
+          type: 'security_warning'
+        });
+      }
+    }
 
     return res.status(201).json({
       success: true,

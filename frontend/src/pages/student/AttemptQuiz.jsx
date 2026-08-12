@@ -41,6 +41,7 @@ const AttemptQuiz = () => {
   // Fullscreen & Violation States
   const [isFullscreen, setIsFullscreen] = useState(true);
   const [warningsCount, setWarningsCount] = useState(0);
+  const lastViolationReasonRef = useRef('');
 
   // Initialize violation count from LocalStorage to prevent bypass by refresh
   useEffect(() => {
@@ -50,6 +51,7 @@ const AttemptQuiz = () => {
 
   // Handle Cheating / Off-Screen Focus Violations
   const handleProctorViolation = (violationMsg) => {
+    if (violationMsg) lastViolationReasonRef.current = violationMsg;
     const savedCount = parseInt(localStorage.getItem(`quiz_violations_${quizId}`) || '0', 10);
     const currentCount = savedCount + 1;
     localStorage.setItem(`quiz_violations_${quizId}`, currentCount.toString());
@@ -306,7 +308,7 @@ const AttemptQuiz = () => {
         timeTaken,
         integrityScore: isDisqualified ? 0 : integrityScore,
         wasDisqualified: isDisqualified,
-        disqualificationReason: isDisqualified ? 'Disqualified: Exceeded Tab / Eye-Gaze Policy Violations' : '',
+        disqualificationReason: isDisqualified ? (lastViolationReasonRef.current || 'Exceeded Tab / Eye-Gaze Policy Violations') : '',
         tabChangeCount: warningsCount,
         status: isDisqualified ? 'TERMINATED' : 'COMPLETED'
       };
