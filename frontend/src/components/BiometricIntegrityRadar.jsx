@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaShieldAlt, FaEye, FaVideo, FaVideoSlash, FaExclamationTriangle, FaCheckCircle, FaLock, FaExclamationCircle, FaUserCheck, FaUserSlash } from 'react-icons/fa';
+import { FaShieldAlt, FaEye, FaVideo, FaVideoSlash, FaExclamationTriangle, FaCheckCircle, FaLock, FaExclamationCircle, FaUserCheck, FaUserSlash, FaCircle } from 'react-icons/fa';
 
 const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScreenStateChange, isExamActive }) => {
   const [integrityScore, setIntegrityScore] = useState(100);
@@ -28,6 +28,11 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
           });
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
+            try {
+              await videoRef.current.play();
+            } catch (e) {
+              // Ignore play interrupt
+            }
             setCameraActive(true);
             setCameraPermissionError('');
           }
@@ -38,7 +43,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
       } catch (err) {
         console.warn('Camera access error:', err.message);
         setCameraActive(false);
-        setCameraPermissionError('Camera permission denied. Please allow camera access for AI Eye Proctoring.');
+        setCameraPermissionError('Camera permission denied. Please grant camera access.');
       } finally {
         setCameraChecked(true);
       }
@@ -261,11 +266,14 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
             <FaEye className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-              AI Eye-Gaze Proctoring
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center space-x-1.5">
+              <span>AI WebCam Proctoring</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black bg-red-600/80 text-white uppercase animate-pulse">
+                <FaCircle className="w-1.5 h-1.5 mr-1 text-white animate-ping" /> REC
+              </span>
             </h4>
             <p className="text-[10px] text-slate-400">
-              Real-Time Camera & Eye Detection Active
+              Live WebCam Stream & Eye Radar Recording Active
             </p>
           </div>
         </div>
@@ -279,52 +287,51 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
         </div>
       </div>
 
-      {/* Camera Video & AI Eye Radar Box */}
-      {cameraActive ? (
-        <div className="space-y-2">
-          <div className="grid grid-cols-2 gap-2 items-center">
-            {/* Live WebCam Stream with Eye Detection Grid */}
-            <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex items-center justify-center">
-              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
-              <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-emerald-600/90 text-[8px] font-bold rounded uppercase tracking-wider text-white flex items-center space-x-1">
-                <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
-                <span>AI EYE CAM</span>
-              </span>
-            </div>
-
-            {/* AI Eye Radar Canvas */}
-            <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex flex-col items-center justify-center p-2">
-              <canvas ref={canvasRef} width={140} height={90} className="w-full h-full" />
-            </div>
+      {/* Live Video Recording & AI Eye Radar Section */}
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2 items-center">
+          {/* Permanent Live WebCam Camera Recording Feed Box */}
+          <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex items-center justify-center group shadow-inner">
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              muted 
+              className="w-full h-full object-cover transform scale-x-[-1] min-h-[90px]" 
+            />
+            <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-600/90 text-[8px] font-bold rounded uppercase tracking-wider text-white flex items-center space-x-1 shadow-md">
+              <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+              <span>LIVE CAM</span>
+            </span>
+            {!cameraActive && (
+              <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center p-2 text-center text-[10px] text-slate-400">
+                <FaVideo className="w-4 h-4 text-emerald-400 animate-pulse mb-1" />
+                <span>Starting Camera...</span>
+              </div>
+            )}
           </div>
 
-          {/* Attention / Eye Gaze Status Alert Card */}
-          <div className={`p-2 rounded-xl border flex items-center justify-between text-xs font-bold transition-all ${
-            eyesOnScreen
-              ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400'
-              : 'bg-red-950/60 border-red-500/60 text-red-400 animate-pulse'
-          }`}>
-            <span className="flex items-center space-x-1.5 text-[11px]">
-              {eyesOnScreen ? <FaUserCheck className="w-3.5 h-3.5" /> : <FaUserSlash className="w-3.5 h-3.5" />}
-              <span>{attentionStatus}</span>
-            </span>
-            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
-              {eyesOnScreen ? 'VERIFIED' : 'VIOLATION'}
-            </span>
+          {/* AI Eye Radar Canvas Box */}
+          <div className="relative rounded-xl overflow-hidden bg-slate-950 aspect-video border border-slate-800 flex flex-col items-center justify-center p-1 shadow-inner">
+            <canvas ref={canvasRef} width={140} height={90} className="w-full h-full min-h-[90px]" />
           </div>
         </div>
-      ) : (
-        /* Automatic WebCam Initializing Card (No Manual Button) */
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2 text-center">
-          <div className="flex items-center justify-center space-x-2 text-blue-400">
-            <FaVideo className="w-4 h-4 animate-pulse text-emerald-400" />
-            <span className="text-xs font-bold text-slate-300">Initializing WebCam Camera Stream...</span>
-          </div>
-          <p className="text-[10px] text-slate-400 leading-relaxed">
-            {cameraPermissionError || 'Direct camera stream activation in progress. AI Eye-Gaze proctoring active.'}
-          </p>
+
+        {/* Attention / Eye Gaze Status Alert Card */}
+        <div className={`p-2 rounded-xl border flex items-center justify-between text-xs font-bold transition-all ${
+          eyesOnScreen
+            ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400'
+            : 'bg-red-950/60 border-red-500/60 text-red-400 animate-pulse'
+        }`}>
+          <span className="flex items-center space-x-1.5 text-[11px]">
+            {eyesOnScreen ? <FaUserCheck className="w-3.5 h-3.5" /> : <FaUserSlash className="w-3.5 h-3.5" />}
+            <span>{attentionStatus}</span>
+          </span>
+          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+            {eyesOnScreen ? 'VERIFIED' : 'VIOLATION'}
+          </span>
         </div>
-      )}
+      </div>
 
       {/* Violation Logs */}
       {logs.length > 0 && (
@@ -342,7 +349,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
       <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/80">
         <span className="flex items-center space-x-1">
           <FaLock className="w-2.5 h-2.5 text-blue-400" />
-          <span>AI Eye-Gaze Security Active</span>
+          <span>AI WebCam Proctoring Active</span>
         </span>
         <span className={`font-bold ${violationCount > 0 ? 'text-red-400' : 'text-slate-300'}`}>
           Violations: {violationCount}/4
