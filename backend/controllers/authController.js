@@ -46,7 +46,7 @@ const registerStudent = async (req, res, next) => {
       phone: phone || '',
       role: 'student',
       isEmailVerified: true,
-      isApproved: false
+      isApproved: true
     });
 
     const token = signToken(student._id, 'student');

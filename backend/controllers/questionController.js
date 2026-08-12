@@ -45,8 +45,8 @@ const getQuestionsForQuiz = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Quiz not found' });
     }
 
-    // Check Admin concern & approval for students attempting quizzes
-    if (req.user.role === 'student' && !req.user.isApproved) {
+    // Check Admin concern & approval for students attempting quizzes (blocked only if explicitly set to false)
+    if (req.user.role === 'student' && req.user.isApproved === false) {
       return res.status(403).json({
         success: false,
         isPendingAdminApproval: true,
