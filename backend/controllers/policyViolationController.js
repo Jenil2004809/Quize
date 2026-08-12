@@ -265,10 +265,40 @@ const getStudentQuizStatus = async (req, res, next) => {
   }
 };
 
+// @desc    Delete a policy violation record from the database
+// @route   DELETE /api/admin/policy-violations/:id
+// @access  Private (Admin)
+const deletePolicyViolation = async (req, res, next) => {
+  try {
+    const violation = await Result.findById(req.params.id)
+      .populate('studentId', 'name email');
+
+    if (!violation) {
+      return res.status(404).json({ success: false, message: 'Policy violation record not found' });
+    }
+
+    const studentName = violation.studentId?.name || 'Student';
+
+    // Delete associated audit logs
+    await PolicyViolationLog.deleteMany({ resultId: violation._id });
+
+    // Delete the Result document from MongoDB
+    await violation.deleteOne();
+
+    return res.json({
+      success: true,
+      message: `Policy violation record for ${studentName} deleted successfully from database.`
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getPolicyViolations,
   getPolicyViolationById,
   approvePolicyViolation,
   rejectPolicyViolation,
+  deletePolicyViolation,
   getStudentQuizStatus
 };

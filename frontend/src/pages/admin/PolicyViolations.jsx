@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   FaShieldAlt, FaExclamationTriangle, FaCheckCircle, FaTimesCircle, 
   FaSearch, FaFilter, FaEye, FaUnlock, FaBan, FaSync, FaClock, 
-  FaDesktop, FaGlobe, FaUser, FaBook, FaTimes
+  FaDesktop, FaGlobe, FaUser, FaBook, FaTimes, FaTrash
 } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
@@ -112,6 +112,38 @@ const PolicyViolations = () => {
         } catch (err) {
           console.error(err);
           Swal.fire('Error', 'Could not process rejection.', 'error');
+        }
+      }
+    });
+  };
+
+  // Handle Delete Policy Violation Record Action
+  const handleDelete = async (violationId, studentName) => {
+    Swal.fire({
+      title: `Delete Policy Record for ${studentName}?`,
+      text: `This will permanently delete this policy violation record from the database.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, Delete Record!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.delete(`/admin/policy-violations/${violationId}`);
+          if (res.data.success) {
+            Swal.fire({
+              title: 'Deleted! 🗑️',
+              text: res.data.message || `Policy violation record for ${studentName} deleted successfully.`,
+              icon: 'success',
+              confirmButtonColor: '#10b981'
+            });
+            setDetailModalOpen(false);
+            fetchViolations();
+          }
+        } catch (err) {
+          console.error(err);
+          Swal.fire('Delete Error', 'Could not delete policy violation record.', 'error');
         }
       }
     });
@@ -327,6 +359,15 @@ const PolicyViolations = () => {
                             <span>Reject</span>
                           </button>
                         )}
+
+                        {/* Delete Record Button */}
+                        <button
+                          onClick={() => handleDelete(v._id, v.studentId?.name || 'Student')}
+                          className="inline-flex items-center space-x-1 p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-600 hover:text-white transition-colors"
+                          title="Delete Policy Violation Record"
+                        >
+                          <FaTrash className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -453,6 +494,13 @@ const PolicyViolations = () => {
                 className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700"
               >
                 Close
+              </button>
+              <button
+                onClick={() => handleDelete(selectedViolation._id, selectedViolation.studentId?.name || 'Student')}
+                className="px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs rounded-xl shadow-md flex items-center space-x-1"
+              >
+                <FaTrash className="w-3 h-3" />
+                <span>Delete Record</span>
               </button>
               {selectedViolation.approvalStatus !== 'REJECTED' && (
                 <button
