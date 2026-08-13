@@ -279,6 +279,37 @@ const chatWithAI = async (req, res, next) => {
   }
 };
 
+// Bulletproof PDF & Document Text Extractor Helper
+const extractPdfTextFromBuffer = async (buffer) => {
+  try {
+    const pdfModule = require('pdf-parse');
+    let parseFn = typeof pdfModule === 'function' ? pdfModule : (pdfModule.default || pdfModule.pdfParse);
+    if (typeof parseFn === 'function') {
+      const data = await parseFn(buffer);
+      if (data && data.text && data.text.trim().length > 10) {
+        return data.text;
+      }
+    }
+  } catch (err) {
+    console.warn('pdf-parse primary parser error, using stream fallback:', err.message);
+  }
+
+  // Fallback 1: Extract string stream text blocks from PDF buffer
+  const str = buffer.toString('utf-8');
+  const textMatches = str.match(/\(([^\)]+)\)\s*Tj|BT[\s\S]*?ET/g) || [];
+  const cleanMatches = textMatches
+    .map(m => m.replace(/[\(\)]/g, '').replace(/Tj|BT|ET/g, '').trim())
+    .filter(s => s.length > 3)
+    .join(' ');
+
+  if (cleanMatches.length > 20) {
+    return cleanMatches;
+  }
+
+  // Fallback 2: Clean ASCII text extract
+  return str.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+};
+
 // @desc    Scan uploaded PDF document or notes and generate structured quiz questions
 // @route   POST /api/ai/scan-to-quiz
 // @access  Private (Teacher/Admin)
@@ -289,10 +320,8 @@ const scanToQuiz = async (req, res, next) => {
     // If PDF or document file uploaded via multer memoryStorage
     if (req.file) {
       const mimeType = req.file.mimetype;
-      if (mimeType === 'application/pdf' || req.file.originalname.endsWith('.pdf')) {
-        const pdfParse = require('pdf-parse');
-        const pdfData = await pdfParse(req.file.buffer);
-        extractedText = pdfData.text || '';
+      if (mimeType === 'application/pdf' || req.file.originalname.toLowerCase().endsWith('.pdf')) {
+        extractedText = await extractPdfTextFromBuffer(req.file.buffer);
       } else {
         // Plain text file or buffer fallback
         extractedText = req.file.buffer.toString('utf-8');
