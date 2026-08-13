@@ -279,9 +279,81 @@ const chatWithAI = async (req, res, next) => {
   }
 };
 
+// @desc    Scan uploaded PDF document or notes and generate structured quiz questions
+// @route   POST /api/ai/scan-to-quiz
+// @access  Private (Teacher/Admin)
+const scanToQuiz = async (req, res, next) => {
+  try {
+    let extractedText = '';
+
+    // If PDF or document file uploaded via multer memoryStorage
+    if (req.file) {
+      const mimeType = req.file.mimetype;
+      if (mimeType === 'application/pdf' || req.file.originalname.endsWith('.pdf')) {
+        const pdfParse = require('pdf-parse');
+        const pdfData = await pdfParse(req.file.buffer);
+        extractedText = pdfData.text || '';
+      } else {
+        // Plain text file or buffer fallback
+        extractedText = req.file.buffer.toString('utf-8');
+      }
+    } else if (req.body.text) {
+      extractedText = req.body.text;
+    }
+
+    if (!extractedText || extractedText.trim() === '') {
+      return res.status(400).json({ success: false, message: 'No readable text or PDF content was extracted from the uploaded file.' });
+    }
+
+    // Process extracted text to generate structured quiz questions
+    const { randomizeQuestionOptions } = require('../utils/shuffleUtils');
+    
+    // Split extracted text into key sentences and concepts
+    const paragraphs = extractedText.split(/\n\s*\n/).filter(p => p.trim().length > 25);
+    const countRequested = Math.max(3, Math.min(parseInt(req.body.count || 5), 10));
+    
+    const generatedQuestions = [];
+
+    for (let i = 0; i < countRequested; i++) {
+      const samplePara = paragraphs[i % paragraphs.length] || `Core concept ${i + 1} from document.`;
+      const cleanPara = samplePara.replace(/\s+/g, ' ').trim().substring(0, 140);
+      
+      const questionText = `According to the scanned document: What is the main principle regarding "${cleanPara.substring(0, 45)}..."?`;
+      const correctChoice = `It defines key domain requirements: ${cleanPara.substring(0, 50)}...`;
+      const options = randomizeQuestionOptions([
+        correctChoice,
+        'It represents a legacy deprecated single-threaded loop',
+        'It mandates static unencrypted text file storage',
+        'It disables peripheral sensor network broadcasts'
+      ]);
+
+      generatedQuestions.push({
+        text: questionText,
+        type: 'mcq',
+        options,
+        correctAnswers: [correctChoice],
+        explanation: `Extracted directly from document content: "${cleanPara}"`,
+        marks: 1,
+        difficulty: 'medium'
+      });
+    }
+
+    return res.json({
+      success: true,
+      extractedCharacters: extractedText.length,
+      paragraphsCount: paragraphs.length,
+      questionsCount: generatedQuestions.length,
+      questions: generatedQuestions
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   generateAIQuiz,
   explainQuestionWithAI,
   getAdaptiveQuestions,
-  chatWithAI
+  chatWithAI,
+  scanToQuiz
 };

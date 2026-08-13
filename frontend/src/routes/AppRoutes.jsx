@@ -33,6 +33,7 @@ import ManageQuizzes from '../pages/teacher/ManageQuizzes';
 import ManageQuestions from '../pages/teacher/ManageQuestions';
 import StudentAttempts from '../pages/teacher/StudentAttempts';
 import TeacherCategories from '../pages/teacher/TeacherCategories';
+import SmartScanQuizBuilder from '../pages/teacher/SmartScanQuizBuilder';
 
 // Admin Pages
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -113,6 +114,7 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<TeacherDashboard />} />
+        <Route path="smart-scan" element={<SmartScanQuizBuilder />} />
         <Route path="quizzes" element={<ManageQuizzes />} />
         <Route path="quizzes/:id/questions" element={<ManageQuestions />} />
         <Route path="categories" element={<TeacherCategories />} />
@@ -130,6 +132,7 @@ const AppRoutes = () => {
         }
       >
         <Route index element={<AdminDashboard />} />
+        <Route path="smart-scan" element={<SmartScanQuizBuilder />} />
         <Route path="users" element={<ManageUsers />} />
         <Route path="policy-violations" element={<PolicyViolations />} />
         <Route path="categories" element={<TeacherCategories />} />
