@@ -246,10 +246,13 @@ const ManageQuizzes = () => {
             <div>
               <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Subject Category</label>
               <CustomSelect
-                options={categories.map(c => ({ value: c._id, label: c.name, icon: '📚' }))}
+                options={[
+                  ...categories.map(c => ({ value: c._id, label: c.name, icon: '📚' })),
+                  { value: 'custom', label: '🛠️ Custom Faculty Assessment', icon: '⚙️' }
+                ]}
                 value={formData.category}
                 onChange={val => setFormData({ ...formData, category: val })}
-                placeholder="Select Category"
+                placeholder="Select Category / Subject"
               />
             </div>
 

@@ -177,16 +177,57 @@ const QuizzesPage = () => {
     }
   ];
 
-  // Filter quizzes based on selected subject
+  // Filter quizzes based on selected subject, category dropdown (including custom option), search, and difficulty
   const getFilteredQuizzes = () => {
-    if (!selectedSubject) return quizzes;
-    if (selectedSubject.id === 'custom') {
-      return quizzes.filter(q => !q.isSystemQuiz);
+    let list = [...quizzes];
+
+    // Filter by Category Dropdown (including 'custom' option)
+    if (category) {
+      if (category === 'custom') {
+        list = list.filter(q => !q.isSystemQuiz || q.isCustom);
+      } else {
+        list = list.filter(q => 
+          q.category?._id === category || 
+          q.category === category || 
+          (q.category?.name && q.category.name.toLowerCase().includes(category.toLowerCase())) ||
+          (q.subject?.name && q.subject.name.toLowerCase().includes(category.toLowerCase()))
+        );
+      }
     }
-    return quizzes.filter(q => 
-      q.subject?.name?.toLowerCase().includes(selectedSubject.matchName.toLowerCase()) ||
-      q.title?.toLowerCase().includes(selectedSubject.matchName.toLowerCase())
-    );
+
+    // Filter by Selected Subject card
+    if (selectedSubject && selectedSubject.id !== 'all') {
+      if (selectedSubject.id === 'custom') {
+        list = list.filter(q => !q.isSystemQuiz);
+      } else {
+        list = list.filter(q => 
+          q.subject?.name?.toLowerCase().includes(selectedSubject.matchName.toLowerCase()) ||
+          q.title?.toLowerCase().includes(selectedSubject.matchName.toLowerCase()) ||
+          q.category?.name?.toLowerCase().includes(selectedSubject.matchName.toLowerCase())
+        );
+      }
+    }
+
+    // Filter by Search Query
+    if (search.trim()) {
+      list = list.filter(q => 
+        q.title?.toLowerCase().includes(search.toLowerCase()) ||
+        q.description?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Filter by Difficulty Level
+    if (difficulty) {
+      list = list.filter(q => q.difficulty === difficulty);
+    }
+
+    // Sorting
+    if (sort === 'newest') list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (sort === 'oldest') list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    if (sort === 'title-asc') list.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    if (sort === 'title-desc') list.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
+
+    return list;
   };
 
   const activeQuizzes = getFilteredQuizzes();
@@ -309,15 +350,22 @@ const QuizzesPage = () => {
               />
             </div>
 
-            <div className="w-full sm:w-48">
+            <div className="w-full sm:w-56">
               <CustomSelect
                 options={[
-                  { value: '', label: 'All Categories', icon: '📂' },
-                  ...categories.map(c => ({ value: c._id, label: c.name, icon: '📚' }))
+                  { value: '', label: '✨ All Categories & Subjects', icon: '📂' },
+                  ...categories.map(c => ({ value: c._id, label: c.name, icon: '📚' })),
+                  { value: 'Computer Science', label: '💻 Computer Science & OS', icon: '💻' },
+                  { value: 'Web Development', label: '🌐 Web Development', icon: '🌐' },
+                  { value: 'Database Systems', label: '🗄️ Database Systems & SQL', icon: '🗄️' },
+                  { value: 'Software Engineering', label: '⚙️ Software Engineering & Agile', icon: '⚙️' },
+                  { value: 'Cybersecurity', label: '🛡️ Cybersecurity & Networks', icon: '🛡️' },
+                  { value: 'Artificial Intelligence', label: '🤖 AI & Data Science', icon: '🤖' },
+                  { value: 'custom', label: '🛠️ Custom Teacher Quizzes', icon: '⚙️' }
                 ]}
                 value={category}
                 onChange={val => setCategory(val)}
-                placeholder="All Categories"
+                placeholder="Category & Subject"
                 icon={FaFilter}
               />
             </div>
