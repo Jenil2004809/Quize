@@ -25,7 +25,10 @@ const handleOutput = (text) => {
     console.log(' 📋 Share this link with students or teachers to access the live app!');
     console.log(' 📋 (Link copied to your clipboard automatically!)');
     console.log('\x1b[36m=========================================================================\x1b[0m');
-    console.log('\n(Keep this terminal window open while sharing. Press Ctrl+C to close.)');
+    console.log('\x1b[31m\x1b[1m ⚠️  IMPORTANT: KEEP THIS TERMINAL WINDOW OPEN WHILE SHARING! \x1b[0m');
+    console.log('\x1b[33m 📌 If you close this window, the link will expire and show Error 1033.\x1b[0m');
+    console.log('\x1b[36m=========================================================================\x1b[0m');
+    console.log('\n(Press Ctrl+C to stop sharing)');
 
     // Copy link to Windows clipboard automatically
     try {
