@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { FaGraduationCap, FaChalkboardTeacher, FaClipboardCheck, FaAward, FaSearch, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { 
+  FaGraduationCap, FaChalkboardTeacher, FaClipboardCheck, FaAward, 
+  FaSearch, FaChevronDown, FaChevronUp, FaMagic, FaShieldAlt, 
+  FaRandom, FaFileWord, FaFilePdf, FaCamera, FaMobileAlt, FaUserCheck, FaBrain
+} from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import api from '../services/api';
 import Swal from 'sweetalert2';
@@ -18,8 +22,8 @@ const LandingPage = () => {
   useEffect(() => {
     if (location.state?.tabViolationDisqualified) {
       Swal.fire({
-        title: 'Error Submitting ⚠️',
-        text: 'Failed to record attempts. Please contact admin.',
+        title: 'Quiz Terminated ⚠️',
+        text: 'Your quiz session was closed due to proctoring policy violations.',
         icon: 'error',
         confirmButtonColor: '#6366f1',
         confirmButtonText: 'OK'
@@ -54,107 +58,153 @@ const LandingPage = () => {
   };
 
   const faqs = [
-    { q: 'Is Quizzy completely free to use?', a: 'Yes! Students can register, attempt quizzes, and download PDF certificates entirely for free. Teachers can also publish public quizzes for free.' },
-    { q: 'How does OTP verification work?', a: 'During registration, a 6-digit verification code is emailed to you. Simply enter this code to activate your account. If you do not have SMTP configured, check your terminal logs for the code!' },
-    { q: 'Can I import questions from Excel?', a: 'Absolutely! Teachers can download our template, paste in their questions list, and upload the Excel file. Our system parses and validates questions in a single click.' },
-    { q: 'Where do I access my certificates?', a: 'Once you pass a quiz by exceeding the passing marks threshold, a PDF certificate is automatically generated. You can download and share it directly from your Student Dashboard.' }
+    { 
+      q: '⚡ How does the AI Scan-to-Quiz Builder work?', 
+      a: 'Teachers can upload PDF textbook chapters, Word documents (.doc/.docx), or photos of handwritten notes. Our AI OCR engine extracts the content and automatically structures it into multiple-choice questions with answer keys in seconds!' 
+    },
+    { 
+      q: '🛡️ How does the AI Biometric Proctoring System work?', 
+      a: 'During exam attempts, our AI Proctoring Engine tracks head pose orientation and secondary mobile phone presence in real-time. Students receive a 15-second setup grace period when starting, followed by a 4-strikes violation alert system (3 warnings with flashing red alerts, 4th strike auto-disqualifies).' 
+    },
+    { 
+      q: '🔀 Are questions and options shuffled for different users?', 
+      a: 'Yes! Every candidate and attempt receives a unique, seeded Mulberry32 PRNG randomized sequence of questions and option order (Options A, B, C, D), making cheating virtually impossible.' 
+    },
+    { 
+      q: '📜 How do I download my verified PDF certificate?', 
+      a: 'Once a student passes a quiz with marks exceeding the passing threshold, a verified PDF Certificate with a unique cryptographic verification token is instantly generated on the Student Dashboard.' 
+    }
   ];
 
   return (
-    <PageTransition className="space-y-20 pb-20">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-20 pb-12 md:pt-32 md:pb-20">
-        {/* Animated Background Gradients */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-blue-500/10 dark:bg-blue-500/5 blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-purple-500/10 dark:bg-purple-500/5 blur-3xl animate-pulse"></div>
+    <PageTransition className="space-y-24 pb-20">
+      
+      {/* 🚀 Hero Section */}
+      <section className="relative overflow-hidden pt-20 pb-16 md:pt-32 md:pb-24">
+        {/* Glowing Background Orbs */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <div className="absolute top-10 left-1/4 w-96 h-96 rounded-full bg-indigo-500/15 dark:bg-indigo-500/10 blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-10 right-1/4 w-96 h-96 rounded-full bg-purple-500/15 dark:bg-purple-500/10 blur-3xl animate-pulse"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="space-y-6 text-left"
+            className="lg:col-span-7 space-y-6 text-left"
           >
-            <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
-              Master New Skills Through{' '}
+            {/* Live AI Feature Pill */}
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-500 text-xs font-bold uppercase tracking-wider">
+              <FaMagic className="w-3.5 h-3.5 animate-spin" />
+              <span>Next-Gen AI Exam & Proctoring Platform</span>
+            </div>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+              AI-Powered Testing with{' '}
               <span className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-                Interactive Quizzes
+                Scan-to-Quiz & Proctoring
               </span>
             </h1>
-            <p className="text-lg text-slate-500 dark:text-slate-400">
-              Quizzy is a production-grade testing platform where students challenge their brains, teachers author assessments, and systems generate verified certifications instantly.
+
+            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl">
+              Upload PDF notes, Word docs, or handwritten photos to generate instant quizzes. Experience AI head pose detection, mobile device proctoring, seeded candidate shuffling, and instant verified certificates.
             </p>
 
             {/* Search Input Bar */}
-            <form onSubmit={handleSearch} className="flex max-w-md p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-100/50 dark:shadow-none">
+            <form onSubmit={handleSearch} className="flex max-w-lg p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl shadow-indigo-500/5">
               <input
                 type="text"
-                placeholder="Search quizzes, categories..."
+                placeholder="Search quizzes, categories, subjects..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 bg-transparent text-sm focus:outline-none text-slate-800 dark:text-slate-100"
+                className="w-full px-4 py-2.5 bg-transparent text-sm focus:outline-none text-slate-800 dark:text-slate-100"
               />
-              <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-xl transition-colors">
-                <FaSearch className="w-4 h-4" />
+              <button type="submit" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-md flex items-center space-x-2 text-xs">
+                <FaSearch className="w-3.5 h-3.5" />
+                <span>Search</span>
               </button>
             </form>
 
             <div className="flex flex-wrap gap-4 pt-2">
-              <Link to="/login" className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold hover-scale shadow-lg shadow-blue-500/20">
-                Attempt Free Quiz
+              <Link to="/quizzes" className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold hover-scale shadow-lg shadow-indigo-500/25 flex items-center space-x-2 text-sm">
+                <FaBrain className="w-4 h-4" />
+                <span>Explore Live Quizzes</span>
               </Link>
-              <Link to="/register?role=teacher" className="px-6 py-3 rounded-xl border border-slate-300 dark:border-slate-800 bg-transparent text-slate-700 dark:text-slate-300 font-semibold hover-scale">
-                Create as Educator
+              <Link to="/login" className="px-6 py-3.5 rounded-xl border border-slate-300 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 text-slate-700 dark:text-slate-200 font-bold hover-scale flex items-center space-x-2 text-sm">
+                <FaMagic className="w-4 h-4 text-indigo-500" />
+                <span>⚡ AI Scan-to-Quiz Builder</span>
               </Link>
             </div>
           </motion.div>
 
-          {/* Hero Image / Animated Card Pile */}
+          {/* Hero Visual Display Cards */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="hidden md:flex justify-center"
+            className="lg:col-span-5 relative hidden md:flex justify-center"
           >
-            <div className="relative w-full max-w-md h-[400px]">
-              {/* Stacked cards demonstrating interface */}
-              <div className="absolute top-0 right-0 w-80 p-6 glass-card rounded-3xl shadow-2xl space-y-4 transform rotate-3 hover:rotate-0 transition-transform duration-500 z-20 animate-float">
+            <div className="relative w-full max-w-md space-y-4">
+              
+              {/* Card 1: AI Proctoring Radar */}
+              <div className="p-5 glass-card rounded-3xl shadow-2xl border border-indigo-500/30 space-y-3 transform -rotate-2 hover:rotate-0 transition-transform duration-500">
                 <div className="flex justify-between items-center">
-                  <span className="px-3 py-1 rounded bg-emerald-500/10 text-emerald-500 text-xs font-bold uppercase">Active Exam</span>
-                  <span className="text-slate-400 text-xs font-semibold">Time: 09:59</span>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                    <span className="text-xs font-bold text-red-500 uppercase tracking-wider">AI Proctoring Active</span>
+                  </div>
+                  <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded font-mono font-bold">15s Grace Period</span>
                 </div>
-                <h3 className="font-bold text-lg">JavaScript Closures</h3>
-                <p className="text-sm text-slate-500">What is the output of the following lexical scoping function?</p>
-                <div className="space-y-2">
-                  <div className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/5 text-sm text-blue-500 font-medium">A. Lexical Environment</div>
-                  <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-sm">B. Global Scope Execution</div>
+                <div className="bg-slate-950 rounded-2xl p-3 border border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <FaCamera className="w-5 h-5 text-indigo-400" />
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-200">Head Pose & Device Cam</h4>
+                      <p className="text-[10px] text-slate-400">Real-time orientation tracking</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">Verified ✅</span>
                 </div>
               </div>
 
-              <div className="absolute bottom-4 left-0 w-72 p-6 bg-slate-900 text-white rounded-3xl shadow-xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 z-10 animate-float-slow">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-blue-500/20 text-blue-400 rounded-2xl"><FaAward className="w-6 h-6" /></div>
-                  <div>
-                    <h4 className="font-bold text-sm">Verification Token</h4>
-                    <p className="text-xs text-slate-400">PDF Certificate issued instantly</p>
+              {/* Card 2: AI Scan-to-Quiz Preview */}
+              <div className="p-5 bg-slate-900 text-white rounded-3xl shadow-2xl border border-purple-500/30 space-y-3 transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                <div className="flex items-center space-x-2">
+                  <FaMagic className="w-4 h-4 text-purple-400" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-purple-300">OCR Scan-to-Quiz Engine</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-bold">
+                  <div className="p-2 bg-slate-950 rounded-xl border border-slate-800 text-slate-300 flex items-center justify-center space-x-1">
+                    <FaFilePdf className="text-red-400" /> <span>PDF</span>
+                  </div>
+                  <div className="p-2 bg-slate-950 rounded-xl border border-slate-800 text-slate-300 flex items-center justify-center space-x-1">
+                    <FaFileWord className="text-blue-400" /> <span>Word</span>
+                  </div>
+                  <div className="p-2 bg-slate-950 rounded-xl border border-slate-800 text-slate-300 flex items-center justify-center space-x-1">
+                    <FaCamera className="text-emerald-400" /> <span>Notes</span>
                   </div>
                 </div>
+                <p className="text-[11px] text-slate-400 italic bg-slate-950/60 p-2 rounded-xl border border-slate-800">
+                  "Generates interactive MCQs from handwritten & textbook files in 1-click."
+                </p>
               </div>
+
             </div>
           </motion.div>
+
         </div>
       </section>
 
-      {/* Statistics Section */}
+      {/* 📊 Live Statistics Counter */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { icon: <FaGraduationCap className="text-blue-500" />, count: '25,000+', label: 'Happy Students' },
-            { icon: <FaChalkboardTeacher className="text-indigo-500" />, count: '1,200+', label: 'Verified Teachers' },
-            { icon: <FaClipboardCheck className="text-purple-500" />, count: '150,000+', label: 'Completed Quizzes' },
-            { icon: <FaAward className="text-emerald-500" />, count: '85,000+', label: 'Certificates Earned' }
+            { icon: <FaGraduationCap className="text-blue-500" />, count: '35+', label: 'Active Students' },
+            { icon: <FaChalkboardTeacher className="text-indigo-500" />, count: '100%', label: 'AI Proctor Verified' },
+            { icon: <FaClipboardCheck className="text-purple-500" />, count: '188+', label: 'Randomized Questions' },
+            { icon: <FaAward className="text-emerald-500" />, count: '100%', label: 'PDF Certificates' }
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -162,9 +212,9 @@ const LandingPage = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="glass-card rounded-2xl p-6 text-center space-y-2 hover-scale"
+              className="glass-card rounded-2xl p-6 text-center space-y-2 hover-scale border border-slate-200 dark:border-slate-800"
             >
-              <div className="inline-flex p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xl">{stat.icon}</div>
+              <div className="inline-flex p-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-xl">{stat.icon}</div>
               <h3 className="text-2xl font-black">{stat.count}</h3>
               <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">{stat.label}</p>
             </motion.div>
@@ -172,40 +222,65 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* ⚡ Core Platform Capabilities */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <div className="text-center space-y-3">
-          <h2 className="text-3xl font-black">Why Choose Quizzy?</h2>
-          <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-            Our platform provides structural security, diverse formats, and full responsive dashboards.
+          <h2 className="text-3xl font-black">Built for High-Integrity Assessments</h2>
+          <p className="text-slate-500 dark:text-slate-400 max-w-xl mx-auto text-sm">
+            Everything you need for creation, anti-cheating enforcement, candidate shuffling, and auto-grading.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
-            { title: 'Interactive Exam Environment', desc: 'Attempt quizzes with fullscreen constraints, progress trackers, and detailed palettes.' },
-            { title: 'Rich Question Types', desc: 'Support for MCQs, True/False, Fill in the blanks, and multiple choice checks.' },
-            { title: 'Bulk Excel Imports', desc: 'Educators can compose quizzes inside spreadsheets and upload files for prompt conversions.' },
-            { title: 'Automated Credentials', desc: 'Receive verifiable PDF Certificates with unique hex tracking IDs upon exceeding passing thresholds.' },
-            { title: 'Role Based Portals', desc: 'Distinct dashboards for Students (performance logs), Teachers (question management), and Admins.' },
-            { title: 'Rich Graphic Analytics', desc: 'Examine results through Chart.js diagrams tracking score timeline progressions.' }
+            { 
+              icon: <FaMagic className="text-purple-500 w-6 h-6" />, 
+              title: 'AI Scan-to-Quiz Builder', 
+              desc: 'Upload PDF chapters, Word documents (.doc/.docx), or handwritten note photos to extract interactive quiz questions instantly.' 
+            },
+            { 
+              icon: <FaShieldAlt className="text-red-500 w-6 h-6" />, 
+              title: 'AI Biometric Proctoring', 
+              desc: 'Real-time head pose tracking and secondary mobile device detection with a 4-strikes violation alert system.' 
+            },
+            { 
+              icon: <FaRandom className="text-indigo-500 w-6 h-6" />, 
+              title: 'Per-Candidate Shuffling', 
+              desc: 'Mulberry32 PRNG algorithm shuffles question order and option positions (A, B, C, D) uniquely for every attempt.' 
+            },
+            { 
+              icon: <FaAward className="text-emerald-500 w-6 h-6" />, 
+              title: 'Verifiable PDF Certificates', 
+              desc: 'Earn tamper-proof certificates featuring student performance metrics and unique verification hex codes.' 
+            },
+            { 
+              icon: <FaUserCheck className="text-blue-500 w-6 h-6" />, 
+              title: 'Role-Based Dashboards', 
+              desc: 'Dedicated portals for Students (attempt history & leaderboards), Teachers (quiz creation), and Admins (policy logs).' 
+            },
+            { 
+              icon: <FaClipboardCheck className="text-yellow-500 w-6 h-6" />, 
+              title: 'Bulk Excel Import & AI Tutor', 
+              desc: 'Import quiz questions directly from Excel spreadsheets and get 1-on-1 AI explanations for wrong answers.' 
+            }
           ].map((feat, idx) => (
-            <div key={idx} className="glass-card rounded-2xl p-6 hover:shadow-2xl transition-shadow border-t-4 border-blue-500">
-              <h3 className="font-bold text-lg mb-2">{feat.title}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{feat.desc}</p>
+            <div key={idx} className="glass-card rounded-2xl p-6 hover:shadow-2xl transition-all border-t-4 border-indigo-500 space-y-3 text-left">
+              <div className="p-3 rounded-xl bg-indigo-500/10 inline-block">{feat.icon}</div>
+              <h3 className="font-bold text-lg">{feat.title}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{feat.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Quiz Categories Section */}
+      {/* 📚 Quiz Categories Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <div className="flex justify-between items-end">
-          <div>
-            <h2 className="text-3xl font-black">Top Categories</h2>
-            <p className="text-slate-500 dark:text-slate-400">Discover trending subjects and challenge your knowledge</p>
+          <div className="text-left space-y-1">
+            <h2 className="text-3xl font-black">Explore Categories</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Select a subject area to test your knowledge</p>
           </div>
-          <Link to="/quizzes" className="text-blue-500 hover:underline text-sm font-semibold">View All Quizzes &rarr;</Link>
+          <Link to="/quizzes" className="text-indigo-500 hover:underline text-xs font-bold">View All Quizzes &rarr;</Link>
         </div>
 
         {loading ? (
@@ -214,17 +289,17 @@ const LandingPage = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {categories.map((cat, i) => (
+            {categories.map((cat) => (
               <motion.div
                 key={cat._id}
                 whileHover={{ y: -5 }}
-                className="glass-card rounded-2xl p-6 cursor-pointer relative overflow-hidden"
+                className="glass-card rounded-2xl p-6 cursor-pointer text-left relative overflow-hidden border border-slate-200 dark:border-slate-800"
                 onClick={() => navigate(`/quizzes?category=${cat._id}`)}
               >
-                <div className="relative z-10 space-y-4">
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">{cat.name}</h3>
-                  <p className="text-xs text-slate-400 line-clamp-2">{cat.description}</p>
-                  <span className="text-xs font-semibold text-blue-500">Browse tests &rarr;</span>
+                <div className="relative z-10 space-y-3">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{cat.name}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{cat.description}</p>
+                  <span className="text-xs font-bold text-indigo-500 inline-block">Browse assessments &rarr;</span>
                 </div>
               </motion.div>
             ))}
@@ -232,21 +307,25 @@ const LandingPage = () => {
         )}
       </section>
 
-      {/* FAQ Section */}
+      {/* ❓ FAQ Section */}
       <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <h2 className="text-3xl font-black text-center">Frequently Asked Questions</h2>
-        <div className="space-y-4">
+        <div className="text-center space-y-2">
+          <h2 className="text-3xl font-black">Frequently Asked Questions</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Everything you need to know about Quizzy</p>
+        </div>
+
+        <div className="space-y-4 text-left">
           {faqs.map((faq, idx) => (
             <div key={idx} className="glass-card rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
               <button
                 onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                className="w-full flex justify-between items-center p-5 text-left font-semibold"
+                className="w-full flex justify-between items-center p-5 text-left font-bold text-sm"
               >
                 <span>{faq.q}</span>
-                {activeFaq === idx ? <FaChevronUp /> : <FaChevronDown />}
+                {activeFaq === idx ? <FaChevronUp className="text-indigo-500" /> : <FaChevronDown />}
               </button>
               {activeFaq === idx && (
-                <div className="px-5 pb-5 pt-1 text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800">
+                <div className="px-5 pb-5 pt-1 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800/80 leading-relaxed">
                   {faq.a}
                 </div>
               )}
@@ -254,6 +333,7 @@ const LandingPage = () => {
           ))}
         </div>
       </section>
+
     </PageTransition>
   );
 };
