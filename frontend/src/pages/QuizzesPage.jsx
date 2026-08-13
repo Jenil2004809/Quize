@@ -7,7 +7,6 @@ import api from '../services/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
 import PageTransition from '../components/PageTransition';
-import CustomSelect from '../components/CustomSelect';
 
 const QuizzesPage = () => {
   const { user, isAuthenticated } = useSelector(state => state.auth);
@@ -177,57 +176,16 @@ const QuizzesPage = () => {
     }
   ];
 
-  // Filter quizzes based on selected subject, category dropdown (including custom option), search, and difficulty
+  // Filter quizzes based on selected subject
   const getFilteredQuizzes = () => {
-    let list = [...quizzes];
-
-    // Filter by Category Dropdown (including 'custom' option)
-    if (category) {
-      if (category === 'custom') {
-        list = list.filter(q => !q.isSystemQuiz || q.isCustom);
-      } else {
-        list = list.filter(q => 
-          q.category?._id === category || 
-          q.category === category || 
-          (q.category?.name && q.category.name.toLowerCase().includes(category.toLowerCase())) ||
-          (q.subject?.name && q.subject.name.toLowerCase().includes(category.toLowerCase()))
-        );
-      }
+    if (!selectedSubject) return quizzes;
+    if (selectedSubject.id === 'custom') {
+      return quizzes.filter(q => !q.isSystemQuiz);
     }
-
-    // Filter by Selected Subject card
-    if (selectedSubject && selectedSubject.id !== 'all') {
-      if (selectedSubject.id === 'custom') {
-        list = list.filter(q => !q.isSystemQuiz);
-      } else {
-        list = list.filter(q => 
-          q.subject?.name?.toLowerCase().includes(selectedSubject.matchName.toLowerCase()) ||
-          q.title?.toLowerCase().includes(selectedSubject.matchName.toLowerCase()) ||
-          q.category?.name?.toLowerCase().includes(selectedSubject.matchName.toLowerCase())
-        );
-      }
-    }
-
-    // Filter by Search Query
-    if (search.trim()) {
-      list = list.filter(q => 
-        q.title?.toLowerCase().includes(search.toLowerCase()) ||
-        q.description?.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    // Filter by Difficulty Level
-    if (difficulty) {
-      list = list.filter(q => q.difficulty === difficulty);
-    }
-
-    // Sorting
-    if (sort === 'newest') list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    if (sort === 'oldest') list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    if (sort === 'title-asc') list.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
-    if (sort === 'title-desc') list.sort((a, b) => (b.title || '').localeCompare(a.title || ''));
-
-    return list;
+    return quizzes.filter(q => 
+      q.subject?.name?.toLowerCase().includes(selectedSubject.matchName.toLowerCase()) ||
+      q.title?.toLowerCase().includes(selectedSubject.matchName.toLowerCase())
+    );
   };
 
   const activeQuizzes = getFilteredQuizzes();
@@ -338,9 +296,9 @@ const QuizzesPage = () => {
         <div className="space-y-8">
           
           {/* Filters Bar */}
-          <div className="glass-card rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 relative z-30 overflow-visible">
+          <div className="glass-card rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
-              <FaSearch className="text-slate-400 text-xs" />
+              <FaSearch className="text-slate-400 text-xs shrink-0" />
               <input
                 type="text"
                 placeholder="Search unit quizzes..."
@@ -350,54 +308,46 @@ const QuizzesPage = () => {
               />
             </div>
 
-            <div className="w-full sm:w-56">
-              <CustomSelect
-                options={[
-                  { value: '', label: '✨ All Categories & Subjects', icon: '📂' },
-                  ...categories.map(c => ({ value: c._id, label: c.name, icon: '📚' })),
-                  { value: 'Computer Science', label: '💻 Computer Science & OS', icon: '💻' },
-                  { value: 'Web Development', label: '🌐 Web Development', icon: '🌐' },
-                  { value: 'Database Systems', label: '🗄️ Database Systems & SQL', icon: '🗄️' },
-                  { value: 'Software Engineering', label: '⚙️ Software Engineering & Agile', icon: '⚙️' },
-                  { value: 'Cybersecurity', label: '🛡️ Cybersecurity & Networks', icon: '🛡️' },
-                  { value: 'Artificial Intelligence', label: '🤖 AI & Data Science', icon: '🤖' },
-                  { value: 'custom', label: '🛠️ Custom Teacher Quizzes', icon: '⚙️' }
-                ]}
+            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
+              <FaFilter className="text-slate-400 text-xs shrink-0" />
+              <select
                 value={category}
-                onChange={val => setCategory(val)}
-                placeholder="Category & Subject"
-                icon={FaFilter}
-              />
+                onChange={e => setCategory(e.target.value)}
+                className="bg-transparent text-xs font-semibold focus:outline-none cursor-pointer w-full text-slate-700 dark:text-slate-200"
+              >
+                <option value="" className="dark:bg-slate-900 dark:text-white">All Categories</option>
+                {categories.map(c => (
+                  <option key={c._id} value={c._id} className="dark:bg-slate-900 dark:text-white">{c.name}</option>
+                ))}
+              </select>
             </div>
 
-            <div className="w-full sm:w-44">
-              <CustomSelect
-                options={[
-                  { value: '', label: 'All Difficulties', icon: '⚡' },
-                  { value: 'easy', label: '🟢 Easy' },
-                  { value: 'medium', label: '🟡 Medium' },
-                  { value: 'hard', label: '🔴 Hard' }
-                ]}
+            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
+              <FaFilter className="text-slate-400 text-xs shrink-0" />
+              <select
                 value={difficulty}
-                onChange={val => setDifficulty(val)}
-                placeholder="All Difficulties"
-                icon={FaFilter}
-              />
+                onChange={e => setDifficulty(e.target.value)}
+                className="bg-transparent text-xs font-semibold focus:outline-none cursor-pointer w-full text-slate-700 dark:text-slate-200"
+              >
+                <option value="" className="dark:bg-slate-900 dark:text-white">All Difficulties</option>
+                <option value="easy" className="dark:bg-slate-900 dark:text-white">Easy</option>
+                <option value="medium" className="dark:bg-slate-900 dark:text-white">Medium</option>
+                <option value="hard" className="dark:bg-slate-900 dark:text-white">Hard</option>
+              </select>
             </div>
 
-            <div className="w-full sm:w-44">
-              <CustomSelect
-                options={[
-                  { value: 'newest', label: '🔥 Newest First' },
-                  { value: 'oldest', label: '📅 Oldest First' },
-                  { value: 'title-asc', label: '🔤 Title A-Z' },
-                  { value: 'title-desc', label: '🔤 Title Z-A' }
-                ]}
+            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
+              <FaFilter className="text-slate-400 text-xs shrink-0" />
+              <select
                 value={sort}
-                onChange={val => setSort(val)}
-                placeholder="Sort By"
-                icon={FaFilter}
-              />
+                onChange={e => setSort(e.target.value)}
+                className="bg-transparent text-xs font-semibold focus:outline-none cursor-pointer w-full text-slate-700 dark:text-slate-200"
+              >
+                <option value="newest" className="dark:bg-slate-900 dark:text-white">Newest First</option>
+                <option value="oldest" className="dark:bg-slate-900 dark:text-white">Oldest First</option>
+                <option value="title-asc" className="dark:bg-slate-900 dark:text-white">Title A-Z</option>
+                <option value="title-desc" className="dark:bg-slate-900 dark:text-white">Title Z-A</option>
+              </select>
             </div>
           </div>
 

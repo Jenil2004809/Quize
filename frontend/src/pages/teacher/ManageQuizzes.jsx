@@ -4,7 +4,6 @@ import { FaFolderOpen, FaPlus, FaTrash, FaEdit, FaEye, FaToggleOn, FaToggleOff, 
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
-import CustomSelect from '../../components/CustomSelect';
 
 const ManageQuizzes = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -245,15 +244,13 @@ const ManageQuizzes = () => {
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Subject Category</label>
-              <CustomSelect
-                options={[
-                  ...categories.map(c => ({ value: c._id, label: c.name, icon: '📚' })),
-                  { value: 'custom', label: '🛠️ Custom Faculty Assessment', icon: '⚙️' }
-                ]}
+              <select
                 value={formData.category}
-                onChange={val => setFormData({ ...formData, category: val })}
-                placeholder="Select Category / Subject"
-              />
+                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                className="w-full text-sm px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+              >
+                {categories.map(c => <option key={c._id} value={c._id} className="dark:bg-slate-900 dark:text-white">{c.name}</option>)}
+              </select>
             </div>
 
             <div className="md:col-span-2">
@@ -269,16 +266,15 @@ const ManageQuizzes = () => {
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Difficulty Level</label>
-              <CustomSelect
-                options={[
-                  { value: 'easy', label: '🟢 Easy' },
-                  { value: 'medium', label: '🟡 Medium' },
-                  { value: 'hard', label: '🔴 Hard' }
-                ]}
+              <select
                 value={formData.difficulty}
-                onChange={val => setFormData({ ...formData, difficulty: val })}
-                placeholder="Select Difficulty"
-              />
+                onChange={e => setFormData({ ...formData, difficulty: e.target.value })}
+                className="w-full text-sm px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-700 dark:text-slate-200"
+              >
+                <option value="easy" className="dark:bg-slate-900 dark:text-white">Easy</option>
+                <option value="medium" className="dark:bg-slate-900 dark:text-white">Medium</option>
+                <option value="hard" className="dark:bg-slate-900 dark:text-white">Hard</option>
+              </select>
             </div>
 
             <div>
