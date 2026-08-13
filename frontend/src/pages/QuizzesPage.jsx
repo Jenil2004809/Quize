@@ -136,29 +136,32 @@ const QuizzesPage = () => {
     return user?.bookmarks?.includes(id);
   };
 
-  // Pre-grouped subjects meta for visual cards
+  // subjects meta for visual cards
   const subjectMetadata = [
-    {
-      id: 'iot',
-      matchName: 'Internet of Things',
-      title: 'Internet of Things (IoT)',
-      icon: <FaMicrochip className="w-8 h-8 text-cyan-500" />,
-      color: 'from-cyan-500/20 to-blue-600/20 border-cyan-500/30',
-      tagColor: 'bg-cyan-500/10 text-cyan-500',
-      description: 'Explore 4 Unit Quizzes covering IoT Protocols, Sensors, Arduino C++ Programming, and WSN Cloud Integration.'
-    },
     {
       id: 'se',
       matchName: 'Software Engineering',
+      dropdownLabel: 'Option 1: SE',
       title: 'Software Engineering (SE)',
       icon: <FaLaptopCode className="w-8 h-8 text-indigo-500" />,
       color: 'from-indigo-500/20 to-purple-600/20 border-indigo-500/30',
       tagColor: 'bg-indigo-500/10 text-indigo-500',
-      description: 'Explore 4 Unit Quizzes covering SDLC Agile/Scrum, Requirements SRS, Architectural Design, and Testing QA.'
+      description: 'Explore Unit Quizzes covering SDLC Agile/Scrum, Requirements SRS, Architectural Design, and Testing QA.'
+    },
+    {
+      id: 'iot',
+      matchName: 'Internet of Things',
+      dropdownLabel: 'Option 2: IOT',
+      title: 'Internet of Things (IoT)',
+      icon: <FaMicrochip className="w-8 h-8 text-cyan-500" />,
+      color: 'from-cyan-500/20 to-blue-600/20 border-cyan-500/30',
+      tagColor: 'bg-cyan-500/10 text-cyan-500',
+      description: 'Explore Unit Quizzes covering IoT Protocols, Sensors, Arduino C++ Programming, and WSN Cloud Integration.'
     },
     {
       id: 'ws',
       matchName: 'Web Services',
+      dropdownLabel: 'Option 3: WS',
       title: 'Web Services & SOA (WS)',
       icon: <FaCloud className="w-8 h-8 text-emerald-500" />,
       color: 'from-emerald-500/20 to-teal-600/20 border-emerald-500/30',
@@ -166,8 +169,39 @@ const QuizzesPage = () => {
       description: 'Explore 4 Unit Quizzes covering XML Schemas, SOAP, WSDL, UDDI, Conversational Services, and WS-Security.'
     },
     {
+      id: 'cs',
+      matchName: 'Computer Science',
+      dropdownLabel: 'Option 4: CS',
+      title: 'Computer Science & Algorithms (CS)',
+      icon: <FaLayerGroup className="w-8 h-8 text-blue-500" />,
+      color: 'from-blue-500/20 to-indigo-600/20 border-blue-500/30',
+      tagColor: 'bg-blue-500/10 text-blue-500',
+      description: 'Explore 600-question pool covering Data Structures, Sorting Algorithms, OS Deadlocks, and Memory Paging.'
+    },
+    {
+      id: 'db',
+      matchName: 'Database Systems',
+      dropdownLabel: 'Option 5: DB',
+      title: 'Database Systems & SQL (DB)',
+      icon: <FaBookmark className="w-8 h-8 text-purple-500" />,
+      color: 'from-purple-500/20 to-pink-600/20 border-purple-500/30',
+      tagColor: 'bg-purple-500/10 text-purple-500',
+      description: 'Explore 600-question pool covering B-Tree Indexing, ACID Transactions, MongoDB Aggregations, and 3NF.'
+    },
+    {
+      id: 'ai',
+      matchName: 'Artificial Intelligence',
+      dropdownLabel: 'Option 6: AI & DS',
+      title: 'Artificial Intelligence & Data Science',
+      icon: <FaTrophy className="w-8 h-8 text-rose-500" />,
+      color: 'from-rose-500/20 to-red-600/20 border-rose-500/30',
+      tagColor: 'bg-rose-500/10 text-rose-500',
+      description: 'Explore 600-question pool covering Machine Learning, Neural Networks, Transformers, and Natural Language Processing.'
+    },
+    {
       id: 'custom',
       matchName: 'Custom',
+      dropdownLabel: 'Custom',
       title: 'Teacher & Custom Quizzes',
       icon: <FaLayerGroup className="w-8 h-8 text-amber-500" />,
       color: 'from-amber-500/20 to-orange-600/20 border-amber-500/30',
@@ -311,13 +345,29 @@ const QuizzesPage = () => {
             <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
               <FaFilter className="text-slate-400 text-xs shrink-0" />
               <select
-                value={category}
-                onChange={e => setCategory(e.target.value)}
+                value={selectedSubject ? selectedSubject.id : category}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (!val || val === 'all') {
+                    setSelectedSubject({ id: 'all', title: 'All Quizzes', matchName: '' });
+                    setCategory('');
+                  } else {
+                    const sub = subjectMetadata.find(s => s.id === val);
+                    if (sub) {
+                      setSelectedSubject(sub);
+                      setCategory('');
+                    } else {
+                      setCategory(val);
+                    }
+                  }
+                }}
                 className="bg-transparent text-xs font-semibold focus:outline-none cursor-pointer w-full text-slate-700 dark:text-slate-200"
               >
                 <option value="" className="dark:bg-slate-900 dark:text-white">All Categories</option>
-                {categories.map(c => (
-                  <option key={c._id} value={c._id} className="dark:bg-slate-900 dark:text-white">{c.name}</option>
+                {subjectMetadata.map(sub => (
+                  <option key={sub.id} value={sub.id} className="dark:bg-slate-900 dark:text-white">
+                    {sub.dropdownLabel || sub.title}
+                  </option>
                 ))}
               </select>
             </div>
