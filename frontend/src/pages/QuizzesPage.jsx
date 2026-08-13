@@ -297,7 +297,7 @@ const QuizzesPage = () => {
         <div className="space-y-8">
           
           {/* Filters Bar */}
-          <div className="glass-card rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="glass-card rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 relative z-30 overflow-visible">
             <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
               <FaSearch className="text-slate-400 text-xs" />
               <input

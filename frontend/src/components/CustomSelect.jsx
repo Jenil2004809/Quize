@@ -27,7 +27,7 @@ const CustomSelect = ({
   }, []);
 
   return (
-    <div className={`relative inline-block text-left w-full ${className}`} ref={dropdownRef}>
+    <div className={`${isOpen ? 'z-50 relative' : 'relative'} inline-block text-left w-full ${className}`} ref={dropdownRef}>
       
       {/* Trigger Button */}
       <button
@@ -51,7 +51,7 @@ const CustomSelect = ({
             animate={{ opacity: 1, y: 4, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-1.5 space-y-0.5"
+            className="absolute left-0 right-0 z-[9999] mt-1 max-h-60 overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-1.5 space-y-0.5"
           >
             {options.map((option) => {
               const isSelected = String(option.value) === String(value);

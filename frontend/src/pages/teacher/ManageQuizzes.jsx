@@ -209,7 +209,7 @@ const ManageQuizzes = () => {
 
       {/* Slide-out Create Form */}
       {showCreateForm && (
-        <div className="glass-card rounded-3xl p-6 space-y-4">
+        <div className="glass-card rounded-3xl p-6 space-y-4 relative z-30 overflow-visible">
           {!editId && (
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center space-x-3">
