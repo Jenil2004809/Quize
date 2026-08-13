@@ -181,7 +181,7 @@ const ContactPage = () => {
               </div>
               <div>
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Global Headquarters</p>
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">100 Innovation Way, Silicon Valley, CA</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Quizzy EduTech Tower, Vijay Nagar, Surat, Gujarat 395007, India</p>
               </div>
             </div>
 
