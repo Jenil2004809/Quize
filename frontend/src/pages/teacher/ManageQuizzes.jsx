@@ -4,6 +4,7 @@ import { FaFolderOpen, FaPlus, FaTrash, FaEdit, FaEye, FaToggleOn, FaToggleOff, 
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
+import CustomSelect from '../../components/CustomSelect';
 
 const ManageQuizzes = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -244,13 +245,12 @@ const ManageQuizzes = () => {
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Subject Category</label>
-              <select
+              <CustomSelect
+                options={categories.map(c => ({ value: c._id, label: c.name, icon: '📚' }))}
                 value={formData.category}
-                onChange={e => setFormData({ ...formData, category: e.target.value })}
-                className="w-full text-sm px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-              </select>
+                onChange={val => setFormData({ ...formData, category: val })}
+                placeholder="Select Category"
+              />
             </div>
 
             <div className="md:col-span-2">
@@ -266,15 +266,16 @@ const ManageQuizzes = () => {
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-400 mb-1">Difficulty Level</label>
-              <select
+              <CustomSelect
+                options={[
+                  { value: 'easy', label: '🟢 Easy' },
+                  { value: 'medium', label: '🟡 Medium' },
+                  { value: 'hard', label: '🔴 Hard' }
+                ]}
                 value={formData.difficulty}
-                onChange={e => setFormData({ ...formData, difficulty: e.target.value })}
-                className="w-full text-sm px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
+                onChange={val => setFormData({ ...formData, difficulty: val })}
+                placeholder="Select Difficulty"
+              />
             </div>
 
             <div>

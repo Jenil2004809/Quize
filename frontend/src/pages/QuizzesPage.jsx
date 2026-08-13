@@ -7,6 +7,7 @@ import api from '../services/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
 import PageTransition from '../components/PageTransition';
+import CustomSelect from '../components/CustomSelect';
 
 const QuizzesPage = () => {
   const { user, isAuthenticated } = useSelector(state => state.auth);
@@ -308,46 +309,47 @@ const QuizzesPage = () => {
               />
             </div>
 
-            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
-              <FaFilter className="text-slate-400 text-xs" />
-              <select
+            <div className="w-full sm:w-48">
+              <CustomSelect
+                options={[
+                  { value: '', label: 'All Categories', icon: '📂' },
+                  ...categories.map(c => ({ value: c._id, label: c.name, icon: '📚' }))
+                ]}
                 value={category}
-                onChange={e => setCategory(e.target.value)}
-                className="bg-transparent text-xs font-semibold focus:outline-none pr-6 cursor-pointer w-full"
-              >
-                <option value="">All Categories</option>
-                {categories.map(c => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
-                ))}
-              </select>
+                onChange={val => setCategory(val)}
+                placeholder="All Categories"
+                icon={FaFilter}
+              />
             </div>
 
-            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
-              <FaFilter className="text-slate-400 text-xs" />
-              <select
+            <div className="w-full sm:w-44">
+              <CustomSelect
+                options={[
+                  { value: '', label: 'All Difficulties', icon: '⚡' },
+                  { value: 'easy', label: '🟢 Easy' },
+                  { value: 'medium', label: '🟡 Medium' },
+                  { value: 'hard', label: '🔴 Hard' }
+                ]}
                 value={difficulty}
-                onChange={e => setDifficulty(e.target.value)}
-                className="bg-transparent text-xs font-semibold focus:outline-none pr-6 cursor-pointer w-full"
-              >
-                <option value="">All Difficulties</option>
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
+                onChange={val => setDifficulty(val)}
+                placeholder="All Difficulties"
+                icon={FaFilter}
+              />
             </div>
 
-            <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2.5 rounded-xl">
-              <FaFilter className="text-slate-400 text-xs" />
-              <select
+            <div className="w-full sm:w-44">
+              <CustomSelect
+                options={[
+                  { value: 'newest', label: '🔥 Newest First' },
+                  { value: 'oldest', label: '📅 Oldest First' },
+                  { value: 'title-asc', label: '🔤 Title A-Z' },
+                  { value: 'title-desc', label: '🔤 Title Z-A' }
+                ]}
                 value={sort}
-                onChange={e => setSort(e.target.value)}
-                className="bg-transparent text-xs font-semibold focus:outline-none pr-6 cursor-pointer w-full"
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="title-asc">Title A-Z</option>
-                <option value="title-desc">Title Z-A</option>
-              </select>
+                onChange={val => setSort(val)}
+                placeholder="Sort By"
+                icon={FaFilter}
+              />
             </div>
           </div>
 
