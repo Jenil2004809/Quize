@@ -202,19 +202,19 @@ const SmartScanQuizBuilder = () => {
 
             {/* Drag & Drop File Box */}
             <div>
-              <label className="text-xs text-slate-400 font-semibold block mb-1">Upload PDF / Document File</label>
+              <label className="text-xs text-slate-400 font-semibold block mb-1">Upload PDF, Word Document, or Handwritten Photo</label>
               <div className="relative border-2 border-dashed border-slate-800 hover:border-indigo-500/50 rounded-xl p-6 text-center transition-all bg-slate-950/50">
                 <input
                   type="file"
-                  accept=".pdf,.txt,.md"
+                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.txt,.md"
                   onChange={handleFileChange}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
                 <FaFilePdf className="w-8 h-8 mx-auto text-indigo-400 mb-2 animate-bounce" />
                 <span className="text-xs font-bold block text-slate-300">
-                  {file ? file.name : 'Drag & Drop PDF or Click to Browse'}
+                  {file ? file.name : 'Drag & Drop File or Click to Browse'}
                 </span>
-                <span className="text-[10px] text-slate-500 block mt-1">Supports PDF, TXT, MD files</span>
+                <span className="text-[10px] text-slate-500 block mt-1">Supports PDF, Word (.docx/.doc), Handwritten Notes (PNG/JPG), TXT</span>
               </div>
             </div>
 

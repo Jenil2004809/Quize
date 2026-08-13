@@ -310,22 +310,75 @@ const extractPdfTextFromBuffer = async (buffer) => {
   return str.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
 };
 
-// @desc    Scan uploaded PDF document or notes and generate structured quiz questions
+// Universal Multi-Format Document & Handwritten Image OCR Extractor Helper
+const extractDocumentOrImageText = async (file) => {
+  if (!file) return '';
+
+  const fileName = (file.originalname || '').toLowerCase();
+  const mimeType = (file.mimetype || '').toLowerCase();
+  const buffer = file.buffer;
+
+  // 1. PDF Files (.pdf)
+  if (mimeType.includes('pdf') || fileName.endsWith('.pdf')) {
+    return await extractPdfTextFromBuffer(buffer);
+  }
+
+  // 2. Microsoft Word Documents (.docx, .doc)
+  if (
+    mimeType.includes('word') ||
+    mimeType.includes('officedocument') ||
+    fileName.endsWith('.docx') ||
+    fileName.endsWith('.doc')
+  ) {
+    try {
+      const mammoth = require('mammoth');
+      const docResult = await mammoth.extractRawText({ buffer });
+      if (docResult && docResult.value && docResult.value.trim().length > 10) {
+        return docResult.value;
+      }
+    } catch (err) {
+      console.warn('Word document mammoth extraction error, using fallback:', err.message);
+    }
+    // Word document raw text fallback
+    const rawStr = buffer.toString('utf-8');
+    const cleanWord = rawStr.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (cleanWord.length > 20) return cleanWord;
+  }
+
+  // 3. Handwritten / Printed Image OCR Scanning (.png, .jpg, .jpeg, .bmp, .webp)
+  if (
+    mimeType.startsWith('image/') ||
+    fileName.endsWith('.png') ||
+    fileName.endsWith('.jpg') ||
+    fileName.endsWith('.jpeg') ||
+    fileName.endsWith('.bmp') ||
+    fileName.endsWith('.webp')
+  ) {
+    try {
+      const tesseract = require('tesseract.js');
+      const ocrResult = await tesseract.recognize(buffer, 'eng');
+      if (ocrResult && ocrResult.data && ocrResult.data.text && ocrResult.data.text.trim().length > 5) {
+        return ocrResult.data.text;
+      }
+    } catch (err) {
+      console.warn('Handwritten image OCR error:', err.message);
+    }
+  }
+
+  // 4. Plain Text Files (.txt, .md, .csv, .json)
+  return buffer.toString('utf-8');
+};
+
+// @desc    Scan uploaded PDF/Word document or Handwritten image and generate structured quiz questions
 // @route   POST /api/ai/scan-to-quiz
 // @access  Private (Teacher/Admin)
 const scanToQuiz = async (req, res, next) => {
   try {
     let extractedText = '';
 
-    // If PDF or document file uploaded via multer memoryStorage
+    // If PDF, Word document, or Handwritten image uploaded via multer memoryStorage
     if (req.file) {
-      const mimeType = req.file.mimetype;
-      if (mimeType === 'application/pdf' || req.file.originalname.toLowerCase().endsWith('.pdf')) {
-        extractedText = await extractPdfTextFromBuffer(req.file.buffer);
-      } else {
-        // Plain text file or buffer fallback
-        extractedText = req.file.buffer.toString('utf-8');
-      }
+      extractedText = await extractDocumentOrImageText(req.file);
     } else if (req.body.text) {
       extractedText = req.body.text;
     }
