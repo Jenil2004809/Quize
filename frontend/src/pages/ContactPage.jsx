@@ -156,9 +156,9 @@ const ContactPage = () => {
                 <FaPhone className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Direct Hotline</p>
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">+1 (555) 123-4567</p>
-                <p className="text-[10px] text-slate-400 font-medium">Toll-free customer care</p>
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Direct Hotline / WhatsApp</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">+91 90164 66277</p>
+                <p className="text-[10px] text-slate-400 font-medium">Customer support & inquiry line</p>
               </div>
             </div>
 
@@ -169,7 +169,7 @@ const ContactPage = () => {
               </div>
               <div>
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Active Office Hours</p>
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Mon - Fri: 9:00 AM - 6:00 PM PST</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Mon - Sat: 9:00 AM - 7:00 PM IST</p>
                 <p className="text-[10px] text-slate-400 font-medium">Weekend emergency support active</p>
               </div>
             </div>
@@ -181,7 +181,7 @@ const ContactPage = () => {
               </div>
               <div>
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Global Headquarters</p>
-                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Quizzy EduTech Tower, Vijay Nagar, Surat, Gujarat 395007, India</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-100">1099, Silver Business Point, VIP Circle Uttran, Mota Varachha, Surat, Gujarat 394105</p>
               </div>
             </div>
 
@@ -190,7 +190,7 @@ const ContactPage = () => {
           {/* Embedded Google Map */}
           <div className="h-56 rounded-3xl overflow-hidden shadow-xl border border-slate-200 dark:border-slate-800 relative">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14875.804935880773!2d72.84470915794371!3d21.233782289283198!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be04f33933b2623%3A0xb440e8447a399880!2zVmlqYXlob8Ku!5e0!3m2!1sen!2sin!4v1784287096584!5m2!1sen!2sin"
+              src="https://maps.google.com/maps?q=1099,+Silver+Business+Point,+VIP+Circle+Uttran,+Mota+Varachha,+Surat,+Gujarat+394105&t=&z=15&ie=UTF8&iwloc=&output=embed"
               width="100%"
               height="100%"
               style={{ border: 0 }}
