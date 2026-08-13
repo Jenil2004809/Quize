@@ -1,20 +1,45 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaShieldAlt, FaEye, FaVideo, FaVideoSlash, FaExclamationTriangle, FaCheckCircle, FaLock, FaExclamationCircle, FaUserCheck, FaUserSlash, FaCircle, FaMobileAlt, FaUser } from 'react-icons/fa';
+import { FaShieldAlt, FaEye, FaVideo, FaVideoSlash, FaExclamationTriangle, FaCheckCircle, FaLock, FaExclamationCircle, FaUserCheck, FaUserSlash, FaCircle, FaMobileAlt, FaUser, FaHourglassHalf } from 'react-icons/fa';
 
 const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScreenStateChange, isExamActive }) => {
   const [integrityScore, setIntegrityScore] = useState(100);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraChecked, setCameraChecked] = useState(false);
   const [headCentered, setHeadCentered] = useState(true);
-  const [attentionStatus, setAttentionStatus] = useState('🟢 HEAD CENTERED & DEVICE-FREE (FOCUSED)');
+  const [attentionStatus, setAttentionStatus] = useState('⏳ SETUP GRACE PERIOD (15s) - ALLOW CAMERA & SETTLE IN');
   const [violationCount, setViolationCount] = useState(0);
   const [logs, setLogs] = useState([]);
   const [cameraPermissionError, setCameraPermissionError] = useState('');
+  const [isGracePeriod, setIsGracePeriod] = useState(true);
+  const [graceTimeLeft, setGraceTimeLeft] = useState(15);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const violationTimerRef = useRef(0);
   const lastViolationTimeRef = useRef(0);
+  const isGracePeriodRef = useRef(true);
+
+  // 15-Second Grace Period Countdown Timer on Quiz Entry
+  useEffect(() => {
+    if (!isExamActive) return;
+    setIsGracePeriod(true);
+    isGracePeriodRef.current = true;
+    setGraceTimeLeft(15);
+
+    const timer = setInterval(() => {
+      setGraceTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsGracePeriod(false);
+          isGracePeriodRef.current = false;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isExamActive]);
 
   // 1. Initialize WebCam Stream with HD Facing Mode
   useEffect(() => {
@@ -43,7 +68,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
       } catch (err) {
         console.warn('Camera access error:', err.message);
         setCameraActive(false);
-        setCameraPermissionError('Camera permission denied. Please grant camera access.');
+        setCameraPermissionError('Camera permission pending. Please allow camera access.');
       } finally {
         setCameraChecked(true);
       }
@@ -62,6 +87,9 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
 
   // 2. Trigger Security Violation Handler
   const triggerSecurityViolation = (reason) => {
+    // If still in 15s calibration grace period, do NOT trigger violations!
+    if (isGracePeriodRef.current) return;
+
     const now = Date.now();
     // Debounce violation triggers (at least 4 seconds apart) to prevent spamming
     if (now - lastViolationTimeRef.current < 4000) return;
@@ -91,16 +119,19 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
     if (!isExamActive) return;
 
     const handleBlur = () => {
+      if (isGracePeriodRef.current) return;
       if (onEyeOffScreenStateChange) onEyeOffScreenStateChange(true);
       triggerSecurityViolation('Window Focus Lost / Tab Switched');
     };
 
     const handleMouseLeave = () => {
+      if (isGracePeriodRef.current) return;
       if (onEyeOffScreenStateChange) onEyeOffScreenStateChange(true);
       triggerSecurityViolation('Cursor Exited Exam Window Boundary');
     };
 
     const handleKeyDown = (e) => {
+      if (isGracePeriodRef.current) return;
       if (
         e.key === 'F12' ||
         (e.ctrlKey && (e.key === 'c' || e.key === 'v' || e.key === 'u' || e.key === 'a')) ||
@@ -138,6 +169,14 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
 
       // Draw current video frame to canvas
       ctx.drawImage(video, 0, 0, width, height);
+
+      // Handle 15s Grace Period UI Render
+      if (isGracePeriodRef.current) {
+        setAttentionStatus(`⏳ SETUP GRACE PERIOD (${graceTimeLeft}s) - ALLOW CAMERA & SETTLE IN`);
+        setHeadCentered(true);
+        if (onEyeOffScreenStateChange) onEyeOffScreenStateChange(false);
+        return;
+      }
 
       let detectedFace = true;
       let headOnScreen = true;
@@ -298,7 +337,7 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
 
     const interval = setInterval(processFrame, 800);
     return () => clearInterval(interval);
-  }, [isExamActive, cameraActive, onEyeOffScreenStateChange]);
+  }, [isExamActive, cameraActive, onEyeOffScreenStateChange, graceTimeLeft]);
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-white shadow-xl space-y-3 text-left">
@@ -329,6 +368,19 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
           <span>{integrityScore}% Trust</span>
         </div>
       </div>
+
+      {/* Grace Period Notification Banner */}
+      {isGracePeriod && (
+        <div className="bg-amber-950/60 border border-amber-500/40 rounded-xl p-2 flex items-center justify-between text-amber-300 text-xs font-bold animate-pulse">
+          <span className="flex items-center space-x-1.5 text-[11px]">
+            <FaHourglassHalf className="w-3.5 h-3.5 animate-spin text-amber-400 flex-shrink-0" />
+            <span>Setup Grace Period (Violations Paused)</span>
+          </span>
+          <span className="font-mono bg-amber-900/80 px-2 py-0.5 rounded text-[10px] border border-amber-500/40">
+            {graceTimeLeft}s
+          </span>
+        </div>
+      )}
 
       {/* Live Video Recording & AI Head Radar Section */}
       <div className="space-y-2">
@@ -362,16 +414,18 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
 
         {/* Head & Device Status Alert Card */}
         <div className={`p-2 rounded-xl border flex items-center justify-between text-xs font-bold transition-all ${
-          headCentered
-            ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400'
-            : 'bg-red-950/60 border-red-500/60 text-red-400 animate-pulse'
+          isGracePeriod 
+            ? 'bg-amber-950/40 border-amber-500/40 text-amber-300'
+            : (headCentered
+                ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400'
+                : 'bg-red-950/60 border-red-500/60 text-red-400 animate-pulse')
         }`}>
           <span className="flex items-center space-x-1.5 text-[11px]">
-            {headCentered ? <FaUserCheck className="w-3.5 h-3.5" /> : <FaUserSlash className="w-3.5 h-3.5" />}
-            <span>{attentionStatus}</span>
+            {isGracePeriod ? <FaHourglassHalf className="w-3.5 h-3.5" /> : (headCentered ? <FaUserCheck className="w-3.5 h-3.5" /> : <FaUserSlash className="w-3.5 h-3.5" />)}
+            <span className="truncate">{attentionStatus}</span>
           </span>
-          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
-            {headCentered ? 'VERIFIED' : 'VIOLATION'}
+          <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-900 border border-slate-800 flex-shrink-0">
+            {isGracePeriod ? 'SETUP' : (headCentered ? 'VERIFIED' : 'VIOLATION')}
           </span>
         </div>
       </div>

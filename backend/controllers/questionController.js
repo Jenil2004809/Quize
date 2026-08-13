@@ -82,9 +82,10 @@ const getQuestionsForQuiz = async (req, res, next) => {
     if (req.user.role === 'student') {
       const studentIdStr = req.user._id.toString();
       const quizIdStr = quizId.toString();
+      const attemptKey = req.query.attemptId || req.query.t || Date.now();
 
       // Unique seed for question sequence per student attempt
-      const questionSeed = stringToSeed(`${studentIdStr}_qseq_${quizIdStr}`);
+      const questionSeed = stringToSeed(`${studentIdStr}_qseq_${quizIdStr}_${attemptKey}`);
 
       const sanitizedQuestions = questions.map(q => {
         const qObj = q.toObject();
@@ -93,7 +94,7 @@ const getQuestionsForQuiz = async (req, res, next) => {
 
         // Unique seed for option sequence per student per question
         if (qObj.options && Array.isArray(qObj.options) && qObj.options.length > 0) {
-          const optSeed = stringToSeed(`${studentIdStr}_opt_${q._id.toString()}`);
+          const optSeed = stringToSeed(`${studentIdStr}_opt_${q._id.toString()}_${attemptKey}`);
           qObj.options = seededShuffleArray(qObj.options, optSeed);
         }
         return qObj;
