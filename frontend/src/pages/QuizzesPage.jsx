@@ -141,7 +141,7 @@ const QuizzesPage = () => {
     {
       id: 'se',
       matchName: 'Software Engineering',
-      dropdownLabel: 'Option 1: SE',
+      dropdownLabel: 'Software Engineering',
       title: 'Software Engineering (SE)',
       icon: <FaLaptopCode className="w-8 h-8 text-indigo-500" />,
       color: 'from-indigo-500/20 to-purple-600/20 border-indigo-500/30',
@@ -151,7 +151,7 @@ const QuizzesPage = () => {
     {
       id: 'iot',
       matchName: 'Internet of Things',
-      dropdownLabel: 'Option 2: IOT',
+      dropdownLabel: 'Internet of Things',
       title: 'Internet of Things (IoT)',
       icon: <FaMicrochip className="w-8 h-8 text-cyan-500" />,
       color: 'from-cyan-500/20 to-blue-600/20 border-cyan-500/30',
@@ -161,7 +161,7 @@ const QuizzesPage = () => {
     {
       id: 'ws',
       matchName: 'Web Services',
-      dropdownLabel: 'Option 3: WS',
+      dropdownLabel: 'Web Services & SOA',
       title: 'Web Services & SOA (WS)',
       icon: <FaCloud className="w-8 h-8 text-emerald-500" />,
       color: 'from-emerald-500/20 to-teal-600/20 border-emerald-500/30',
@@ -171,7 +171,7 @@ const QuizzesPage = () => {
     {
       id: 'cs',
       matchName: 'Computer Science',
-      dropdownLabel: 'Option 4: CS',
+      dropdownLabel: 'Computer Science & Algorithms',
       title: 'Computer Science & Algorithms (CS)',
       icon: <FaLayerGroup className="w-8 h-8 text-blue-500" />,
       color: 'from-blue-500/20 to-indigo-600/20 border-blue-500/30',
@@ -181,7 +181,7 @@ const QuizzesPage = () => {
     {
       id: 'db',
       matchName: 'Database Systems',
-      dropdownLabel: 'Option 5: DB',
+      dropdownLabel: 'Database Systems & SQL',
       title: 'Database Systems & SQL (DB)',
       icon: <FaBookmark className="w-8 h-8 text-purple-500" />,
       color: 'from-purple-500/20 to-pink-600/20 border-purple-500/30',
@@ -191,7 +191,7 @@ const QuizzesPage = () => {
     {
       id: 'ai',
       matchName: 'Artificial Intelligence',
-      dropdownLabel: 'Option 6: AI & DS',
+      dropdownLabel: 'Artificial Intelligence & Data Science',
       title: 'Artificial Intelligence & Data Science',
       icon: <FaTrophy className="w-8 h-8 text-rose-500" />,
       color: 'from-rose-500/20 to-red-600/20 border-rose-500/30',
