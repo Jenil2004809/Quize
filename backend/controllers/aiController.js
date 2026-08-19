@@ -95,75 +95,8 @@ const generateAIQuiz = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please provide a topic for AI question generation.' });
     }
 
-    const cleanTopic = topic.toLowerCase().trim();
-    let baseQuestions = [];
-
-    if (cleanTopic.includes('iot') || cleanTopic.includes('internet of things') || cleanTopic.includes('sensor')) {
-      baseQuestions = AI_TOPIC_TEMPLATES.iot;
-    } else if (cleanTopic.includes('se') || cleanTopic.includes('software') || cleanTopic.includes('agile')) {
-      baseQuestions = AI_TOPIC_TEMPLATES.se;
-    } else if (cleanTopic.includes('ws') || cleanTopic.includes('web service') || cleanTopic.includes('soap') || cleanTopic.includes('rest')) {
-      baseQuestions = AI_TOPIC_TEMPLATES.ws;
-    } else {
-      // Dynamic General Tech Generation
-      baseQuestions = [
-        {
-          text: `What is a fundamental concept in ${topic}?`,
-          options: [
-            `Modular architecture in ${topic}`,
-            `Monolithic static processing`,
-            `Depreciated single-thread loops`,
-            `Manual tape storage indexing`
-          ],
-          correctAnswers: [`Modular architecture in ${topic}`],
-          explanation: `Modular design ensures scalability and fault-isolation when building applications in ${topic}.`,
-          marks: 1,
-          difficulty: "easy"
-        },
-        {
-          text: `Which security best practice should be enforced when implementing ${topic}?`,
-          options: [
-            "Principle of Least Privilege & Encryption at Rest",
-            "Disabling SSL/TLS certificates",
-            "Hardcoding credentials in source control",
-            "Storing plaintext passwords in memory"
-          ],
-          correctAnswers: ["Principle of Least Privilege & Encryption at Rest"],
-          explanation: "Least privilege access combined with strong encryption safeguards resources against unauthorized exploitation.",
-          marks: 1,
-          difficulty: "medium"
-        },
-        {
-          text: `How does real-time monitoring optimize performance in ${topic} systems?`,
-          options: [
-            "Provides immediate telemetric visibility and automated anomaly alerts",
-            "Slowing down system clock speeds",
-            "Deleting log files automatically",
-            "Disabling network sockets"
-          ],
-          correctAnswers: ["Provides immediate telemetric visibility and automated anomaly alerts"],
-          explanation: "Telemetry and continuous observability enable proactive mitigation of bottlenecks before service degradation occurs.",
-          marks: 1,
-          difficulty: "hard"
-        }
-      ];
-    }
-
-    // Expand questions to requested count
     const numRequested = Math.max(1, Math.min(parseInt(count || 5), 15));
-    const generated = [];
-
-    const { randomizeQuestionOptions } = require('../utils/shuffleUtils');
-
-    for (let i = 0; i < numRequested; i++) {
-      const template = baseQuestions[i % baseQuestions.length];
-      const shuffledOptions = randomizeQuestionOptions(template.options || []);
-      generated.push({
-        ...template,
-        options: shuffledOptions,
-        text: i >= baseQuestions.length ? `${template.text} (Variation ${Math.floor(i / baseQuestions.length) + 1})` : template.text
-      });
-    }
+    const generated = await AIService.generateQuizQuestions(topic, numRequested, difficulty);
 
     return res.json({
       success: true,
@@ -187,34 +120,13 @@ const explainQuestionWithAI = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Question details required for AI explanation.' });
     }
 
-    const userAns = Array.isArray(selectedAnswers) ? selectedAnswers.join(', ') : (selectedAnswers || 'None');
-    const correctAns = Array.isArray(correctAnswers) ? correctAnswers.join(', ') : (correctAnswers || 'Not Specified');
-    const isUserCorrect = userAns === correctAns;
-
-    // Extract key topic from question text for a rich topic deep-dive
-    let topicDetail = 'This topic evaluates core principles, standards, and architecture specifications.';
-    const qLower = questionText.toLowerCase();
-
-    if (qLower.includes('mqtt') || qLower.includes('protocol') || qLower.includes('sensor')) {
-      topicDetail = 'IoT Communication Protocols: Protocols like MQTT, CoAP, and Zigbee are engineered for constrained sensor networks with minimal header overhead, low power consumption, and publish-subscribe asynchronous messaging.';
-    } else if (qLower.includes('agile') || qLower.includes('scrum') || qLower.includes('sprint') || qLower.includes('sdlc')) {
-      topicDetail = 'Agile Software Development Lifecycle (SDLC): Iterative methodologies prioritize continuous customer feedback, time-boxed Sprints (1-4 weeks), adaptive planning, and rapid feature delivery over rigid upfront documentation.';
-    } else if (qLower.includes('soap') || qLower.includes('wsdl') || qLower.includes('rest') || qLower.includes('http')) {
-      topicDetail = 'Web Services Architecture: Service-Oriented Architecture (SOA) relies on standardized contracts (SOAP XML envelopes with WSDL descriptors or RESTful JSON APIs with idempotent HTTP verbs) to achieve seamless interoperability across heterogeneous platforms.';
-    } else if (qLower.includes('security') || qLower.includes('encrypt') || qLower.includes('privilege')) {
-      topicDetail = 'Cybersecurity & Least Privilege: Multi-layered defense requires enforcing minimal access permissions, strict authorization tokens (JWT/OAuth2), and encryption at rest and in transit.';
-    } else if (qLower.includes('layer') || qLower.includes('perception') || qLower.includes('sensing')) {
-      topicDetail = 'IoT Architecture Layers: The Perception/Sensing Layer acquires real-world physical data via sensors/actuators; the Network Layer transmits packets; the Application Layer delivers end-user analytics.';
-    }
-
-    const aiBreakdown = {
-      conceptSummary: `📘 Topic Overview:\n${topicDetail}\n\n📌 Question Context:\n"${questionText}"`,
-      whyCorrect: `✅ Correct Choice: "${correctAns}"\n\nExplanation:\n${explanation || 'This option directly satisfies the theoretical and operational criteria defined by domain standards.'}`,
-      whyUserWrong: isUserCorrect
-        ? '🎉 Excellent work! Your selection was 100% accurate.'
-        : `⚠️ Your Selection: "${userAns}"\n\nAnalysis:\nThis option is incorrect because it represents a different layer, protocol, or anti-pattern that does not satisfy the requirements of "${correctAns}".`,
-      proTip: '💡 AI Mentor Advice: Focus on understanding the core concept rather than memorizing options. Reviewing this unit’s summary will help solidify this topic!'
-    };
+    const aiBreakdown = await AIService.generateAIExplanation(
+      questionText,
+      options,
+      selectedAnswers,
+      correctAnswers,
+      explanation
+    );
 
     return res.json({
       success: true,
@@ -387,43 +299,12 @@ const scanToQuiz = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No readable text or PDF content was extracted from the uploaded file.' });
     }
 
-    // Process extracted text to generate structured quiz questions
-    const { randomizeQuestionOptions } = require('../utils/shuffleUtils');
-    
-    // Split extracted text into key sentences and concepts
-    const paragraphs = extractedText.split(/\n\s*\n/).filter(p => p.trim().length > 25);
     const countRequested = Math.max(3, Math.min(parseInt(req.body.count || 5), 10));
-    
-    const generatedQuestions = [];
-
-    for (let i = 0; i < countRequested; i++) {
-      const samplePara = paragraphs[i % paragraphs.length] || `Core concept ${i + 1} from document.`;
-      const cleanPara = samplePara.replace(/\s+/g, ' ').trim().substring(0, 140);
-      
-      const questionText = `According to the scanned document: What is the main principle regarding "${cleanPara.substring(0, 45)}..."?`;
-      const correctChoice = `It defines key domain requirements: ${cleanPara.substring(0, 50)}...`;
-      const options = randomizeQuestionOptions([
-        correctChoice,
-        'It represents a legacy deprecated single-threaded loop',
-        'It mandates static unencrypted text file storage',
-        'It disables peripheral sensor network broadcasts'
-      ]);
-
-      generatedQuestions.push({
-        text: questionText,
-        type: 'mcq',
-        options,
-        correctAnswers: [correctChoice],
-        explanation: `Extracted directly from document content: "${cleanPara}"`,
-        marks: 1,
-        difficulty: 'medium'
-      });
-    }
+    const generatedQuestions = await AIService.scanToQuizText(extractedText, countRequested);
 
     return res.json({
       success: true,
       extractedCharacters: extractedText.length,
-      paragraphsCount: paragraphs.length,
       questionsCount: generatedQuestions.length,
       questions: generatedQuestions
     });

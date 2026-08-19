@@ -72,10 +72,10 @@ const AIMentorModal = ({ isOpen, onClose, questionData }) => {
         ) : breakdown ? (
           <div className="space-y-4">
             {/* Tabs */}
-            <div className="flex rounded-xl bg-slate-100 dark:bg-slate-900 p-1 text-xs font-bold">
+            <div className="flex flex-wrap rounded-xl bg-slate-100 dark:bg-slate-900 p-1 text-[11px] font-bold gap-1">
               <button
                 onClick={() => setActiveTab('concept')}
-                className={`flex-1 py-2 rounded-lg transition-all ${
+                className={`flex-1 py-1.5 px-2 rounded-lg transition-all whitespace-nowrap ${
                   activeTab === 'concept' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -83,7 +83,7 @@ const AIMentorModal = ({ isOpen, onClose, questionData }) => {
               </button>
               <button
                 onClick={() => setActiveTab('correct')}
-                className={`flex-1 py-2 rounded-lg transition-all ${
+                className={`flex-1 py-1.5 px-2 rounded-lg transition-all whitespace-nowrap ${
                   activeTab === 'correct' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -91,15 +91,23 @@ const AIMentorModal = ({ isOpen, onClose, questionData }) => {
               </button>
               <button
                 onClick={() => setActiveTab('wrong')}
-                className={`flex-1 py-2 rounded-lg transition-all ${
+                className={`flex-1 py-1.5 px-2 rounded-lg transition-all whitespace-nowrap ${
                   activeTab === 'wrong' ? 'bg-red-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                ⚠️ Your Answer
+                ⚠️ Diagnostic
+              </button>
+              <button
+                onClick={() => setActiveTab('step')}
+                className={`flex-1 py-1.5 px-2 rounded-lg transition-all whitespace-nowrap ${
+                  activeTab === 'step' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                🧩 Step-by-Step
               </button>
               <button
                 onClick={() => setActiveTab('tip')}
-                className={`flex-1 py-2 rounded-lg transition-all ${
+                className={`flex-1 py-1.5 px-2 rounded-lg transition-all whitespace-nowrap ${
                   activeTab === 'tip' ? 'bg-amber-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -133,6 +141,15 @@ const AIMentorModal = ({ isOpen, onClose, questionData }) => {
                     <FaExclamationCircle className="mr-1.5" /> Answer Choice Diagnostic
                   </h4>
                   <p className="text-slate-600 dark:text-slate-300 whitespace-pre-line">{breakdown.whyUserWrong}</p>
+                </div>
+              )}
+
+              {activeTab === 'step' && (
+                <div className="space-y-2">
+                  <h4 className="font-extrabold text-purple-500 flex items-center">
+                    <FaRobot className="mr-1.5" /> Step-by-Step Logical Derivation
+                  </h4>
+                  <p className="text-slate-600 dark:text-slate-300 whitespace-pre-line">{breakdown.stepByStepSolution || '1. Parse question prompt.\n2. Evaluate options.\n3. Verify against standards.'}</p>
                 </div>
               )}
 
