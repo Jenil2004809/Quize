@@ -160,18 +160,19 @@ const loginUser = async (req, res, next) => {
     let role = null;
 
     // 1. Search Admin
-    user = await Admin.findOne({ $or: [{ email: targetLower }, { phone: target }] });
+    const emailRegex = new RegExp(`^${targetLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    user = await Admin.findOne({ $or: [{ email: emailRegex }, { phone: target }] });
     if (user) role = 'admin';
 
     // 2. Search Student
     if (!user) {
-      user = await Student.findOne({ $or: [{ email: targetLower }, { phone: target }] });
+      user = await Student.findOne({ $or: [{ email: emailRegex }, { phone: target }] });
       if (user) role = 'student';
     }
 
     // 3. Search Teacher
     if (!user) {
-      user = await Teacher.findOne({ $or: [{ email: targetLower }, { phone: target }] });
+      user = await Teacher.findOne({ $or: [{ email: emailRegex }, { phone: target }] });
       if (user) role = 'teacher';
     }
 
