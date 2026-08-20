@@ -74,7 +74,7 @@ const AdminSettings = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center space-x-3">
           <div className="p-3 bg-blue-500/10 text-blue-500 rounded-2xl">
-            <FaCog className="w-6 h-6 animate-spin-slow" />
+            <FaCog className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-3xl font-black">System Settings</h1>

@@ -465,7 +465,7 @@ const AttemptQuiz = () => {
       {/* Full-Screen Flashing Red Alert Top Banner */}
       {isRedScreenAlert && (
         <div className="bg-red-600 text-white font-black text-center py-2.5 px-4 text-xs md:text-sm tracking-widest uppercase animate-bounce flex items-center justify-center space-x-2 shadow-2xl z-50 sticky top-0 border-b-2 border-red-800">
-          <FaExclamationTriangle className="w-4 h-4 text-yellow-300 animate-spin flex-shrink-0" />
+          <FaExclamationTriangle className="w-4 h-4 text-yellow-300 flex-shrink-0" />
           <span>🚨 ALERT: EYES OFF SCREEN DETECTED! PLEASE LOOK BACK AT THE EXAM SCREEN NOW! 🚨</span>
         </div>
       )}

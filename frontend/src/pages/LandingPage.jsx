@@ -97,7 +97,7 @@ const LandingPage = () => {
           >
             {/* Live AI Feature Pill */}
             <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-500 text-xs font-bold uppercase tracking-wider">
-              <FaMagic className="w-3.5 h-3.5 animate-spin" />
+              <FaMagic className="w-3.5 h-3.5" />
               <span>Next-Gen AI Exam & Proctoring Platform</span>
             </div>
 
