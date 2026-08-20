@@ -494,6 +494,8 @@ const authorizeTabViolationRetake = async (req, res, next) => {
 
     resultDoc.isAuthorizedForRetake = true;
     resultDoc.tabViolationLocked = false;
+    resultDoc.wasDisqualified = false;
+    resultDoc.approvalStatus = 'APPROVED';
     await resultDoc.save();
 
     // Ensure student account isApproved = true
