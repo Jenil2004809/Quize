@@ -16,16 +16,27 @@ const statusOptions = [
   { value: 'unread', label: 'Unread' }
 ];
 
-const formatCell = (value) => {
+const formatCell = (key, value) => {
   if (value === null || value === undefined || value === '') return '—';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (Array.isArray(value)) return `${value.length} item${value.length === 1 ? '' : 's'}`;
-  if (typeof value === 'object') return value.name || value.title || value.email || value._id || 'Object';
+  if (typeof value === 'object') {
+    if (key === 'studentId' || key === 'student') {
+      return value.name ? `${value.name} (${value.email || ''})` : (value.email || value._id || 'Student');
+    }
+    if (key === 'quizId' || key === 'quiz') {
+      return value.title || value.name || value._id || 'Quiz';
+    }
+    if (key === 'creator') {
+      return value.name ? `${value.name} (${value.email || ''})` : (value.email || value._id || 'User');
+    }
+    return value.name || value.title || value.email || value._id || 'Object';
+  }
   return String(value);
 };
 
 const pickColumns = (records) => {
-  const preferred = ['name', 'email', 'title', 'text', 'subject', 'type', 'role', 'score', 'percentage', 'isPublished', 'isApproved', 'passed', 'createdAt'];
+  const preferred = ['name', 'email', 'studentId', 'quizId', 'title', 'creator', 'text', 'subject', 'type', 'role', 'score', 'percentage', 'isPublished', 'isApproved', 'passed', 'createdAt'];
   const keys = new Set();
   records.forEach((record) => Object.keys(record).forEach((key) => keys.add(key)));
   const ordered = preferred.filter((key) => keys.has(key));
@@ -361,7 +372,7 @@ const DatabaseManagement = () => {
                       <td key={column} className="max-w-[220px] truncate px-3 py-3 text-xs">
                         {column === 'createdAt' && record[column]
                           ? new Date(record[column]).toLocaleString()
-                          : formatCell(record[column])}
+                          : formatCell(column, record[column])}
                       </td>
                     ))}
                     <td className="px-3 py-3">

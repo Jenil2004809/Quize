@@ -159,11 +159,27 @@ const getCollectionRecords = async (req, res, next) => {
     const sort = { [sortField]: sortOrder === 'desc' ? -1 : 1 };
 
     const total = await model.countDocuments(query);
-    const records = await model.find(query)
-      .sort(sort)
-      .skip(skipIndex)
-      .limit(limitNum);
+    let reqQuery = model.find(query).sort(sort).skip(skipIndex).limit(limitNum);
 
+    // Populate student and reference names so student names are clearly shown in database views
+    if (collectionKey === 'results' || collectionKey === 'certificates') {
+      reqQuery = reqQuery
+        .populate('studentId', 'name email avatar phone')
+        .populate('quizId', 'title category subject');
+    } else if (collectionKey === 'quizzes') {
+      reqQuery = reqQuery
+        .populate('creator', 'name email')
+        .populate('category', 'name')
+        .populate('subject', 'name');
+    } else if (collectionKey === 'questions') {
+      reqQuery = reqQuery.populate('quizId', 'title');
+    } else if (collectionKey === 'notifications') {
+      reqQuery = reqQuery.populate('recipientId', 'name email');
+    } else if (collectionKey === 'subjects') {
+      reqQuery = reqQuery.populate('category', 'name');
+    }
+
+    const records = await reqQuery;
     const metadata = collectionMetadataMap[collectionKey] || {};
 
     return res.json({
