@@ -6,13 +6,16 @@ const {
   approvePolicyViolation,
   rejectPolicyViolation,
   deletePolicyViolation,
-  getStudentQuizStatus
+  getStudentQuizStatus,
+  requestRetakeApproval
 } = require('../controllers/policyViolationController');
 const { protect } = require('../middleware/auth');
 const admin = require('../middleware/admin');
 
-// Protected Student Quiz Status Route
+// Protected Student Quiz Status & Retake Request Routes
 router.get('/student/quiz-status/:quizId', protect, getStudentQuizStatus);
+router.post('/policy-violations/request-retake', protect, requestRetakeApproval);
+router.post('/student/request-retake', protect, requestRetakeApproval);
 
 // Admin Only Routes
 router.get('/admin/policy-violations', protect, admin, getPolicyViolations);

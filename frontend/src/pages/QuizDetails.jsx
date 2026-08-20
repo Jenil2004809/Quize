@@ -13,6 +13,14 @@ const QuizDetails = () => {
 
   const [quiz, setQuiz] = useState(null);
   const [attemptsCount, setAttemptsCount] = useState(0);
+  const [quizStatus, setQuizStatus] = useState({
+    canAttempt: true,
+    isApproved: false,
+    isPending: false,
+    isRejected: false,
+    isLocked: false,
+    message: ''
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,6 +36,23 @@ const QuizDetails = () => {
               const quizAttempts = attemptsRes.data.results.filter(r => r.quizId?._id === quizId);
               setAttemptsCount(quizAttempts.length);
             }
+
+            // Check Policy Violation & Admin Retake Approval Status for this Quiz
+            try {
+              const statusRes = await api.get(`/student/quiz-status/${quizId}`);
+              if (statusRes.data) {
+                setQuizStatus({
+                  canAttempt: statusRes.data.canAttempt || statusRes.data.isApproved,
+                  isApproved: !!statusRes.data.isApproved,
+                  isPending: !!statusRes.data.isPending,
+                  isRejected: !!statusRes.data.isRejected,
+                  isLocked: !!statusRes.data.isLocked,
+                  message: statusRes.data.message || ''
+                });
+              }
+            } catch (err) {
+              console.warn('Quiz status check error:', err.message);
+            }
           }
         }
       } catch (err) {
@@ -38,6 +63,59 @@ const QuizDetails = () => {
     };
     fetchQuizDetails();
   }, [quizId, isAuthenticated, user]);
+
+  // Request Retake Approval from Admin
+  const handleRequestRetake = async () => {
+    if (!isAuthenticated) {
+      return navigate('/login');
+    }
+
+    const { value: reason } = await Swal.fire({
+      title: 'Request Admin Retake Approval ✉️',
+      text: `Please enter a message for the Administrator explaining why you are requesting retake access for "${quiz?.title}".`,
+      input: 'textarea',
+      inputPlaceholder: 'e.g. I request permission for a retake attempt to improve my score / my network interrupted...',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Send Request to Admin',
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return 'Please write a brief note for the Admin!';
+        }
+      }
+    });
+
+    if (reason) {
+      try {
+        const res = await api.post('/policy-violations/request-retake', {
+          quizId,
+          reason: reason.trim()
+        });
+
+        if (res.data.success) {
+          setQuizStatus({
+            canAttempt: false,
+            isApproved: false,
+            isPending: true,
+            isRejected: false,
+            isLocked: false,
+            message: 'Your retake approval request is pending administrator review.'
+          });
+
+          Swal.fire({
+            title: 'Request Sent to Admin! ✉️',
+            text: 'Your retake approval request has been logged. The Administrator will review your request shortly.',
+            icon: 'success',
+            confirmButtonColor: '#3b82f6'
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Error', err.response?.data?.message || 'Failed to submit request to Admin.', 'error');
+      }
+    }
+  };
 
   const handleStartQuiz = async () => {
     if (!isAuthenticated) {
@@ -61,54 +139,35 @@ const QuizDetails = () => {
       });
     }
 
-    // CHECK POLICY VIOLATION & TAB CHANGE LOCK
-    try {
-      const statusRes = await api.get(`/student/quiz-status/${quizId}`);
-      if (statusRes.data && statusRes.data.canAttempt === false) {
-        return Swal.fire({
-          title: 'Access Denied',
-          text: statusRes.data.message || 'You exceeded the allowed tab change limit. Please wait until the administrator reviews your request.',
-          icon: 'error',
-          confirmButtonColor: '#ef4444'
-        });
-      }
-    } catch (statusErr) {
-      if (statusErr.response && statusErr.response.status === 403) {
-        return Swal.fire({
-          title: 'Access Denied',
-          text: statusErr.response.data?.message || 'You exceeded the allowed tab change limit. Please wait until the administrator reviews your request.',
-          icon: 'error',
-          confirmButtonColor: '#ef4444'
-        });
-      }
-    }
-
-    // CHECK ADMIN CONCERN & APPROVAL
-    if (user?.isApproved === false) {
-      return Swal.fire({
-        title: 'Admin Concern & Approval Required ⛔',
-        text: 'You cannot give or attempt this quiz without Admin concern and explicit approval. Click below to send an approval request to the Admin.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3b82f6',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Request Admin Concern & Approval'
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          try {
-            await api.post('/notifications/request-admin-concern', { quizId, quizTitle: quiz?.title });
-            Swal.fire('Request Sent! ✉️', 'Approval request sent to Admin. Please contact Admin to unlock your quiz access.', 'success');
-          } catch (e) {
-            Swal.fire('Request Logged! ✉️', 'Admin notification logged. Please contact your Admin to approve your quiz attempt.', 'info');
-          }
+    // CHECK POLICY VIOLATION & TAB CHANGE LOCK UNLESS ADMIN APPROVED
+    if (!quizStatus.isApproved) {
+      try {
+        const statusRes = await api.get(`/student/quiz-status/${quizId}`);
+        if (statusRes.data && statusRes.data.canAttempt === false) {
+          return Swal.fire({
+            title: 'Access Denied',
+            text: statusRes.data.message || 'You exceeded the allowed limit or your attempt is locked.',
+            icon: 'error',
+            confirmButtonColor: '#ef4444'
+          });
         }
-      });
+      } catch (statusErr) {
+        if (statusErr.response && statusErr.response.status === 403) {
+          return Swal.fire({
+            title: 'Access Denied',
+            text: statusErr.response.data?.message || 'Quiz access blocked. Please request admin approval.',
+            icon: 'error',
+            confirmButtonColor: '#ef4444'
+          });
+        }
+      }
     }
 
-    if (attemptsCount >= quiz?.maxAttempts) {
+    // CHECK ATTEMPT LIMIT UNLESS ADMIN APPROVED
+    if (!quizStatus.isApproved && attemptsCount >= quiz?.maxAttempts) {
       return Swal.fire({
         title: 'Attempt Limit Reached ⛔',
-        text: `You have completed ${attemptsCount}/${quiz?.maxAttempts} permitted attempts.`,
+        text: `You have completed ${attemptsCount}/${quiz?.maxAttempts} permitted attempts. You can request admin approval to retake!`,
         icon: 'error'
       });
     }
@@ -174,7 +233,9 @@ const QuizDetails = () => {
     );
   }
 
-  const reachedLimit = attemptsCount >= quiz.maxAttempts;
+  const isApprovedByAdmin = quizStatus.isApproved;
+  const isPendingAdmin = quizStatus.isPending;
+  const isBlockedOrLimit = (attemptsCount >= quiz.maxAttempts || quizStatus.isLocked || !quizStatus.canAttempt) && !isApprovedByAdmin;
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-left space-y-8">
@@ -258,27 +319,77 @@ const QuizDetails = () => {
             {isAuthenticated && user?.role === 'student' && (
               <div className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-900/50 text-xs flex justify-between">
                 <span className="text-slate-400">Attempts logged:</span>
-                <strong className={reachedLimit ? 'text-red-500' : 'text-slate-800 dark:text-slate-100'}>
+                <strong className={isBlockedOrLimit ? 'text-red-500' : 'text-slate-800 dark:text-slate-100'}>
                   {attemptsCount} / {quiz.maxAttempts}
                 </strong>
               </div>
             )}
 
-            {reachedLimit && (
-              <div className="p-3 bg-red-500/10 border-l-4 border-red-500 text-red-500 rounded text-[10px] leading-relaxed flex items-center space-x-1.5">
-                <FaExclamationTriangle className="flex-shrink-0" />
-                <span>You have reached the maximum attempt limit. Starting is disabled.</span>
+            {/* BANNERS FOR ADMIN APPROVAL & BLOCKS */}
+            {isApprovedByAdmin && (
+              <div className="p-3 bg-emerald-500/10 border-l-4 border-emerald-500 text-emerald-500 rounded text-[10px] font-bold leading-relaxed flex items-center space-x-1.5">
+                <FaTrophy className="flex-shrink-0" />
+                <span>Admin Approved Retake Access! You are authorized to attempt this quiz now.</span>
               </div>
             )}
 
-            <button
-              onClick={handleStartQuiz}
-              disabled={reachedLimit}
-              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center justify-center space-x-2 text-sm transition-colors disabled:bg-slate-350 dark:disabled:bg-slate-800 dark:disabled:text-slate-500 disabled:cursor-not-allowed hover-scale shadow-lg shadow-blue-500/10"
-            >
-              {reachedLimit ? <FaLock /> : <FaGamepad />}
-              <span>{reachedLimit ? 'Attempt Blocked' : 'Start Assessment'}</span>
-            </button>
+            {isPendingAdmin && (
+              <div className="p-3 bg-amber-500/10 border-l-4 border-amber-500 text-amber-500 rounded text-[10px] font-bold leading-relaxed flex items-center space-x-1.5">
+                <FaClock className="flex-shrink-0" />
+                <span>Your Retake Approval Request is pending Administrator review.</span>
+              </div>
+            )}
+
+            {isBlockedOrLimit && !isPendingAdmin && (
+              <div className="p-3 bg-red-500/10 border-l-4 border-red-500 text-red-500 rounded text-[10px] leading-relaxed flex items-center space-x-1.5">
+                <FaExclamationTriangle className="flex-shrink-0" />
+                <span>Starting is disabled. You can request admin approval to retake this quiz below.</span>
+              </div>
+            )}
+
+            {/* MAIN ACTION BUTTONS */}
+            {isApprovedByAdmin ? (
+              <button
+                onClick={handleStartQuiz}
+                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center space-x-2 text-sm transition-all hover-scale shadow-lg shadow-emerald-500/20"
+              >
+                <FaGamepad />
+                <span>Start Assessment (Admin Authorized)</span>
+              </button>
+            ) : isPendingAdmin ? (
+              <button
+                disabled
+                className="w-full py-3 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/30 font-bold flex items-center justify-center space-x-2 text-xs cursor-not-allowed opacity-80"
+              >
+                <FaClock />
+                <span>⏳ Retake Request Pending Admin Approval</span>
+              </button>
+            ) : isBlockedOrLimit ? (
+              <div className="space-y-3">
+                <button
+                  onClick={handleRequestRetake}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold flex items-center justify-center space-x-2 text-xs transition-all hover-scale shadow-lg shadow-blue-500/20"
+                >
+                  <FaExclamationTriangle />
+                  <span>📩 Request Retake Approval from Admin</span>
+                </button>
+                <button
+                  disabled
+                  className="w-full py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-400 font-bold flex items-center justify-center space-x-2 text-xs cursor-not-allowed"
+                >
+                  <FaLock />
+                  <span>Attempt Blocked</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleStartQuiz}
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center justify-center space-x-2 text-sm transition-colors hover-scale shadow-lg shadow-blue-500/10"
+              >
+                <FaGamepad />
+                <span>Start Assessment</span>
+              </button>
+            )}
 
             <button
               onClick={handleDeleteQuiz}

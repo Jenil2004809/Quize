@@ -226,13 +226,7 @@ const getStudentQuizStatus = async (req, res, next) => {
 
     const result = await Result.findOne({
       studentId: req.user._id,
-      quizId,
-      $or: [
-        { status: 'TERMINATED' },
-        { terminatedDueToViolation: true },
-        { wasDisqualified: true },
-        { tabViolationLocked: true }
-      ]
+      quizId
     }).sort({ createdAt: -1 });
 
     if (!result) {
@@ -243,22 +237,124 @@ const getStudentQuizStatus = async (req, res, next) => {
       });
     }
 
-    if (result.approvalStatus === 'APPROVED') {
+    if (result.approvalStatus === 'APPROVED' || result.isAuthorizedForRetake === true) {
       return res.json({
         success: true,
         canAttempt: true,
+        isApproved: true,
         status: 'APPROVED',
         message: 'Admin approved your quiz access. You may now attempt the quiz again.'
       });
     }
 
-    // Otherwise student is blocked
-    return res.status(403).json({
-      success: false,
-      canAttempt: false,
-      status: result.approvalStatus || 'PENDING',
-      reason: 'Quiz access blocked due to policy violation.',
-      message: 'Access Denied: You exceeded the allowed tab change limit. Please wait until the administrator reviews your request.'
+    if (result.approvalStatus === 'PENDING') {
+      return res.json({
+        success: true,
+        canAttempt: false,
+        isPending: true,
+        status: 'PENDING',
+        message: 'Your retake approval request is pending administrator review.'
+      });
+    }
+
+    if (result.approvalStatus === 'REJECTED') {
+      return res.json({
+        success: true,
+        canAttempt: false,
+        isRejected: true,
+        status: 'REJECTED',
+        message: 'Your retake approval request was rejected by the administrator.'
+      });
+    }
+
+    if (result.wasDisqualified || result.tabViolationLocked || result.status === 'TERMINATED') {
+      return res.json({
+        success: true,
+        canAttempt: false,
+        isLocked: true,
+        status: 'LOCKED',
+        message: 'Access Denied: Quiz access locked due to policy violation. You can request admin approval.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      canAttempt: true,
+      status: 'ACTIVE'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Student submits retake / access approval request to Admin
+// @route   POST /api/policy-violations/request-retake
+// @access  Private (Student)
+const requestRetakeApproval = async (req, res, next) => {
+  try {
+    const { quizId, reason } = req.body;
+    const studentId = req.user._id;
+
+    const quiz = await Quiz.findById(quizId);
+    if (!quiz) {
+      return res.status(404).json({ success: false, message: 'Quiz not found' });
+    }
+
+    const Admin = require('../models/Admin');
+
+    let result = await Result.findOne({ studentId, quizId }).sort({ createdAt: -1 });
+
+    if (!result) {
+      result = new Result({
+        studentId,
+        quizId,
+        score: 0,
+        totalMarks: quiz.totalMarks || 10,
+        passingMarks: quiz.passingMarks || 5,
+        percentage: 0,
+        isPassed: false,
+        status: 'TERMINATED',
+        answers: []
+      });
+    }
+
+    result.status = 'TERMINATED';
+    result.wasDisqualified = true;
+    result.tabViolationLocked = true;
+    result.terminatedDueToViolation = true;
+    result.disqualificationReason = reason || 'Student requested retake approval from quiz details page.';
+    result.approvalStatus = 'PENDING';
+    result.isAuthorizedForRetake = false;
+    await result.save();
+
+    // Create Notification for All Admins
+    const admins = await Admin.find({ role: 'admin' });
+    for (const adm of admins) {
+      await Notification.create({
+        recipientId: adm._id,
+        recipientModel: 'Admin',
+        title: 'Retake Approval Requested 📩',
+        message: `Student ${req.user.name} requested retake approval for quiz "${quiz.title}".`,
+        type: 'security_warning'
+      });
+      emitToUser(adm._id, 'notification_received', { title: 'Retake Approval Requested' });
+    }
+
+    // Audit Log
+    await PolicyViolationLog.create({
+      action: 'RETAKE_REQUESTED',
+      userId: studentId,
+      userModel: 'Student',
+      quizId,
+      resultId: result._id,
+      details: `Student ${req.user.name} requested retake approval for quiz "${quiz.title}". Note: ${reason || 'None'}`
+    });
+
+    return res.json({
+      success: true,
+      message: 'Retake approval request submitted to Administrator successfully.',
+      approvalStatus: 'PENDING',
+      resultId: result._id
     });
   } catch (error) {
     next(error);
@@ -300,5 +396,6 @@ module.exports = {
   approvePolicyViolation,
   rejectPolicyViolation,
   deletePolicyViolation,
-  getStudentQuizStatus
+  getStudentQuizStatus,
+  requestRetakeApproval
 };

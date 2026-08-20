@@ -40,7 +40,7 @@ const resultSchema = new mongoose.Schema({
   },
   totalQuestions: {
     type: Number,
-    required: true
+    default: 0
   },
   correctAnswers: {
     type: Number,
@@ -61,11 +61,11 @@ const resultSchema = new mongoose.Schema({
   answers: [answerSchema],
   timeTaken: {
     type: Number, // In seconds
-    required: true
+    default: 0
   },
   passed: {
     type: Boolean,
-    required: true
+    default: false
   },
   wasDisqualified: {
     type: Boolean,

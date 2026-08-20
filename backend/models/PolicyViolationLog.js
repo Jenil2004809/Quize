@@ -8,6 +8,7 @@ const policyViolationLogSchema = new mongoose.Schema({
       'QUIZ_TERMINATED',
       'ADMIN_APPROVED',
       'ADMIN_REJECTED',
+      'RETAKE_REQUESTED',
       'NOTIFICATION_SENT',
       'NOTIFICATION_READ'
     ],
