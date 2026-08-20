@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUnlock, FaExclamationTriangle, FaCheckCircle, FaUserShield, FaSync } from 'react-icons/fa';
+import { FaUnlock, FaExclamationTriangle, FaCheckCircle, FaUserShield, FaSync, FaTrash } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import Swal from 'sweetalert2';
 
@@ -55,6 +55,36 @@ const TabViolationAuthorizations = () => {
     });
   };
 
+  const handleDeleteAll = () => {
+    Swal.fire({
+      title: 'Delete All Violation Records?',
+      text: 'This will permanently delete all policy violation and lock records from the website and database at the same time.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, Delete All!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.delete('/admin/policy-violations/delete-all');
+          if (res.data.success) {
+            Swal.fire({
+              title: 'Deleted All Records! 🗑️',
+              text: res.data.message || 'All records deleted permanently.',
+              icon: 'success',
+              confirmButtonColor: '#10b981'
+            });
+            fetchViolations();
+          }
+        } catch (err) {
+          console.error(err);
+          Swal.fire('Error', 'Could not delete all records.', 'error');
+        }
+      }
+    });
+  };
+
   return (
     <div className="glass-card rounded-3xl p-6 space-y-4 text-left">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
@@ -72,13 +102,23 @@ const TabViolationAuthorizations = () => {
           </div>
         </div>
 
-        <button
-          onClick={fetchViolations}
-          className="inline-flex items-center space-x-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-500 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl transition-all"
-        >
-          <FaSync className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={fetchViolations}
+            className="inline-flex items-center space-x-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-500 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl transition-all"
+          >
+            <FaSync className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+
+          <button
+            onClick={handleDeleteAll}
+            className="inline-flex items-center space-x-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-3 py-2 rounded-xl transition-all hover-scale shadow-md shadow-red-500/20"
+          >
+            <FaTrash className="w-3 h-3" />
+            <span>Delete All</span>
+          </button>
+        </div>
       </div>
 
       {loading ? (

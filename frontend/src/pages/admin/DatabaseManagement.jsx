@@ -174,6 +174,38 @@ const DatabaseManagement = () => {
     }
   };
 
+  const handleClearCollection = async () => {
+    const result = await Swal.fire({
+      title: `Delete All ${activeLabel}?`,
+      text: `This will permanently delete ALL records in ${activeLabel} from the database. This action cannot be undone!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, Delete All!'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await api.delete(`/database/${activeCollection}/clear-all`);
+      if (res.data.success) {
+        Swal.fire({
+          title: 'Deleted All Records! 🗑️',
+          text: res.data.message || 'All records deleted permanently.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+        fetchRecords();
+        fetchCollections();
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire('Error', err.response?.data?.message || 'Failed to delete all records.', 'error');
+    }
+  };
+
   return (
     <div className="space-y-6 text-left">
       {/* Page Header */}
@@ -190,14 +222,24 @@ const DatabaseManagement = () => {
           </div>
         </div>
 
-        <button
-          onClick={handleSeedDatabase}
-          disabled={seeding}
-          className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 text-xs transition-all hover-scale disabled:opacity-50"
-        >
-          <FaSeedling className="w-4 h-4" />
-          <span>{seeding ? 'Seeding Data...' : 'Seed Sample Data'}</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleSeedDatabase}
+            disabled={seeding}
+            className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 text-xs transition-all hover-scale disabled:opacity-50"
+          >
+            <FaSeedling className="w-4 h-4" />
+            <span>{seeding ? 'Seeding Data...' : 'Seed Sample Data'}</span>
+          </button>
+
+          <button
+            onClick={handleClearCollection}
+            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-red-500/20 text-xs transition-all hover-scale"
+          >
+            <FaTrash className="w-3.5 h-3.5" />
+            <span>Delete All</span>
+          </button>
+        </div>
       </div>
 
       {/* Collection Navigation Tabs */}

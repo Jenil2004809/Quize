@@ -337,10 +337,35 @@ const seedSampleData = async (req, res, next) => {
   }
 };
 
+// @desc    Clear / Delete ALL records in a collection
+// @route   DELETE /api/database/:collection/clear-all
+// @access  Private (Admin only)
+const clearCollectionRecords = async (req, res, next) => {
+  try {
+    const { collection } = req.params;
+    const model = getModel(collection);
+
+    if (!model) {
+      return res.status(404).json({ success: false, message: `Collection ${collection} not found` });
+    }
+
+    const deleteRes = await model.deleteMany({});
+
+    return res.json({
+      success: true,
+      count: deleteRes.deletedCount,
+      message: `Successfully deleted all ${deleteRes.deletedCount} records in ${collection} permanently from the database.`
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCollections,
   getCollectionRecords,
   updateCollectionRecord,
   deleteCollectionRecord,
+  clearCollectionRecords,
   seedSampleData
 };

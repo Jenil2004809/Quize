@@ -5,6 +5,7 @@ const {
   getCollectionRecords,
   updateCollectionRecord,
   deleteCollectionRecord,
+  clearCollectionRecords,
   seedSampleData
 } = require('../controllers/databaseController');
 const { protect } = require('../middleware/auth');
@@ -17,6 +18,7 @@ router.get('/', getCollections);
 router.post('/seed', seedSampleData);
 router.get('/:collection', getCollectionRecords);
 router.put('/:collection/:id', updateCollectionRecord);
+router.delete('/:collection/clear-all', clearCollectionRecords);
 router.delete('/:collection/:id', deleteCollectionRecord);
 
 module.exports = router;

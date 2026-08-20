@@ -239,7 +239,7 @@ const PolicyViolations = () => {
             className="inline-flex items-center space-x-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-2.5 rounded-xl transition-all hover-scale shadow-lg shadow-red-500/20"
           >
             <FaTrash className="w-3.5 h-3.5" />
-            <span>Delete All Violations</span>
+            <span>Delete All</span>
           </button>
         </div>
       </div>
