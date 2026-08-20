@@ -76,52 +76,15 @@ const LoginPage = () => {
         
         {/* Header Icon & Title */}
         <div className="text-center space-y-2">
-          <div className="inline-flex p-3 rounded-2xl bg-blue-500/10 text-blue-500 mb-1 animate-pulse">
+          <div className="inline-flex p-3 rounded-2xl bg-blue-500/10 text-blue-500 mb-1">
             <FaShieldAlt className="w-7 h-7" />
           </div>
           <h1 className="text-3xl font-black bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">
-            Welcome to Quizzy
+            Welcome Back
           </h1>
           <p className="text-slate-400 text-xs">
-            Enter your credentials to access your student or teacher dashboard
+            Enter your credentials to access your dashboard
           </p>
-        </div>
-
-        {/* Quick Demo Login Pills */}
-        <div className="space-y-2 pt-1">
-          <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider text-center">Quick Demo Login Shortcuts:</p>
-          <div className="flex flex-wrap gap-2 justify-center text-xs">
-            <button
-              type="button"
-              onClick={() => {
-                setIdentifier('admin@quizsystem.com');
-                setPassword('Admin@123');
-              }}
-              className="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30 font-bold transition-all"
-            >
-              👑 Admin Demo
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIdentifier('student@quiz.com');
-                setPassword('Password@123');
-              }}
-              className="px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 font-bold transition-all"
-            >
-              🎓 Student Demo
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIdentifier('teacher@quiz.com');
-                setPassword('Password@123');
-              }}
-              className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 font-bold transition-all"
-            >
-              👨‍🏫 Teacher Demo
-            </button>
-          </div>
         </div>
 
         {/* Error Alert */}
