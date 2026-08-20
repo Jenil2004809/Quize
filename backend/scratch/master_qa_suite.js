@@ -81,17 +81,11 @@ async function runMasterQASuite() {
     const teacherConfig = { headers: { Authorization: `Bearer ${tToken}` } };
     record('Teacher Login & JWT Signing', tLogin.data.success && !!tToken);
 
-    // Admin Account & Login
-    const adminEmail = 'qa_admin_' + Date.now() + '@quiz.com';
-    const admin = await Admin.create({
-      name: 'Master Admin QA',
-      email: adminEmail,
-      password: 'Password@123',
-      role: 'admin'
-    });
+    // Admin Login (Reusing primary System Administrator)
+    const adminEmail = 'admin@quizsystem.com';
     const aLogin = await axios.post(`${BASE_URL}/auth/login`, {
       identifier: adminEmail,
-      password: 'Password@123'
+      password: 'Admin@123'
     });
     const aToken = aLogin.data.token;
     const adminConfig = { headers: { Authorization: `Bearer ${aToken}` } };
