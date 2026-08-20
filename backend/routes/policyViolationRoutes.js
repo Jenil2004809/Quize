@@ -6,6 +6,7 @@ const {
   approvePolicyViolation,
   rejectPolicyViolation,
   deletePolicyViolation,
+  deleteAllPolicyViolations,
   getStudentQuizStatus,
   requestRetakeApproval
 } = require('../controllers/policyViolationController');
@@ -19,6 +20,7 @@ router.post('/student/request-retake', protect, requestRetakeApproval);
 
 // Admin Only Routes
 router.get('/admin/policy-violations', protect, admin, getPolicyViolations);
+router.delete('/admin/policy-violations/delete-all', protect, admin, deleteAllPolicyViolations);
 router.get('/admin/policy-violations/:id', protect, admin, getPolicyViolationById);
 router.put('/admin/policy-violations/:id/approve', protect, admin, approvePolicyViolation);
 router.put('/admin/policy-violations/:id/reject', protect, admin, rejectPolicyViolation);

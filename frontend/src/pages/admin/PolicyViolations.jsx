@@ -149,6 +149,37 @@ const PolicyViolations = () => {
     });
   };
 
+  // Handle Delete ALL Policy Violations Action
+  const handleDeleteAll = () => {
+    Swal.fire({
+      title: 'Delete ALL Policy Violations?',
+      text: 'This will permanently delete ALL policy violation records and audit logs from the database. This action cannot be undone!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, Delete All Records!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.delete('/admin/policy-violations/delete-all');
+          if (res.data.success) {
+            Swal.fire({
+              title: 'All Violations Deleted! 🗑️',
+              text: res.data.message || 'All policy violation records cleared from database.',
+              icon: 'success',
+              confirmButtonColor: '#10b981'
+            });
+            fetchViolations();
+          }
+        } catch (err) {
+          console.error(err);
+          Swal.fire('Delete Error', 'Could not delete all policy violation records.', 'error');
+        }
+      }
+    });
+  };
+
   // Open View Details Modal (Section 7)
   const handleViewDetails = async (violationId) => {
     try {
@@ -194,13 +225,23 @@ const PolicyViolations = () => {
           </div>
         </div>
 
-        <button
-          onClick={fetchViolations}
-          className="inline-flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-xl hover-scale shadow-sm"
-        >
-          <FaSync className={`w-3.5 h-3.5 text-blue-500 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh Violations</span>
-        </button>
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <button
+            onClick={fetchViolations}
+            className="inline-flex items-center space-x-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2.5 rounded-xl hover-scale shadow-sm"
+          >
+            <FaSync className={`w-3.5 h-3.5 text-blue-500 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+
+          <button
+            onClick={handleDeleteAll}
+            className="inline-flex items-center space-x-2 text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-4 py-2.5 rounded-xl transition-all hover-scale shadow-lg shadow-red-500/20"
+          >
+            <FaTrash className="w-3.5 h-3.5" />
+            <span>Delete All Violations</span>
+          </button>
+        </div>
       </div>
 
       {/* Dashboard Metrics Cards (Section 6) */}

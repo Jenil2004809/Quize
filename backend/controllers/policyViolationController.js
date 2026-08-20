@@ -390,12 +390,47 @@ const deletePolicyViolation = async (req, res, next) => {
   }
 };
 
+// @desc    Delete ALL policy violation records from the database
+// @route   DELETE /api/admin/policy-violations/delete-all
+// @access  Private (Admin)
+const deleteAllPolicyViolations = async (req, res, next) => {
+  try {
+    const violationQuery = {
+      $or: [
+        { wasDisqualified: true },
+        { tabViolationLocked: true },
+        { terminatedDueToViolation: true },
+        { status: 'TERMINATED' },
+        { disqualificationReason: { $regex: /tab change|attempts|policy/i } }
+      ]
+    };
+
+    const violations = await Result.find(violationQuery);
+    const resultIds = violations.map(v => v._id);
+
+    // Delete associated audit logs
+    await PolicyViolationLog.deleteMany({ resultId: { $in: resultIds } });
+
+    // Delete violation Result records
+    const deleteRes = await Result.deleteMany(violationQuery);
+
+    return res.json({
+      success: true,
+      count: deleteRes.deletedCount,
+      message: `Successfully deleted all ${deleteRes.deletedCount} policy violation records from the database.`
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getPolicyViolations,
   getPolicyViolationById,
   approvePolicyViolation,
   rejectPolicyViolation,
   deletePolicyViolation,
+  deleteAllPolicyViolations,
   getStudentQuizStatus,
   requestRetakeApproval
 };
