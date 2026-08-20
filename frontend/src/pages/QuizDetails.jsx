@@ -187,24 +187,24 @@ const QuizDetails = () => {
     });
   };
 
-  // Instant Database Deletion Trigger
+  // Instant Deletion Trigger
   const handleDeleteQuiz = () => {
     Swal.fire({
-      title: 'Delete Quiz Permanently?',
-      text: 'This will delete the quiz and ALL associated questions/results from the database immediately. This action cannot be undone.',
+      title: 'Delete Quiz?',
+      text: 'This will delete the quiz and all associated questions/results immediately. This action cannot be undone.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
       cancelButtonColor: '#64748b',
-      confirmButtonText: 'Yes, Delete from Database!'
+      confirmButtonText: 'Yes, Delete Quiz!'
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
           const res = await api.delete(`/quizzes/${quizId}`);
           if (res.data.success) {
             Swal.fire({
-              title: 'Deleted from Database! 🗑️',
-              text: 'Quiz and all associated database records removed.',
+              title: 'Quiz Deleted! 🗑️',
+              text: 'Quiz and all associated records removed.',
               icon: 'success',
               timer: 1500,
               showConfirmButton: false
@@ -253,7 +253,7 @@ const QuizDetails = () => {
           className="flex items-center space-x-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-red-500/20"
         >
           <FaTrash />
-          <span>Delete Quiz from Database</span>
+          <span>Delete Quiz</span>
         </button>
       </div>
 
@@ -396,7 +396,7 @@ const QuizDetails = () => {
               className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold flex items-center justify-center space-x-2 text-xs transition-colors hover-scale shadow-lg shadow-red-500/20"
             >
               <FaTrash />
-              <span>Delete Quiz from Database</span>
+              <span>Delete Quiz</span>
             </button>
           </div>
 

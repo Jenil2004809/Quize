@@ -153,7 +153,7 @@ const PolicyViolations = () => {
   const handleDeleteAll = () => {
     Swal.fire({
       title: 'Delete ALL Policy Violations?',
-      text: 'This will permanently delete ALL policy violation records and audit logs from the database. This action cannot be undone!',
+      text: 'This will permanently delete ALL policy violation records and audit logs. This action cannot be undone!',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ef4444',
@@ -166,7 +166,7 @@ const PolicyViolations = () => {
           if (res.data.success) {
             Swal.fire({
               title: 'All Violations Deleted! 🗑️',
-              text: res.data.message || 'All policy violation records cleared from database.',
+              text: res.data.message || 'All policy violation records cleared.',
               icon: 'success',
               confirmButtonColor: '#10b981'
             });
