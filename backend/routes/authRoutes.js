@@ -11,10 +11,7 @@ const {
   updateProfile,
   changePassword,
   forgotPassword,
-  resetPassword,
-  sendOTP,
-  verifyOTP,
-  resendOTP
+  resetPassword
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -38,11 +35,6 @@ router.post('/teacher/register', registerRules, registerTeacher);
 // Login & Logout
 router.post('/login', loginRules, loginUser);
 router.post('/logout', logoutUser);
-
-// OTP Verification Public Endpoints
-router.post('/send-otp', sendOTP);
-router.post('/verify-otp', verifyOTP);
-router.post('/resend-otp', resendOTP);
 
 // Password recovery
 router.post('/forgot-password', forgotPassword);
