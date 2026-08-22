@@ -13,7 +13,9 @@ const getModel = (collectionName) => {
     results: 'Result',
     certificates: 'Certificate',
     notifications: 'Notification',
-    messages: 'Message'
+    messages: 'Message',
+    policyviolations: 'PolicyViolationLog',
+    settings: 'Setting'
   };
   const modelName = map[collectionName];
   return modelName ? mongoose.model(modelName) : null;
@@ -75,6 +77,16 @@ const collectionMetadataMap = {
     description: 'User inquiries and support feedback submitted through the Contact Us form.',
     fields: ['name', 'email', 'subject', 'message', 'isResolved'],
     relations: 'Independent Contact Inquiry'
+  },
+  policyviolations: {
+    description: 'Audit logs for tab switching, off-screen gaze detection, and exam disqualification events.',
+    fields: ['action', 'userId', 'quizId', 'details', 'createdAt'],
+    relations: 'References Student & Quiz'
+  },
+  settings: {
+    description: 'Global system configuration parameters, maintenance toggles, and feature settings.',
+    fields: ['siteName', 'contactEmail', 'enableAiProctoring', 'maxTabViolations'],
+    relations: 'Global Application State'
   }
 };
 
@@ -94,7 +106,9 @@ const getCollections = async (req, res, next) => {
       { key: 'results', label: 'Results' },
       { key: 'certificates', label: 'Certificates' },
       { key: 'notifications', label: 'Notifications' },
-      { key: 'messages', label: 'Messages' }
+      { key: 'messages', label: 'Messages' },
+      { key: 'policyviolations', label: 'Policy Violations' },
+      { key: 'settings', label: 'Settings' }
     ];
 
     const collectionsWithCounts = await Promise.all(list.map(async (item) => {
