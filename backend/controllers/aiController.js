@@ -281,6 +281,25 @@ const extractDocumentOrImageText = async (file) => {
   return buffer.toString('utf-8');
 };
 
+// Clean noise, isolated header/footer lines, professor titles, page numbers, and slide numbers
+const cleanExtractedAcademicText = (rawText) => {
+  if (!rawText) return '';
+
+  const cleaned = rawText
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => {
+      if (line.length < 15) return false; // Ignore short fragments like "Unit- 2", "Page 1"
+      if (/^(page|slide|chapter|unit)\s*\d+/i.test(line)) return false; // Ignore "Page 1", "Slide 3", "Unit 2: Sensors..."
+      if (/\b(prof|dr|department|university|college|faculty|author|prepared by|instructor)\b/i.test(line) && line.length < 60) return false; // Ignore "Prof. Gohil", "Department of CS"
+      if (/^\d+(\.\d+)*$/i.test(line)) return false; // Ignore standalone numbers like "2.1.3"
+      return true;
+    })
+    .join('\n');
+
+  return cleaned || rawText; // Fallback to raw if filtering was too aggressive
+};
+
 // @desc    Scan uploaded PDF/Word document or Handwritten image and generate structured quiz questions
 // @route   POST /api/ai/scan-to-quiz
 // @access  Private (Teacher/Admin)
@@ -299,12 +318,15 @@ const scanToQuiz = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No readable text or PDF content was extracted from the uploaded file.' });
     }
 
+    // Clean headers, professor signatures, and document noise
+    const sanitizedText = cleanExtractedAcademicText(extractedText);
+
     const countRequested = Math.max(3, Math.min(parseInt(req.body.count || 5), 10));
-    const generatedQuestions = await AIService.scanToQuizText(extractedText, countRequested);
+    const generatedQuestions = await AIService.scanToQuizText(sanitizedText, countRequested);
 
     return res.json({
       success: true,
-      extractedCharacters: extractedText.length,
+      extractedCharacters: sanitizedText.length,
       questionsCount: generatedQuestions.length,
       questions: generatedQuestions
     });

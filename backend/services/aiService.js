@@ -198,45 +198,68 @@ Return ONLY a JSON array of objects with this structure:
       }
     }
 
-    // Professional Heuristic NLP Extractor Fallback
+    // College-Level Technical NLP Synthesizer Fallback
     const { randomizeQuestionOptions } = require('../utils/shuffleUtils');
     
-    // Extract key sentences (definitions, rules, statements)
+    // Extract key sentences with meaningful academic / technical content (> 35 chars, contains subject verbs or domain keywords)
     const rawSentences = extractedText
-      .split(/(?<=[.!?])\s+/)
+      .split(/(?<=[.!?])\s+|\n+/)
       .map(s => s.replace(/\s+/g, ' ').trim())
-      .filter(s => s.length > 25 && s.length < 250);
+      .filter(s => {
+        if (s.length < 35 || s.length > 250) return false;
+        if (/\b(prof|dr|department|university|college|prepared by|author|page|slide|instructor)\b/i.test(s)) return false;
+        if (/^(page|slide|chapter|unit)\s*\d+/i.test(s)) return false;
+        return true;
+      });
 
     const questions = [];
     const usedSentences = new Set();
 
+    const academicDistractorTemplates = [
+      [
+        "It acts as a synchronous blocking process that prevents parallel resource allocation.",
+        "It operates strictly as a transport-layer encapsulation without application context.",
+        "It requires manual intervention to resolve dynamic protocol state mismatches."
+      ],
+      [
+        "It mandates static unbuffered memory allocation restricted to legacy single-threaded architectures.",
+        "It relies on stateless polling mechanisms that increase bandwidth overhead.",
+        "It bypasses standard security handshake verifications during runtime execution."
+      ],
+      [
+        "It enforces rigid sequential execution constraints that prevent asynchronous queueing.",
+        "It functions as an isolated hardware interface without supporting network abstraction.",
+        "It restricts data payload formatting exclusively to unencrypted binary buffers."
+      ]
+    ];
+
     for (let i = 0; i < count; i++) {
-      const sentence = rawSentences.find(s => !usedSentences.has(s)) || rawSentences[i % Math.max(1, rawSentences.length)] || `Core document concept excerpt ${i + 1}`;
+      const sentence = rawSentences.find(s => !usedSentences.has(s)) || rawSentences[i % Math.max(1, rawSentences.length)] || `Core technical concept reference ${i + 1}`;
       usedSentences.add(sentence);
 
       const words = sentence.split(/\s+/);
-      const mainSubject = words.slice(0, 5).join(' ');
+      let mainTopic = words.slice(0, 4).join(' ');
+      if (mainTopic.length > 40) mainTopic = mainTopic.substring(0, 35) + '...';
 
-      const questionText = sentence.includes('is') || sentence.includes('are') || sentence.includes('defines')
-        ? `Based on the scanned material: What is the core principle or definition concerning "${mainSubject}"?`
-        : `According to the document text: Which statement accurately describes "${mainSubject}"?`;
+      let questionPrompt = '';
+      if (sentence.includes('is defined as') || sentence.includes('refers to') || sentence.includes('is a')) {
+        questionPrompt = `In the context of the scanned material: Which statement accurately defines the operational role of "${mainTopic}"?`;
+      } else if (sentence.includes('used for') || sentence.includes('provides') || sentence.includes('enables')) {
+        questionPrompt = `Based on the document text: What is the primary functional requirement fulfilled by "${mainTopic}"?`;
+      } else {
+        questionPrompt = `According to the academic document: Which statement correctly characterizes "${mainTopic}"?`;
+      }
 
       const correctChoice = sentence;
-
-      const distractors = [
-        `It operates as a restricted legacy process without taking "${mainSubject}" into account.`,
-        `It requires manual user input for every execution cycle instead of standard processing.`,
-        `It represents an external network dependency isolated from "${mainSubject}".`
-      ];
-
-      const options = randomizeQuestionOptions([correctChoice, ...distractors]);
+      const distractorSet = academicDistractorTemplates[i % academicDistractorTemplates.length];
+      const options = randomizeQuestionOptions([correctChoice, ...distractorSet]);
 
       questions.push({
-        text: questionText,
+        text: questionPrompt,
         type: 'mcq',
         options,
         correctAnswers: [correctChoice],
-        explanation: `Document Reference: "${sentence}"`,
+        explanation: `Academic Document Reference: "${sentence}"`,
         marks: 1,
         difficulty: i % 3 === 0 ? 'hard' : (i % 2 === 0 ? 'medium' : 'easy')
       });
