@@ -210,16 +210,43 @@ const QuizzesPage = () => {
     }
   ];
 
+  const matchesSubject = (q, sub) => {
+    if (!q || !sub) return false;
+    if (sub.id === 'custom') return !q.isSystemQuiz;
+
+    const title = (q.title || '').toLowerCase();
+    const desc = (q.description || '').toLowerCase();
+    const subName = (q.subject?.name || '').toLowerCase();
+    const catName = (q.category?.name || '').toLowerCase();
+    const unit = (q.unitName || '').toLowerCase();
+
+    if (sub.id === 'se') {
+      return subName.includes('software') || catName.includes('software') || title.includes('se unit') || title.includes('software') || unit.includes('se unit');
+    }
+    if (sub.id === 'iot') {
+      return subName.includes('iot') || subName.includes('internet of things') || catName.includes('iot') || title.includes('iot unit') || title.includes('iot') || unit.includes('iot');
+    }
+    if (sub.id === 'ws') {
+      return subName.includes('web services') || subName.includes('ws') || catName.includes('web services') || title.includes('ws unit') || title.includes('web services') || unit.includes('ws');
+    }
+    if (sub.id === 'cs') {
+      return subName.includes('computer science') || catName.includes('computer science') || title.includes('computer science') || title.includes('javascript') || title.includes('python') || title.includes('data structures') || title.includes('physics') || title.includes('algorithms');
+    }
+    if (sub.id === 'db') {
+      return subName.includes('database') || catName.includes('database') || catName.includes('sql') || title.includes('database') || title.includes('sql');
+    }
+    if (sub.id === 'ai') {
+      return subName.includes('artificial intelligence') || catName.includes('artificial intelligence') || catName.includes('data science') || title.includes('artificial intelligence') || title.includes('ai & data') || title.includes('machine learning');
+    }
+
+    const match = (sub.matchName || '').toLowerCase();
+    return subName.includes(match) || catName.includes(match) || title.includes(match) || desc.includes(match);
+  };
+
   // Filter quizzes based on selected subject
   const getFilteredQuizzes = () => {
     if (!selectedSubject) return quizzes;
-    if (selectedSubject.id === 'custom') {
-      return quizzes.filter(q => !q.isSystemQuiz);
-    }
-    return quizzes.filter(q => 
-      q.subject?.name?.toLowerCase().includes(selectedSubject.matchName.toLowerCase()) ||
-      q.title?.toLowerCase().includes(selectedSubject.matchName.toLowerCase())
-    );
+    return quizzes.filter(q => matchesSubject(q, selectedSubject));
   };
 
   const activeQuizzes = getFilteredQuizzes();
@@ -267,11 +294,7 @@ const QuizzesPage = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {subjectMetadata.map((sub) => {
-              const count = quizzes.filter(q => {
-                if (sub.id === 'custom') return !q.isSystemQuiz;
-                return q.subject?.name?.toLowerCase().includes(sub.matchName.toLowerCase()) ||
-                       q.title?.toLowerCase().includes(sub.matchName.toLowerCase());
-              }).length;
+              const count = quizzes.filter(q => matchesSubject(q, sub)).length;
 
               return (
                 <div
