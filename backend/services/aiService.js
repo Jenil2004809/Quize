@@ -146,24 +146,32 @@ Return ONLY a JSON array of objects with the following format:
   }
 
   /**
-   * Generate Real AI Quiz Questions from Document / Handwritten Image Text
+   * Generate Professional AI Quiz Questions from Document / Handwritten Image Text
    */
   static async scanToQuizText(extractedText, count = 5) {
-    const prompt = `Read the following text extracted from a scanned document/handwritten note and generate ${count} multiple choice questions (MCQs) testing key concepts.
+    const prompt = `You are a Senior Professor & Principal Examination Architect.
+Analyze the following text extracted from a scanned document/handwritten note and generate ${count} professional, university-grade multiple-choice questions (MCQs).
 
 Extracted Document Content:
 """
-${extractedText.substring(0, 4000)}
+${extractedText.substring(0, 5000)}
 """
 
-Return ONLY a JSON array of objects with the following format:
+Strict Requirements for Question Quality:
+1. Each question must test a clear technical concept, definition, operational rule, or principle found in the text.
+2. Formulate clear, precise, professional question prompts (do not use conversational meta-language).
+3. Provide EXACTLY 4 plausible, professional options (1 correct answer and 3 realistic distractors).
+4. The 3 distractors must sound realistic and domain-relevant to rigorously test student knowledge.
+5. Provide a detailed, professional explanation citing the concept from the document.
+
+Return ONLY a JSON array of objects with this structure:
 [
   {
-    "text": "Question testing a concept from the text",
+    "text": "Professional academic question prompt text",
     "type": "mcq",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswers": ["Exact text of correct option"],
-    "explanation": "Extracted logic explaining the answer",
+    "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
+    "correctAnswers": ["Exact text matching the correct option"],
+    "explanation": "Professional academic explanation of the correct choice and concept.",
     "marks": 1,
     "difficulty": "medium"
   }
@@ -174,39 +182,63 @@ Return ONLY a JSON array of objects with the following format:
       try {
         const parsed = JSON.parse(rawAiJson);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          const valid = parsed.map((q, idx) => ({
+            text: q.text || `Question ${idx + 1} from Document`,
+            type: 'mcq',
+            options: Array.isArray(q.options) && q.options.length === 4 ? q.options : ['Option A', 'Option B', 'Option C', 'Option D'],
+            correctAnswers: Array.isArray(q.correctAnswers) && q.correctAnswers.length > 0 ? q.correctAnswers : [q.options?.[0] || 'Option A'],
+            explanation: q.explanation || 'Extracted from document analysis.',
+            marks: q.marks || 1,
+            difficulty: q.difficulty || (idx % 3 === 0 ? 'hard' : (idx % 2 === 0 ? 'medium' : 'easy'))
+          }));
+          return valid;
         }
       } catch (err) {
-        console.warn('Failed to parse Gemini Scan-to-Quiz JSON');
+        console.warn('Failed to parse Gemini Scan-to-Quiz JSON, using NLP Extractor');
       }
     }
 
-    // Dynamic Paragraph Parser Fallback
+    // Professional Heuristic NLP Extractor Fallback
     const { randomizeQuestionOptions } = require('../utils/shuffleUtils');
-    const paragraphs = extractedText.split(/\n\s*\n/).filter(p => p.trim().length > 25);
+    
+    // Extract key sentences (definitions, rules, statements)
+    const rawSentences = extractedText
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.replace(/\s+/g, ' ').trim())
+      .filter(s => s.length > 25 && s.length < 250);
+
     const questions = [];
+    const usedSentences = new Set();
 
     for (let i = 0; i < count; i++) {
-      const samplePara = paragraphs[i % paragraphs.length] || `Core document text excerpt ${i + 1}.`;
-      const cleanPara = samplePara.replace(/\s+/g, ' ').trim().substring(0, 140);
-      
-      const questionText = `According to the document: What is the main point regarding "${cleanPara.substring(0, 45)}..."?`;
-      const correctChoice = `It specifies key domain rules: ${cleanPara.substring(0, 50)}...`;
-      const options = randomizeQuestionOptions([
-        correctChoice,
-        'It represents a legacy unencrypted single-threaded loop',
-        'It mandates plain text file storage',
-        'It disables socket handshakes'
-      ]);
+      const sentence = rawSentences.find(s => !usedSentences.has(s)) || rawSentences[i % Math.max(1, rawSentences.length)] || `Core document concept excerpt ${i + 1}`;
+      usedSentences.add(sentence);
+
+      const words = sentence.split(/\s+/);
+      const mainSubject = words.slice(0, 5).join(' ');
+
+      const questionText = sentence.includes('is') || sentence.includes('are') || sentence.includes('defines')
+        ? `Based on the scanned material: What is the core principle or definition concerning "${mainSubject}"?`
+        : `According to the document text: Which statement accurately describes "${mainSubject}"?`;
+
+      const correctChoice = sentence;
+
+      const distractors = [
+        `It operates as a restricted legacy process without taking "${mainSubject}" into account.`,
+        `It requires manual user input for every execution cycle instead of standard processing.`,
+        `It represents an external network dependency isolated from "${mainSubject}".`
+      ];
+
+      const options = randomizeQuestionOptions([correctChoice, ...distractors]);
 
       questions.push({
         text: questionText,
         type: 'mcq',
         options,
         correctAnswers: [correctChoice],
-        explanation: `Extracted directly from text: "${cleanPara}"`,
+        explanation: `Document Reference: "${sentence}"`,
         marks: 1,
-        difficulty: 'medium'
+        difficulty: i % 3 === 0 ? 'hard' : (i % 2 === 0 ? 'medium' : 'easy')
       });
     }
 
