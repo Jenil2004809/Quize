@@ -15,7 +15,13 @@ import {
   FaTimesCircle, 
   FaQuestionCircle, 
   FaDesktop, 
-  FaShieldAlt 
+  FaShieldAlt,
+  FaRocket,
+  FaVideo,
+  FaInfoCircle,
+  FaLock,
+  FaRedo,
+  FaPlay
 } from 'react-icons/fa';
 
 const AttemptQuiz = () => {
@@ -27,6 +33,10 @@ const AttemptQuiz = () => {
   const [quiz, setQuiz] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Pre-Flight Proctoring Device & Screen Check State
+  const [isExamStarted, setIsExamStarted] = useState(false);
+  const [screenShareError, setScreenShareError] = useState('');
 
   // User state responses
   const [userAnswers, setUserAnswers] = useState({}); // questionId -> selectedAnswers: []
@@ -164,32 +174,54 @@ const AttemptQuiz = () => {
   };
 
   const requestScreenShare = async (camStream) => {
+    setScreenShareError('');
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
         const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: { displaySurface: 'browser' },
+          video: { 
+            displaySurface: 'browser',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 15 }
+          },
           audio: false
         });
         screenStreamRef.current = screenStream;
         setIsScreenSharing(true);
-        startRecordingWithStreams(screenStream, camStream || cameraStreamRef.current);
+        setScreenShareError('');
+
+        // If exam is already active, immediately initialize recording
+        if (isExamStarted) {
+          startRecordingWithStreams(screenStream, camStream || cameraStreamRef.current);
+        }
       } else {
-        startRecordingWithStreams(null, camStream || cameraStreamRef.current);
+        setScreenShareError('Screen sharing is not supported on this mobile device/browser.');
       }
     } catch (err) {
       console.warn('Screen share cancelled or not granted:', err.message);
       setIsScreenSharing(false);
-      startRecordingWithStreams(null, camStream || cameraStreamRef.current);
+      setScreenShareError('Screen selection cancelled. Click above to retry or start with camera proctoring.');
     }
   };
 
   const handleStreamReady = (stream) => {
     cameraStreamRef.current = stream;
-    if (!screenStreamRef.current && !mediaRecorderRef.current) {
-      requestScreenShare(stream);
-    } else {
+    if (isExamStarted) {
       startRecordingWithStreams(screenStreamRef.current, stream);
     }
+  };
+
+  // Launch Exam with Fullscreen + Recording
+  const handleLaunchExam = async () => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (e) {}
+
+    // Initialize composite stream recording
+    startRecordingWithStreams(screenStreamRef.current, cameraStreamRef.current);
+    setIsExamStarted(true);
   };
 
   // Clean up streams on unmount
@@ -351,6 +383,7 @@ const AttemptQuiz = () => {
 
   // Non-blocking Fullscreen change listener
   useEffect(() => {
+    if (!isExamStarted) return;
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
     };
@@ -366,11 +399,11 @@ const AttemptQuiz = () => {
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
     };
-  }, [loading, quiz]);
+  }, [loading, quiz, isExamStarted]);
 
-  // Start timer on successful load
+  // Start timer on successful load & after exam is started
   useEffect(() => {
-    if (loading || !quiz || questions.length === 0 || timeLeft <= 0) return;
+    if (loading || !quiz || questions.length === 0 || timeLeft <= 0 || !isExamStarted) return;
 
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
@@ -384,7 +417,7 @@ const AttemptQuiz = () => {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [loading, quiz, questions.length]);
+  }, [loading, quiz, questions.length, isExamStarted]);
 
   // Auto-save active answers state to localStorage
   useEffect(() => {
@@ -589,6 +622,146 @@ const AttemptQuiz = () => {
     );
   }
 
+  if (!isExamStarted) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 animate-fade-in">
+        <div className="max-w-3xl w-full glass-card rounded-3xl p-6 sm:p-10 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-8">
+          
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-wider">
+              <FaShieldAlt className="w-3.5 h-3.5" />
+              <span>Proctored Assessment Setup</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+              {quiz?.title}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-lg mx-auto">
+              Please complete the 2-step verification below to connect your proctoring camera and quiz screen recording before the timer starts.
+            </p>
+          </div>
+
+          {/* Device Verification Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Step 1: Camera Proctor */}
+            <div className="p-5 rounded-2xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-blue-500 uppercase tracking-wider flex items-center space-x-1.5">
+                    <FaVideo className="w-3.5 h-3.5" />
+                    <span>Step 1: Face WebCam</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-500 flex items-center space-x-1">
+                    <FaCheckCircle className="w-2.5 h-2.5" />
+                    <span>Connected</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Monitors head alignment and active exam attention.
+                </p>
+              </div>
+
+              <div className="rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                <BiometricIntegrityRadar 
+                  isExamActive={true}
+                  onViolation={() => {}}
+                  onIntegrityChange={() => {}}
+                  onEyeOffScreenStateChange={() => {}}
+                  onStreamReady={handleStreamReady}
+                />
+              </div>
+            </div>
+
+            {/* Step 2: Screen Recording */}
+            <div className="p-5 rounded-2xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-indigo-500 uppercase tracking-wider flex items-center space-x-1.5">
+                    <FaDesktop className="w-3.5 h-3.5" />
+                    <span>Step 2: Quiz Screen</span>
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex items-center space-x-1 ${
+                    isScreenSharing
+                      ? 'bg-emerald-500/10 text-emerald-500'
+                      : 'bg-amber-500/10 text-amber-500'
+                  }`}>
+                    {isScreenSharing ? <FaCheckCircle className="w-2.5 h-2.5" /> : <FaInfoCircle className="w-2.5 h-2.5" />}
+                    <span>{isScreenSharing ? 'Screen Ready' : 'Permission Needed'}</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Records your quiz browser window so answers and interactions are verified by teachers.
+                </p>
+              </div>
+
+              {/* Action Button for Screen Share */}
+              <div className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => requestScreenShare(cameraStreamRef.current)}
+                  className={`w-full py-3 px-4 rounded-xl text-xs font-black flex items-center justify-center space-x-2 transition-all shadow-md ${
+                    isScreenSharing
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/20 hover-scale'
+                  }`}
+                >
+                  <FaDesktop className="w-4 h-4" />
+                  <span>{isScreenSharing ? '✅ Screen Selected (Click to Change)' : '🖥️ Click to Share Exam Screen'}</span>
+                </button>
+
+                <p className="text-[10px] text-slate-400 text-center leading-relaxed">
+                  💡 <em>Hint: Select <strong>"Entire Screen"</strong> or <strong>"Current Tab"</strong> in the browser prompt.</em>
+                </p>
+
+                {screenShareError && (
+                  <p className="text-[10px] text-amber-500 text-center font-bold">
+                    {screenShareError}
+                  </p>
+                )}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Exam Summary Info Bar */}
+          <div className="grid grid-cols-3 gap-3 text-center p-4 rounded-2xl bg-slate-100 dark:bg-slate-900/40 text-xs">
+            <div>
+              <span className="text-slate-400 block text-[10px] uppercase font-bold">Time Limit</span>
+              <strong className="text-slate-900 dark:text-white">{quiz?.timeLimit} Minutes</strong>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px] uppercase font-bold">Questions</span>
+              <strong className="text-slate-900 dark:text-white">{questions.length} Items</strong>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px] uppercase font-bold">Passing Marks</span>
+              <strong className="text-slate-900 dark:text-white">{quiz?.passingMarks} Pts</strong>
+            </div>
+          </div>
+
+          {/* Launch Exam CTA */}
+          <div className="space-y-3 pt-2">
+            <button
+              type="button"
+              onClick={handleLaunchExam}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-sm sm:text-base flex items-center justify-center space-x-3 transition-all shadow-xl shadow-emerald-500/20 hover-scale"
+            >
+              <FaRocket className="w-5 h-5" />
+              <span>🚀 Start Proctored Exam (Enter Fullscreen)</span>
+            </button>
+
+            <p className="text-[11px] text-slate-400 text-center flex items-center justify-center space-x-1.5">
+              <FaLock className="w-3 h-3 text-emerald-500" />
+              <span>Timer starts only after you click start. Fullscreen will activate automatically.</span>
+            </p>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
   // Safe question object extraction
   const currentQuestion = questions[currentIndex] || {};
   const qId = currentQuestion._id || `q_${currentIndex}`;
@@ -618,9 +791,9 @@ const AttemptQuiz = () => {
     if (!qItem) return 'w-10 h-10 rounded-xl font-bold text-xs flex items-center justify-center border transition-all bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400';
     const id = qItem._id;
     const isCurrent = idx === currentIndex;
-    const isAns = userAnswers[id]?.length > 0;
-    const isFlg = flagged[id];
-    const isVst = visited[id];
+    const isAns = (userAnswers[id] || []).length > 0;
+    const isFlg = !!flagged[id];
+    const isVst = !!visited[id];
 
     let base = 'w-10 h-10 rounded-xl font-bold text-xs flex items-center justify-center border transition-all ';
 
@@ -672,6 +845,16 @@ const AttemptQuiz = () => {
               Time Allowed: {quiz?.timeLimit} Mins | Total Questions: {questions.length}
             </p>
           </div>
+        </div>
+
+        {/* Live Proctoring & Recording Badge */}
+        <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] font-bold">
+          <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+          <span className="text-red-500 font-extrabold uppercase tracking-wider text-[10px]">REC</span>
+          <span className="text-slate-300 dark:text-slate-700">|</span>
+          <span className="text-slate-600 dark:text-slate-300">
+            {isScreenSharing ? '🖥️ Screen & Camera Monitored' : '📷 Camera Monitored'}
+          </span>
         </div>
 
         {/* Live Countdown Timer */}
