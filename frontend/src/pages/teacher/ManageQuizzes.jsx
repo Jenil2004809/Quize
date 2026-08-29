@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaFolderOpen, FaPlus, FaTrash, FaEdit, FaEye, FaToggleOn, FaToggleOff, FaQuestionCircle, FaArrowRight } from 'react-icons/fa';
-import api from '../../services/api';
+import api, { ASSET_BASE_URL } from '../../services/api';
+import { io } from 'socket.io-client';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
 
@@ -59,6 +60,21 @@ const ManageQuizzes = () => {
       setLoading(false);
     };
     init();
+  }, []);
+
+  // Real-time Database Synchronization via WebSocket
+  useEffect(() => {
+    const backendUrl = ASSET_BASE_URL || window.location.origin;
+    const socket = io(backendUrl);
+
+    socket.on('analytics_updated', () => {
+      fetchQuizzes();
+      fetchCategories();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const handlePublishToggle = async (id, currentStatus) => {

@@ -5,6 +5,7 @@ import {
   FaShieldAlt, FaTrophy, FaUser, FaRedo, FaTimes, FaDesktop, FaEye
 } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
+import { io } from 'socket.io-client';
 import Swal from 'sweetalert2';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import PageTransition from '../../components/PageTransition';
@@ -75,6 +76,20 @@ const QuizRecordings = ({ role = 'teacher' }) => {
   useEffect(() => {
     fetchRecordings(true);
   }, [role, selectedQuizId, statusFilter, violationsOnly]);
+
+  // Real-time Database Synchronization via WebSocket
+  useEffect(() => {
+    const backendUrl = ASSET_BASE_URL || window.location.origin;
+    const socket = io(backendUrl);
+
+    socket.on('analytics_updated', () => {
+      fetchRecordings(false);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [role, selectedQuizId, statusFilter, violationsOnly, searchTerm]);
 
   // Handle Search Debounce / Trigger
   const handleSearchSubmit = (e) => {

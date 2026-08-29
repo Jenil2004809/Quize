@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaCheckDouble, FaExclamationCircle, FaCheckCircle, FaFilter, FaSearch, FaEye, FaTimes, FaUser, FaClock, FaTrophy, FaAward, FaFileExcel, FaVideo } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
+import { io } from 'socket.io-client';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
 
@@ -35,25 +36,40 @@ const StudentAttempts = () => {
     fetchQuizzes();
   }, []);
 
+  const fetchAttempts = async (showLoading = true) => {
+    if (showLoading) setAttemptsLoading(true);
+    try {
+      const url = selectedQuizId === 'all'
+        ? '/results/teacher/all'
+        : `/results/quiz/${selectedQuizId}`;
+      const res = await api.get(url);
+      if (res.data.success) {
+        setAttempts(res.data.results);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (showLoading) setAttemptsLoading(false);
+    }
+  };
+
   // Fetch attempts whenever selected quiz changes
   useEffect(() => {
-    const fetchAttempts = async () => {
-      setAttemptsLoading(true);
-      try {
-        const url = selectedQuizId === 'all'
-          ? '/results/teacher/all'
-          : `/results/quiz/${selectedQuizId}`;
-        const res = await api.get(url);
-        if (res.data.success) {
-          setAttempts(res.data.results);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setAttemptsLoading(false);
-      }
+    fetchAttempts(true);
+  }, [selectedQuizId]);
+
+  // Real-time Database Synchronization via WebSocket
+  useEffect(() => {
+    const backendUrl = ASSET_BASE_URL || window.location.origin;
+    const socket = io(backendUrl);
+
+    socket.on('analytics_updated', () => {
+      fetchAttempts(false);
+    });
+
+    return () => {
+      socket.disconnect();
     };
-    fetchAttempts();
   }, [selectedQuizId]);
 
   // Open detail breakdown modal

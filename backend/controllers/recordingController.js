@@ -3,6 +3,7 @@ const fs = require('fs');
 const Result = require('../models/Result');
 const Quiz = require('../models/Quiz');
 const Student = require('../models/Student');
+const { notifyAnalyticsUpdate } = require('../config/socket');
 
 // @desc    Upload Student Quiz Session Recording
 // @route   POST /api/recordings/upload/:resultId
@@ -51,6 +52,7 @@ const uploadRecording = async (req, res, next) => {
     result.hasRecording = true;
 
     await result.save();
+    notifyAnalyticsUpdate();
 
     return res.status(200).json({
       success: true,
@@ -260,6 +262,7 @@ const deleteRecording = async (req, res, next) => {
     result.recordingDuration = 0;
     result.hasRecording = false;
     await result.save();
+    notifyAnalyticsUpdate();
 
     return res.status(200).json({
       success: true,

@@ -5,6 +5,7 @@ import {
   FaDesktop, FaGlobe, FaUser, FaBook, FaTimes, FaTrash, FaVideo
 } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
+import { io } from 'socket.io-client';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
 
@@ -51,6 +52,24 @@ const PolicyViolations = () => {
 
   useEffect(() => {
     fetchViolations();
+  }, [statusFilter, searchQuery]);
+
+  // Real-time Database Synchronization via WebSocket
+  useEffect(() => {
+    const backendUrl = ASSET_BASE_URL || window.location.origin;
+    const socket = io(backendUrl);
+
+    socket.on('analytics_updated', () => {
+      fetchViolations();
+    });
+
+    socket.on('policy_violation_update', () => {
+      fetchViolations();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [statusFilter, searchQuery]);
 
   // Handle Approve Action (Section 8)

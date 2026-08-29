@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { bookmarkToggleSuccess } from '../redux/authSlice';
 import { FaClock, FaTrophy, FaSearch, FaBookmark, FaGamepad, FaFilter, FaTrash, FaBookOpen, FaArrowLeft, FaLayerGroup, FaMicrochip, FaLaptopCode, FaCloud } from 'react-icons/fa';
-import api from '../services/api';
+import api, { ASSET_BASE_URL } from '../services/api';
+import { io } from 'socket.io-client';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
 import PageTransition from '../components/PageTransition';
@@ -70,6 +71,21 @@ const QuizzesPage = () => {
 
   useEffect(() => {
     fetchQuizzes();
+  }, [search, category, difficulty, sort]);
+
+  // Real-time Database Synchronization via WebSocket
+  useEffect(() => {
+    const backendUrl = ASSET_BASE_URL || window.location.origin;
+    const socket = io(backendUrl);
+
+    socket.on('analytics_updated', () => {
+      fetchCategoriesAndSubjects();
+      fetchQuizzes();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [search, category, difficulty, sort]);
 
   const handleBookmarkToggle = async (e, id) => {
