@@ -44,14 +44,96 @@ const AttemptQuiz = () => {
   const [isRedScreenAlert, setIsRedScreenAlert] = useState(false);
   const lastViolationReasonRef = useRef('');
 
-  // Proctored Session Video Recording States
+  // Proctored Session Video Recording States (Screen + Camera Composite)
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const recordingStartTimeRef = useRef(Date.now());
+  const cameraStreamRef = useRef(null);
+  const screenStreamRef = useRef(null);
+  const compositeCleanupRef = useRef(null);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
 
-  const handleStreamReady = (stream) => {
-    if (!stream || mediaRecorderRef.current) return;
+  // Initialize Screen Recording + WebCam Composite Canvas Stream
+  const startRecordingWithStreams = (screenStream, camStream) => {
     try {
+      let recordingStream = camStream;
+
+      if (screenStream) {
+        // Create Picture-in-Picture Canvas Composite
+        const canvas = document.createElement('canvas');
+        canvas.width = 1280;
+        canvas.height = 720;
+        const ctx = canvas.getContext('2d');
+
+        const screenVideo = document.createElement('video');
+        screenVideo.srcObject = screenStream;
+        screenVideo.muted = true;
+        screenVideo.play().catch(() => {});
+
+        let camVideo = null;
+        if (camStream) {
+          camVideo = document.createElement('video');
+          camVideo.srcObject = camStream;
+          camVideo.muted = true;
+          camVideo.play().catch(() => {});
+        }
+
+        let animId;
+        const renderFrame = () => {
+          if (screenVideo.readyState >= 2) {
+            ctx.drawImage(screenVideo, 0, 0, canvas.width, canvas.height);
+          } else {
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+
+          if (camVideo && camVideo.readyState >= 2) {
+            const pipW = 240;
+            const pipH = 180;
+            const pipX = canvas.width - pipW - 20;
+            const pipY = canvas.height - pipH - 20;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(pipX - 3, pipY - 3, pipW + 6, pipH + 6);
+            ctx.drawImage(camVideo, pipX, pipY, pipW, pipH);
+
+            ctx.fillStyle = '#10b981';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText('🔴 LIVE PROCTOR', pipX + 10, pipY + 20);
+          }
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.font = 'bold 12px monospace';
+          ctx.fillText(`QUIZ MASTER PROCTOR • ${new Date().toLocaleTimeString()}`, 20, canvas.height - 20);
+
+          animId = requestAnimationFrame(renderFrame);
+        };
+
+        renderFrame();
+        recordingStream = canvas.captureStream(15);
+
+        compositeCleanupRef.current = () => {
+          if (animId) cancelAnimationFrame(animId);
+          screenVideo.pause();
+          screenVideo.srcObject = null;
+          if (camVideo) {
+            camVideo.pause();
+            camVideo.srcObject = null;
+          }
+        };
+
+        // Listen if screen share is stopped manually by candidate
+        const screenTrack = screenStream.getVideoTracks()[0];
+        if (screenTrack) {
+          screenTrack.onended = () => {
+            setIsScreenSharing(false);
+            handleProctorViolation('Screen sharing was disconnected during active exam.');
+          };
+        }
+      }
+
+      if (!recordingStream) return;
+
       let options = { mimeType: 'video/webm;codecs=vp8,opus' };
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
         options = { mimeType: 'video/webm' };
@@ -60,7 +142,11 @@ const AttemptQuiz = () => {
         options = {};
       }
 
-      const recorder = new MediaRecorder(stream, options);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try { mediaRecorderRef.current.stop(); } catch (e) {}
+      }
+
+      const recorder = new MediaRecorder(recordingStream, options);
       recordedChunksRef.current = [];
       recordingStartTimeRef.current = Date.now();
 
@@ -70,13 +156,53 @@ const AttemptQuiz = () => {
         }
       };
 
-      // Collect video chunks in 3-second slices
       recorder.start(3000);
       mediaRecorderRef.current = recorder;
-    } catch (e) {
-      console.warn('MediaRecorder setup error:', e);
+    } catch (err) {
+      console.warn('Composite recorder error:', err);
     }
   };
+
+  const requestScreenShare = async (camStream) => {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { displaySurface: 'browser' },
+          audio: false
+        });
+        screenStreamRef.current = screenStream;
+        setIsScreenSharing(true);
+        startRecordingWithStreams(screenStream, camStream || cameraStreamRef.current);
+      } else {
+        startRecordingWithStreams(null, camStream || cameraStreamRef.current);
+      }
+    } catch (err) {
+      console.warn('Screen share cancelled or not granted:', err.message);
+      setIsScreenSharing(false);
+      startRecordingWithStreams(null, camStream || cameraStreamRef.current);
+    }
+  };
+
+  const handleStreamReady = (stream) => {
+    cameraStreamRef.current = stream;
+    if (!screenStreamRef.current && !mediaRecorderRef.current) {
+      requestScreenShare(stream);
+    } else {
+      startRecordingWithStreams(screenStreamRef.current, stream);
+    }
+  };
+
+  // Clean up streams on unmount
+  useEffect(() => {
+    return () => {
+      if (compositeCleanupRef.current) {
+        compositeCleanupRef.current();
+      }
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, []);
 
   // Initialize violation count from LocalStorage to prevent bypass by refresh
   useEffect(() => {
@@ -720,6 +846,36 @@ const AttemptQuiz = () => {
             onEyeOffScreenStateChange={setIsRedScreenAlert}
             onStreamReady={handleStreamReady}
           />
+
+          {/* Screen Recording Status & Connect Badge */}
+          <div className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between transition-all ${
+            isScreenSharing
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+              : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400'
+          }`}>
+            <div className="flex items-center space-x-2.5">
+              <div className={`p-2 rounded-xl ${isScreenSharing ? 'bg-emerald-500/20 text-emerald-500' : 'bg-indigo-500/20 text-indigo-500'}`}>
+                <FaDesktop className="w-3.5 h-3.5" />
+              </div>
+              <div>
+                <p className="font-extrabold text-[11px]">
+                  {isScreenSharing ? '🖥️ Screen Recorded' : '🖥️ Screen Stream'}
+                </p>
+                <p className="text-[9px] text-slate-400">
+                  {isScreenSharing ? 'Quiz screen & window captured' : 'Proctored window recording'}
+                </p>
+              </div>
+            </div>
+            {!isScreenSharing && (
+              <button
+                type="button"
+                onClick={() => requestScreenShare(cameraStreamRef.current)}
+                className="px-2.5 py-1 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] transition-all shadow-sm"
+              >
+                Share Screen
+              </button>
+            )}
+          </div>
 
           {/* Palette Card */}
           <div className="glass-card rounded-2xl p-4 space-y-3 text-left">

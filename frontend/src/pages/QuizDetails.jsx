@@ -173,13 +173,13 @@ const QuizDetails = () => {
     }
 
     Swal.fire({
-      title: 'Enter Exam Environment?',
-      text: 'This will request fullscreen mode. Exiting fullscreen or navigating away will automatically autosave and submit your active progress! Are you ready?',
+      title: 'Enter Proctored Exam?',
+      text: 'This examination is monitored with active Screen & Biometric Proctoring. You will enter fullscreen mode with live session recording. Are you ready to begin?',
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#10b981',
       cancelButtonColor: '#64748b',
-      confirmButtonText: 'Start Now!'
+      confirmButtonText: 'Start Exam Now!'
     }).then((result) => {
       if (result.isConfirmed) {
         navigate(`/quizzes/${quizId}/attempt`);
