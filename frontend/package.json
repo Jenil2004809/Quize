@@ -12,6 +12,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.1",
     "axios": "^1.6.8",
+    "canvas-confetti": "^1.9.4",
     "chart.js": "^4.4.2",
     "framer-motion": "^11.0.8",
     "html2canvas": "^1.4.1",
