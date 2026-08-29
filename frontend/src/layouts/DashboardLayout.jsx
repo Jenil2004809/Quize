@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../redux/authSlice';
 import { ASSET_BASE_URL } from '../services/api';
+import ThemeSelector from '../components/ThemeSelector';
 import {
   FaTrophy, FaAward, FaHistory, FaBookmark, FaCog, FaUser, FaSignOutAlt,
   FaPlusCircle, FaFolderOpen, FaChartPie, FaCheckDouble, FaUsers,
@@ -153,6 +154,7 @@ const DashboardLayout = () => {
         </Link>
 
         <div className="flex items-center space-x-2.5">
+          <ThemeSelector align="right" />
           <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-full border ${getRoleBadgeStyle(user?.role)}`}>
             {user?.role}
           </span>
@@ -336,11 +338,14 @@ const DashboardLayout = () => {
             <FaArrowLeft className="w-3 h-3 text-blue-500" />
             <span>Back to Portal</span>
           </Link>
-          <div className="flex items-center space-x-2 text-xs text-slate-400 font-semibold capitalize hidden sm:flex">
-            <span>Logged in as:</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${getRoleBadgeStyle(user?.role)}`}>
-              {user?.role}
-            </span>
+          <div className="flex items-center space-x-3 text-xs text-slate-400 font-semibold capitalize hidden sm:flex">
+            <ThemeSelector align="right" />
+            <div className="flex items-center space-x-1.5 border-l border-slate-200 dark:border-slate-800 pl-3">
+              <span>Logged in as:</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ${getRoleBadgeStyle(user?.role)}`}>
+                {user?.role}
+              </span>
+            </div>
           </div>
         </div>
 

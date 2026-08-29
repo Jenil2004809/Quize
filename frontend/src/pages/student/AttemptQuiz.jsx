@@ -4,6 +4,7 @@ import api from '../../services/api';
 import Swal from 'sweetalert2';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import BiometricIntegrityRadar from '../../components/BiometricIntegrityRadar';
+import ThemeSelector from '../../components/ThemeSelector';
 import { 
   FaClock, 
   FaExclamationTriangle, 
@@ -857,22 +858,26 @@ const AttemptQuiz = () => {
           </span>
         </div>
 
-        {/* Live Countdown Timer */}
-        <div className={`px-4 py-2 rounded-2xl border font-mono font-black text-xs md:text-sm flex items-center space-x-2 ${
-          timeLeft < 300 
-            ? 'bg-red-500/10 text-red-500 border-red-500/30 animate-pulse' 
-            : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
-        }`}>
-          <FaClock />
-          <span>{formatTime(timeLeft)}</span>
-        </div>
+        <div className="flex items-center space-x-3">
+          <ThemeSelector align="right" />
 
-        <button
-          onClick={handleSubmitConfirmation}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl hover-scale shadow shadow-emerald-500/10"
-        >
-          Submit Exam
-        </button>
+          {/* Live Countdown Timer */}
+          <div className={`px-4 py-2 rounded-2xl border font-mono font-black text-xs md:text-sm flex items-center space-x-2 ${
+            timeLeft < 300 
+              ? 'bg-red-500/10 text-red-500 border-red-500/30 animate-pulse' 
+              : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+          }`}>
+            <FaClock />
+            <span>{formatTime(timeLeft)}</span>
+          </div>
+
+          <button
+            onClick={handleSubmitConfirmation}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl hover-scale shadow shadow-emerald-500/10"
+          >
+            Submit Exam
+          </button>
+        </div>
       </header>
 
       {/* Progress Bar */}

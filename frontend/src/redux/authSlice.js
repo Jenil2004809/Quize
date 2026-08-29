@@ -62,26 +62,50 @@ const authSlice = createSlice({
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     },
+    setTheme: (state, action) => {
+      const selectedTheme = action.payload;
+      state.theme = selectedTheme;
+      localStorage.setItem('theme', selectedTheme);
+      applyThemeToDOM(selectedTheme);
+    },
     toggleTheme: (state) => {
-      const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+      const themes = ['dark', 'oled', 'cyber', 'light'];
+      const currentIndex = themes.indexOf(state.theme);
+      const nextIndex = (currentIndex + 1) % themes.length;
+      const newTheme = themes[nextIndex];
       state.theme = newTheme;
       localStorage.setItem('theme', newTheme);
-      // Toggle body tag dark class
-      if (newTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      applyThemeToDOM(newTheme);
     },
     initTheme: (state) => {
-      if (state.theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+      const savedTheme = localStorage.getItem('theme') || state.theme || 'dark';
+      state.theme = savedTheme;
+      applyThemeToDOM(savedTheme);
     }
   }
 });
+
+const applyThemeToDOM = (theme) => {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  root.classList.remove('light', 'dark', 'theme-academic', 'theme-slate', 'theme-oled', 'theme-cyber');
+
+  switch (theme) {
+    case 'light':
+      root.classList.add('light', 'theme-academic');
+      break;
+    case 'oled':
+      root.classList.add('dark', 'theme-oled');
+      break;
+    case 'cyber':
+      root.classList.add('dark', 'theme-cyber');
+      break;
+    case 'dark':
+    default:
+      root.classList.add('dark', 'theme-slate');
+      break;
+  }
+};
 
 export const {
   authStart,
@@ -90,6 +114,7 @@ export const {
   updateProfileSuccess,
   bookmarkToggleSuccess,
   logout,
+  setTheme,
   toggleTheme,
   initTheme
 } = authSlice.actions;

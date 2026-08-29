@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, toggleTheme } from '../redux/authSlice';
-import { FaSun, FaMoon, FaBell, FaUser, FaSignOutAlt, FaBars, FaTimes, FaTrophy, FaArrowLeft, FaGamepad } from 'react-icons/fa';
+import { FaBell, FaUser, FaSignOutAlt, FaBars, FaTimes, FaTrophy, FaArrowLeft, FaGamepad } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import api, { ASSET_BASE_URL } from '../services/api';
 import { io } from 'socket.io-client';
+import ThemeSelector from './ThemeSelector';
 
 const Navbar = () => {
   const { isAuthenticated, user, theme } = useSelector((state) => state.auth);
@@ -130,14 +131,8 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Theme Toggle */}
-            <button
-              onClick={() => dispatch(toggleTheme())}
-              className="p-2 rounded-lg text-slate-500 hover:text-blue-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all"
-              aria-label="Toggle Theme"
-            >
-              {theme === 'dark' ? <FaSun className="w-5 h-5 text-amber-500" /> : <FaMoon className="w-5 h-5" />}
-            </button>
+            {/* Multi-Theme Selector (4 Palettes) */}
+            <ThemeSelector align="right" />
 
             {/* Notification Bell */}
             {isAuthenticated && (
@@ -253,14 +248,8 @@ const Navbar = () => {
               </button>
             )}
 
-            {/* Mobile Theme Toggle */}
-            <button
-              onClick={() => dispatch(toggleTheme())}
-              className="p-2 rounded-lg text-slate-500 dark:text-slate-400 touch-target flex items-center justify-center"
-              aria-label="Toggle Theme"
-            >
-              {theme === 'dark' ? <FaSun className="w-5 h-5 text-amber-500" /> : <FaMoon className="w-5 h-5" />}
-            </button>
+            {/* Mobile Multi-Theme Selector */}
+            <ThemeSelector align="right" />
 
             {/* Mobile Hamburger Button */}
             <button

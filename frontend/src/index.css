@@ -146,3 +146,67 @@
 .glow-success {
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
 }
+
+/* =========================================================================
+   MULTI-THEME PALETTES (ACADEMIC LIGHT, SLATE DARK, MIDNIGHT OLED, CYBER SYNTHWAVE)
+   ========================================================================= */
+
+/* 1. Academic Light (Default Light) */
+html.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+/* 2. Slate Dark (Default Dark) */
+html.dark.theme-slate body {
+  background-color: #020617;
+  color: #f8fafc;
+}
+
+/* 3. Midnight OLED (True Pitch Black) */
+html.dark.theme-oled body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+html.dark.theme-oled .glass-card,
+html.dark.theme-oled .glass-sidebar,
+html.dark.theme-oled .glass-navbar,
+html.dark.theme-oled aside,
+html.dark.theme-oled .bg-slate-900,
+html.dark.theme-oled .dark\:bg-slate-900,
+html.dark.theme-oled .dark\:bg-slate-950 {
+  background-color: #080808 !important;
+  border-color: #222222 !important;
+}
+html.dark.theme-oled .border-slate-800,
+html.dark.theme-oled .dark\:border-slate-800 {
+  border-color: #1e1e1e !important;
+}
+
+/* 4. Cyber Synthwave / Neon Matrix */
+html.dark.theme-cyber body {
+  background-color: #07030d !important;
+  background-image: 
+    radial-gradient(circle at 10% 0%, rgba(147, 51, 234, 0.12), transparent 35%),
+    radial-gradient(circle at 90% 90%, rgba(236, 72, 153, 0.1), transparent 35%);
+  color: #f3e8ff !important;
+}
+html.dark.theme-cyber .glass-card,
+html.dark.theme-cyber .glass-sidebar,
+html.dark.theme-cyber .glass-navbar,
+html.dark.theme-cyber aside,
+html.dark.theme-cyber .bg-slate-900,
+html.dark.theme-cyber .dark\:bg-slate-900,
+html.dark.theme-cyber .dark\:bg-slate-950 {
+  background-color: rgba(19, 8, 35, 0.85) !important;
+  border-color: rgba(168, 85, 247, 0.3) !important;
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.08) !important;
+}
+html.dark.theme-cyber .border-slate-800,
+html.dark.theme-cyber .dark\:border-slate-800 {
+  border-color: rgba(147, 51, 234, 0.3) !important;
+}
+html.dark.theme-cyber .text-blue-500,
+html.dark.theme-cyber .dark\:text-blue-400 {
+  color: #c084fc !important;
+}
