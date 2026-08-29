@@ -3,7 +3,7 @@ const Quiz = require('../models/Quiz');
 const Student = require('../models/Student');
 const Notification = require('../models/Notification');
 const PolicyViolationLog = require('../models/PolicyViolationLog');
-const { emitToUser } = require('../config/socket');
+const { emitToUser, notifyAnalyticsUpdate } = require('../config/socket');
 
 // @desc    Get all policy violations for Admin Dashboard with stats cards & filters
 // @route   GET /api/admin/policy-violations
@@ -149,6 +149,7 @@ const approvePolicyViolation = async (req, res, next) => {
       status: 'APPROVED',
       message: 'Admin approved your quiz access.'
     });
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,
@@ -206,6 +207,7 @@ const rejectPolicyViolation = async (req, res, next) => {
       status: 'REJECTED',
       message: 'Your request has been rejected by the administrator.'
     });
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,
@@ -350,6 +352,8 @@ const requestRetakeApproval = async (req, res, next) => {
       details: `Student ${req.user.name} requested retake approval for quiz "${quiz.title}". Note: ${reason || 'None'}`
     });
 
+    notifyAnalyticsUpdate();
+
     return res.json({
       success: true,
       message: 'Retake approval request submitted to Administrator successfully.',
@@ -380,6 +384,7 @@ const deletePolicyViolation = async (req, res, next) => {
 
     // Delete the Result document from MongoDB
     await violation.deleteOne();
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,
@@ -413,6 +418,7 @@ const deleteAllPolicyViolations = async (req, res, next) => {
 
     // Delete violation Result records
     const deleteRes = await Result.deleteMany(violationQuery);
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,

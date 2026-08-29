@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCheckDouble, FaExclamationCircle, FaCheckCircle, FaFilter, FaSearch, FaEye, FaTimes, FaUser, FaClock, FaTrophy, FaAward, FaFileExcel } from 'react-icons/fa';
+import { FaCheckDouble, FaExclamationCircle, FaCheckCircle, FaFilter, FaSearch, FaEye, FaTimes, FaUser, FaClock, FaTrophy, FaAward, FaFileExcel, FaVideo } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
@@ -402,6 +402,30 @@ const StudentAttempts = () => {
                     <p className="text-lg font-black text-purple-500">{Math.floor(attemptDetail.result.timeTaken / 60)}m {attemptDetail.result.timeTaken % 60}s</p>
                   </div>
                 </div>
+
+                {/* Exam Session Proctored Video Player (If Available) */}
+                {attemptDetail.result.recordingUrl && (
+                  <div className="p-4 rounded-2xl bg-slate-950 text-white space-y-3 border border-slate-800">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-xs font-bold text-blue-400">
+                        <FaVideo className="w-3.5 h-3.5" />
+                        <span>Recorded Proctored Exam Session Video</span>
+                      </div>
+                      <a
+                        href={`${ASSET_BASE_URL}${attemptDetail.result.recordingUrl}`}
+                        download={`exam_recording_${attemptDetail.result._id}.webm`}
+                        className="text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 px-3 py-1 rounded-xl"
+                      >
+                        Download Recording
+                      </a>
+                    </div>
+                    <video
+                      src={`${ASSET_BASE_URL}${attemptDetail.result.recordingUrl}`}
+                      controls
+                      className="w-full max-h-64 rounded-xl bg-black object-contain"
+                    />
+                  </div>
+                )}
 
                 {/* Answer breakdown list */}
                 <div className="space-y-4 pt-2">

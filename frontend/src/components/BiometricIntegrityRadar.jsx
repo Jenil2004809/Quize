@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaShieldAlt, FaEye, FaVideo, FaVideoSlash, FaExclamationTriangle, FaCheckCircle, FaLock, FaExclamationCircle, FaUserCheck, FaUserSlash, FaCircle, FaMobileAlt, FaUser, FaHourglassHalf } from 'react-icons/fa';
 
-const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScreenStateChange, isExamActive }) => {
+const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScreenStateChange, onStreamReady, isExamActive }) => {
   const [integrityScore, setIntegrityScore] = useState(100);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraChecked, setCameraChecked] = useState(false);
@@ -60,6 +60,9 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
             }
             setCameraActive(true);
             setCameraPermissionError('');
+            if (onStreamReady) {
+              onStreamReady(stream);
+            }
           }
         } else {
           setCameraActive(false);

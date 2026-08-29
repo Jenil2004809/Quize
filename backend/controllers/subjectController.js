@@ -1,5 +1,6 @@
 const Subject = require('../models/Subject');
 const Quiz = require('../models/Quiz');
+const { notifyAnalyticsUpdate } = require('../config/socket');
 
 // @desc    Get all subjects
 // @route   GET /api/subjects
@@ -77,6 +78,8 @@ const createSubject = async (req, res, next) => {
       category
     });
 
+    notifyAnalyticsUpdate();
+
     return res.status(201).json({
       success: true,
       message: 'Subject created successfully!',
@@ -133,6 +136,7 @@ const deleteSubject = async (req, res, next) => {
     await Quiz.updateMany({ subject: subject._id }, { $set: { subject: null } });
 
     await subject.deleteOne();
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,

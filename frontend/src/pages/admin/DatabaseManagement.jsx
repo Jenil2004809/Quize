@@ -3,6 +3,7 @@ import { FaDatabase, FaEdit, FaFilter, FaSearch, FaSort, FaTrash, FaSeedling, Fa
 import Swal from 'sweetalert2';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import { io } from 'socket.io-client';
 
 const statusOptions = [
   { value: '', label: 'All records' },
@@ -67,8 +68,8 @@ const DatabaseManagement = () => {
     if (res.data.success) setCollections(res.data.collections);
   }, []);
 
-  const fetchRecords = useCallback(async () => {
-    setLoading(true);
+  const fetchRecords = useCallback(async (isInitial = true) => {
+    if (isInitial) setLoading(true);
     try {
       const res = await api.get(`/database/${activeCollection}`, {
         params: { search, status, sortField, sortOrder, page, limit: 10 }
@@ -79,7 +80,7 @@ const DatabaseManagement = () => {
         setMeta({ page: res.data.page, pages: res.data.pages, total: res.data.total });
       }
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   }, [activeCollection, page, search, sortField, sortOrder, status]);
 
@@ -88,8 +89,29 @@ const DatabaseManagement = () => {
   }, [fetchCollections]);
 
   useEffect(() => {
-    fetchRecords();
+    fetchRecords(true);
   }, [fetchRecords]);
+
+  // Socket.IO + Polling for Real-Time Instant Database Sync
+  useEffect(() => {
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5005' : window.location.origin;
+    const socket = io(backendUrl);
+
+    socket.on('analytics_updated', () => {
+      fetchCollections();
+      fetchRecords(false);
+    });
+
+    const interval = setInterval(() => {
+      fetchCollections();
+      fetchRecords(false);
+    }, 2000);
+
+    return () => {
+      socket.disconnect();
+      clearInterval(interval);
+    };
+  }, [fetchCollections, fetchRecords]);
 
   const changeCollection = (key) => {
     setActiveCollection(key);
@@ -226,9 +248,15 @@ const DatabaseManagement = () => {
             <FaDatabase className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-black">MongoDB Database Architecture</h1>
+            <h1 className="text-3xl font-black flex items-center gap-3">
+              <span>MongoDB Database Architecture</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-extrabold bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20 tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                REAL-TIME SYNC
+              </span>
+            </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Browse, search, edit, seed, and manage all collections & relationships.
+              Browse, search, edit, seed, and manage all collections & relationships (Live Sync).
             </p>
           </div>
         </div>

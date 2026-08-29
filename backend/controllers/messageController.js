@@ -1,4 +1,5 @@
 const Message = require('../models/Message');
+const { notifyAnalyticsUpdate } = require('../config/socket');
 
 // @desc    Submit a contact message
 // @route   POST /api/contact
@@ -17,6 +18,8 @@ const submitMessage = async (req, res, next) => {
       subject,
       message
     });
+
+    notifyAnalyticsUpdate();
 
     return res.status(201).json({
       success: true,
@@ -53,6 +56,8 @@ const resolveMessage = async (req, res, next) => {
 
     message.isResolved = !message.isResolved;
     await message.save();
+
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,

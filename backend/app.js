@@ -53,6 +53,7 @@ app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/leaderboard', require('./routes/leaderboardRoutes'));
 app.use('/api/settings', require('./routes/settingRoutes'));
 app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/recordings', require('./routes/recordingRoutes'));
 app.use('/api', require('./routes/policyViolationRoutes'));
 
 // ─── Health Check ──────────────────────────────────────────────────────────

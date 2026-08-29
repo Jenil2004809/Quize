@@ -1,5 +1,6 @@
 const Question = require('../models/Question');
 const Quiz = require('../models/Quiz');
+const { notifyAnalyticsUpdate } = require('../config/socket');
 
 // Seeded pseudo-random generator (Mulberry32) for 100% reproducible per-student shuffling
 function mulberry32(a) {
@@ -163,6 +164,7 @@ const createQuestion = async (req, res, next) => {
       image
     });
 
+    notifyAnalyticsUpdate();
     return res.status(201).json({ success: true, message: 'Question created successfully!', question });
   } catch (error) {
     next(error);
@@ -210,6 +212,7 @@ const updateQuestion = async (req, res, next) => {
     }
 
     await question.save();
+    notifyAnalyticsUpdate();
 
     return res.json({ success: true, message: 'Question updated successfully!', question });
   } catch (error) {
@@ -238,6 +241,7 @@ const deleteQuestion = async (req, res, next) => {
     }
 
     await question.deleteOne();
+    notifyAnalyticsUpdate();
 
     return res.json({ success: true, message: 'Question deleted successfully!' });
   } catch (error) {
@@ -293,6 +297,7 @@ const importQuestions = async (req, res, next) => {
 
     // Bulk Insert
     const inserted = await Question.insertMany(parsedQuestions);
+    notifyAnalyticsUpdate();
 
     return res.status(201).json({
       success: true,

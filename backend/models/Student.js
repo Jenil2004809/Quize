@@ -32,6 +32,10 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  coverPhoto: {
+    type: String,
+    default: ''
+  },
   isApproved: {
     type: Boolean,
     default: true
@@ -43,6 +47,14 @@ const studentSchema = new mongoose.Schema({
   isEmailVerified: {
     type: Boolean,
     default: true
+  },
+  otp: {
+    type: String,
+    default: null
+  },
+  otpExpires: {
+    type: Date,
+    default: null
   },
   bookmarks: [
     {

@@ -22,8 +22,8 @@ const QuizzesPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Active view: null = Subject Cards view, 'all' or subjectId = Unit-wise Quiz Cards view
-  const [selectedSubject, setSelectedSubject] = useState({ id: 'all', title: 'All Quizzes', matchName: '' });
+  // Active view: null = Show All Subject Cards & All Quizzes together
+  const [selectedSubject, setSelectedSubject] = useState(null);
 
   // Filters state
   const [search, setSearch] = useState(urlSearch);

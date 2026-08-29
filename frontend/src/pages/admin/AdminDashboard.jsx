@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaUsers, FaUserShield, FaGamepad, FaHistory, FaQuestionCircle, FaDatabase, FaHeartbeat } from 'react-icons/fa';
+import { FaUsers, FaUserShield, FaGamepad, FaHistory, FaQuestionCircle, FaDatabase, FaHeartbeat, FaSignal } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import { io } from 'socket.io-client';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -33,20 +34,47 @@ const AdminDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const res = await api.get('/analytics/dashboard');
-        if (res.data.success) {
-          setData(res.data);
-        }
-      } catch (err) {
-        console.error('Error fetching admin analytics', err);
-      } finally {
-        setLoading(false);
+  const fetchAnalytics = async (isInitial = false) => {
+    try {
+      const res = await api.get('/analytics/dashboard');
+      if (res.data.success) {
+        setData(res.data);
       }
+    } catch (err) {
+      console.error('Error fetching admin analytics', err);
+    } finally {
+      if (isInitial) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics(true);
+
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5005' : window.location.origin;
+    const socket = io(backendUrl);
+
+    socket.on('analytics_updated', () => {
+      fetchAnalytics(false);
+    });
+
+    socket.on('active_users_count', (count) => {
+      setData(prev => prev ? {
+        ...prev,
+        stats: {
+          ...(prev.stats || {}),
+          activeUsers: count
+        }
+      } : prev);
+    });
+
+    const interval = setInterval(() => {
+      fetchAnalytics(false);
+    }, 5000);
+
+    return () => {
+      socket.disconnect();
+      clearInterval(interval);
     };
-    fetchAnalytics();
   }, []);
 
   if (loading) {
@@ -61,7 +89,7 @@ const AdminDashboard = () => {
     totalQuestions: 0,
     totalResults: 0,
     totalSubjects: 0,
-    activeUsers: 0,
+    activeUsers: 1,
     averagePercentage: 0,
     systemStatus: 'Unknown'
   };
@@ -103,26 +131,34 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-8 text-left">
-      <div>
-        <h1 className="text-3xl font-black">Admin Panel</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Website configurations, approvals, and user standings.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black flex items-center gap-3">
+            <span>Admin Panel</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-extrabold bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20 tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              REAL-TIME UPDATES
+            </span>
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Website configurations, approvals, and user standings (Live Sync).</p>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
-          { icon: <FaUsers className="text-blue-500" />, title: 'Students Active', val: stats.totalStudents },
-          { icon: <FaUsers className="text-indigo-500" />, title: 'Teachers Active', val: stats.totalTeachers },
-          { icon: <FaUserShield className="text-amber-500 font-bold" />, title: 'Pending Licences', val: stats.pendingTeachers, link: '/admin-dashboard/users' },
-          { icon: <FaGamepad className="text-purple-500" />, title: 'Quizzes Created', val: stats.totalQuizzes },
-          { icon: <FaQuestionCircle className="text-cyan-500" />, title: 'Questions', val: stats.totalQuestions },
-          { icon: <FaHistory className="text-emerald-500" />, title: 'Attempts', val: stats.totalResults },
-          { icon: <FaDatabase className="text-teal-500" />, title: 'Subjects', val: stats.totalSubjects, link: '/admin-dashboard/database' },
-          { icon: <FaUsers className="text-pink-500" />, title: 'Active Users', val: stats.activeUsers },
-          { icon: <FaHeartbeat className="text-red-500" />, title: 'Avg Score', val: `${stats.averagePercentage}%` },
-          { icon: <FaHeartbeat className="text-green-500" />, title: 'System', val: stats.systemStatus }
+          { icon: <FaUsers className="text-blue-500" />, title: 'Students Active', val: stats.totalStudents ?? 0 },
+          { icon: <FaUsers className="text-indigo-500" />, title: 'Teachers Active', val: stats.totalTeachers ?? 0 },
+          { icon: <FaUserShield className="text-amber-500 font-bold" />, title: 'Pending Licences', val: stats.pendingTeachers ?? 0, link: '/admin-dashboard/users' },
+          { icon: <FaGamepad className="text-purple-500" />, title: 'Quizzes Created', val: stats.totalQuizzes ?? 0 },
+          { icon: <FaQuestionCircle className="text-cyan-500" />, title: 'Questions', val: stats.totalQuestions ?? 0 },
+          { icon: <FaHistory className="text-emerald-500" />, title: 'Attempts', val: stats.totalResults ?? 0 },
+          { icon: <FaDatabase className="text-teal-500" />, title: 'Subjects', val: stats.totalSubjects ?? 0, link: '/admin-dashboard/database' },
+          { icon: <FaUsers className="text-pink-500" />, title: 'Active Users', val: stats.activeUsers ?? 1 },
+          { icon: <FaHeartbeat className="text-red-500" />, title: 'Avg Score', val: `${stats.averagePercentage ?? 0}%` },
+          { icon: <FaHeartbeat className="text-green-500" />, title: 'System', val: stats.systemStatus ?? 'Operational' }
         ].map((card, idx) => (
-          <div key={idx} className="glass-card rounded-2xl p-5 flex items-center space-x-3">
+          <div key={idx} className="glass-card rounded-2xl p-5 flex items-center space-x-3 transition-all duration-300 hover:scale-[1.02]">
             <div className="p-3 bg-slate-100 dark:bg-slate-900 rounded-xl text-lg">{card.icon}</div>
             <div>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{card.title}</p>

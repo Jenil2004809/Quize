@@ -44,6 +44,40 @@ const AttemptQuiz = () => {
   const [isRedScreenAlert, setIsRedScreenAlert] = useState(false);
   const lastViolationReasonRef = useRef('');
 
+  // Proctored Session Video Recording States
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
+  const recordingStartTimeRef = useRef(Date.now());
+
+  const handleStreamReady = (stream) => {
+    if (!stream || mediaRecorderRef.current) return;
+    try {
+      let options = { mimeType: 'video/webm;codecs=vp8,opus' };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = { mimeType: 'video/webm' };
+      }
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        options = {};
+      }
+
+      const recorder = new MediaRecorder(stream, options);
+      recordedChunksRef.current = [];
+      recordingStartTimeRef.current = Date.now();
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+
+      // Collect video chunks in 3-second slices
+      recorder.start(3000);
+      mediaRecorderRef.current = recorder;
+    } catch (e) {
+      console.warn('MediaRecorder setup error:', e);
+    }
+  };
+
   // Initialize violation count from LocalStorage to prevent bypass by refresh
   useEffect(() => {
     const savedCount = parseInt(localStorage.getItem(`quiz_violations_${quizId}`) || '0', 10);
@@ -311,6 +345,15 @@ const AttemptQuiz = () => {
       const totalTime = (quiz?.timeLimit || 15) * 60;
       const timeTaken = Math.max(0, totalTime - timeLeft);
 
+      // Stop video recorder if active
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {
+          // ignore recorder stop error
+        }
+      }
+
       const formattedAnswers = Object.keys(userAnswers).map(qId => ({
         questionId: qId,
         selectedAnswers: userAnswers[qId] || []
@@ -328,6 +371,23 @@ const AttemptQuiz = () => {
       };
 
       const res = await api.post('/results/submit', payload);
+
+      // Upload recorded proctoring session in background
+      const resultId = res.data?.resultId;
+      if (resultId && recordedChunksRef.current && recordedChunksRef.current.length > 0) {
+        try {
+          const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+          const formData = new FormData();
+          formData.append('video', videoBlob, `session_${quizId}_${Date.now()}.webm`);
+          formData.append('duration', timeTaken.toString());
+
+          api.post(`/recordings/upload/${resultId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          }).catch(err => console.warn('Background recording upload notice:', err.message));
+        } catch (uploadErr) {
+          console.warn('Video blob creation error:', uploadErr);
+        }
+      }
 
       // Clean autosave state
       localStorage.removeItem(`autosave_${quizId}`);
@@ -658,6 +718,7 @@ const AttemptQuiz = () => {
             onViolation={handleProctorViolation}
             onIntegrityChange={setIntegrityScore}
             onEyeOffScreenStateChange={setIsRedScreenAlert}
+            onStreamReady={handleStreamReady}
           />
 
           {/* Palette Card */}

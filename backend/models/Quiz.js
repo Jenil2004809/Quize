@@ -81,4 +81,10 @@ const quizSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Performance Indexes for Fast Filtering & Queries
+quizSchema.index({ category: 1, isPublished: 1 });
+quizSchema.index({ subject: 1, isPublished: 1 });
+quizSchema.index({ creator: 1, isPublished: 1 });
+quizSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Quiz', quizSchema);

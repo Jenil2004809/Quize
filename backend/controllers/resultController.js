@@ -4,6 +4,7 @@ const Question = require('../models/Question');
 const Certificate = require('../models/Certificate');
 const Notification = require('../models/Notification');
 const Student = require('../models/Student');
+const { notifyAnalyticsUpdate } = require('../config/socket');
 
 // @desc    Submit a quiz attempt
 // @route   POST /api/results/submit
@@ -150,6 +151,8 @@ const submitQuiz = async (req, res, next) => {
       status: isTabSwitchFailure ? 'TERMINATED' : 'COMPLETED',
       approvalStatus: isTabSwitchFailure ? 'PENDING' : 'NONE'
     });
+
+    notifyAnalyticsUpdate();
 
     // Generate Certificate for the attempt if passed
     if (finalPassed) {

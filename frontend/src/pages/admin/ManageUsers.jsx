@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaUsers, FaTrash, FaFilter, FaUserCheck } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
+import { io } from 'socket.io-client';
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState('');
 
-  const fetchUsers = async () => {
-    setLoading(true);
+  const fetchUsers = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
       const url = roleFilter ? `/users?role=${roleFilter}` : '/users';
       const res = await api.get(url);
@@ -20,13 +21,31 @@ const ManageUsers = () => {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
-  };
+  }, [roleFilter]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [roleFilter]);
+    fetchUsers(true);
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5005' : window.location.origin;
+    const socket = io(backendUrl);
+
+    socket.on('analytics_updated', () => {
+      fetchUsers(false);
+    });
+
+    const interval = setInterval(() => {
+      fetchUsers(false);
+    }, 5000);
+
+    return () => {
+      socket.disconnect();
+      clearInterval(interval);
+    };
+  }, [fetchUsers]);
 
   const handleDelete = async (id, name) => {
     Swal.fire({

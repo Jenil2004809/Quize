@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { notifyAnalyticsUpdate } = require('../config/socket');
 
 // Helper to resolve model name from collection key
 const getModel = (collectionName) => {
@@ -226,6 +227,8 @@ const updateCollectionRecord = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Record not found' });
     }
 
+    notifyAnalyticsUpdate();
+
     return res.json({
       success: true,
       message: 'Record updated successfully',
@@ -254,6 +257,7 @@ const deleteCollectionRecord = async (req, res, next) => {
     }
 
     await record.deleteOne();
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,
@@ -358,6 +362,8 @@ const seedSampleData = async (req, res, next) => {
       }
     }
 
+    notifyAnalyticsUpdate();
+
     return res.json({
       success: true,
       message: 'Sample data seeded successfully into MongoDB!'
@@ -380,6 +386,7 @@ const clearCollectionRecords = async (req, res, next) => {
     }
 
     const deleteRes = await model.deleteMany({});
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,

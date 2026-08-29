@@ -1,5 +1,6 @@
 const Category = require('../models/Category');
 const Quiz = require('../models/Quiz');
+const { notifyAnalyticsUpdate } = require('../config/socket');
 
 // @desc    Get all categories
 // @route   GET /api/categories
@@ -40,6 +41,8 @@ const createCategory = async (req, res, next) => {
       image
     });
 
+    notifyAnalyticsUpdate();
+
     return res.status(201).json({ success: true, message: 'Category created successfully!', category });
   } catch (error) {
     next(error);
@@ -69,6 +72,7 @@ const updateCategory = async (req, res, next) => {
     }
 
     await category.save();
+    notifyAnalyticsUpdate();
 
     return res.json({ success: true, message: 'Category updated successfully!', category });
   } catch (error) {
@@ -97,6 +101,7 @@ const deleteCategory = async (req, res, next) => {
     }
 
     await category.deleteOne();
+    notifyAnalyticsUpdate();
 
     return res.json({ success: true, message: 'Category deleted successfully!' });
   } catch (error) {

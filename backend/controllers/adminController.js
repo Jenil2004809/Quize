@@ -8,6 +8,7 @@ const Category = require('../models/Category');
 const Subject = require('../models/Subject');
 const Notification = require('../models/Notification');
 const mongoose = require('mongoose');
+const { getActiveUsersCount, notifyAnalyticsUpdate } = require('../config/socket');
 
 // @desc    Get Admin Dashboard Analytics
 // @route   GET /api/admin/dashboard
@@ -83,6 +84,7 @@ const getDashboardStats = async (req, res, next) => {
         totalQuizzes,
         totalQuestions,
         totalAttempts,
+        activeUsers: getActiveUsersCount() || 1,
         systemStatus: 'Operational'
       },
       latestUsers: {
@@ -238,6 +240,8 @@ const approveTeacher = async (req, res, next) => {
       type: 'teacher_approved'
     });
 
+    notifyAnalyticsUpdate();
+
     return res.json({
       success: true,
       message: `Teacher account for ${teacher.name} has been approved.`,
@@ -260,6 +264,8 @@ const rejectTeacher = async (req, res, next) => {
 
     teacher.isApproved = false;
     await teacher.save();
+
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,
@@ -373,6 +379,7 @@ const deleteUser = async (req, res, next) => {
       await Notification.deleteMany({ recipientId: id, recipientModel: 'Teacher' });
 
       await teacher.deleteOne();
+      notifyAnalyticsUpdate();
 
       return res.json({ success: true, message: 'Teacher, quizzes, and related quiz data deleted successfully.' });
     }
@@ -446,6 +453,8 @@ const approveUser = async (req, res, next) => {
       });
     }
 
+    notifyAnalyticsUpdate();
+
     return res.json({
       success: true,
       message: `${role} account for ${user.name} has been ${user.isApproved ? 'approved' : 'rejected'}.`,
@@ -511,6 +520,8 @@ const authorizeTabViolationRetake = async (req, res, next) => {
       message: `Admin has authorized your account for "${resultDoc.quizId?.title || 'Quiz'}". You can now attempt the quiz again!`,
       type: 'announcement'
     });
+
+    notifyAnalyticsUpdate();
 
     return res.json({
       success: true,

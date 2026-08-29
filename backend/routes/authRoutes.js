@@ -42,7 +42,7 @@ router.post('/reset-password', resetPassword);
 
 // Profile (Protected)
 router.get('/profile', protect, getProfile);
-router.put('/profile', protect, upload.single('avatar'), updateProfile);
+router.put('/profile', protect, upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'coverPhoto', maxCount: 1 }]), updateProfile);
 router.put('/change-password', protect, changePassword);
 
 module.exports = router;

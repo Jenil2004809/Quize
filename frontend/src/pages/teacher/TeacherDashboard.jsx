@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { FaFolderOpen, FaCheckDouble, FaAward, FaChartBar, FaExclamationTriangle } from 'react-icons/fa';
 import api from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
+import { io } from 'socket.io-client';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -30,20 +31,37 @@ const TeacherDashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const res = await api.get('/analytics/dashboard');
-        if (res.data.success) {
-          setData(res.data);
-        }
-      } catch (err) {
-        console.error('Error fetching teacher analytics', err);
-      } finally {
-        setLoading(false);
+  const fetchAnalytics = async (isInitial = false) => {
+    try {
+      const res = await api.get('/analytics/dashboard');
+      if (res.data.success) {
+        setData(res.data);
       }
+    } catch (err) {
+      console.error('Error fetching teacher analytics', err);
+    } finally {
+      if (isInitial) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics(true);
+
+    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5005' : window.location.origin;
+    const socket = io(backendUrl);
+
+    socket.on('analytics_updated', () => {
+      fetchAnalytics(false);
+    });
+
+    const interval = setInterval(() => {
+      fetchAnalytics(false);
+    }, 5000);
+
+    return () => {
+      socket.disconnect();
+      clearInterval(interval);
     };
-    fetchAnalytics();
   }, []);
 
   if (loading) {

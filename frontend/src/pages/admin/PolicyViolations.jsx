@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   FaShieldAlt, FaExclamationTriangle, FaCheckCircle, FaTimesCircle, 
   FaSearch, FaFilter, FaEye, FaUnlock, FaBan, FaSync, FaClock, 
-  FaDesktop, FaGlobe, FaUser, FaBook, FaTimes, FaTrash
+  FaDesktop, FaGlobe, FaUser, FaBook, FaTimes, FaTrash, FaVideo
 } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
@@ -515,6 +515,30 @@ const PolicyViolations = () => {
                 </div>
               )}
             </div>
+
+            {/* Proctored Video Recording (If Available) */}
+            {selectedViolation.recordingUrl && (
+              <div className="p-4 rounded-2xl bg-slate-950 text-white space-y-3 border border-slate-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-xs font-bold text-blue-400">
+                    <FaVideo className="w-3.5 h-3.5" />
+                    <span>Captured Proctoring Window & Camera Recording</span>
+                  </div>
+                  <a
+                    href={`${ASSET_BASE_URL}${selectedViolation.recordingUrl}`}
+                    download={`violation_recording_${selectedViolation._id}.webm`}
+                    className="text-[11px] font-bold text-slate-300 hover:text-white bg-slate-800 px-3 py-1 rounded-xl"
+                  >
+                    Download Video
+                  </a>
+                </div>
+                <video
+                  src={`${ASSET_BASE_URL}${selectedViolation.recordingUrl}`}
+                  controls
+                  className="w-full max-h-64 rounded-xl bg-black object-contain"
+                />
+              </div>
+            )}
 
             {/* Admin Notes Input */}
             <div className="space-y-2">

@@ -120,9 +120,32 @@ const resultSchema = new mongoose.Schema({
   adminNotes: {
     type: String,
     default: ''
+  },
+  recordingUrl: {
+    type: String,
+    default: ''
+  },
+  recordingSize: {
+    type: Number,
+    default: 0
+  },
+  recordingDuration: {
+    type: Number,
+    default: 0
+  },
+  hasRecording: {
+    type: Boolean,
+    default: false,
+    index: true
   }
 }, {
   timestamps: true
 });
+
+// Performance Indexes for Database Optimization
+resultSchema.index({ studentId: 1, quizId: 1 });
+resultSchema.index({ passed: 1, score: -1 });
+resultSchema.index({ approvalStatus: 1 });
+resultSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Result', resultSchema);

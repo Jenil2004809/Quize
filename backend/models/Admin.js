@@ -28,6 +28,14 @@ const adminSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  avatar: {
+    type: String,
+    default: ''
+  },
+  coverPhoto: {
+    type: String,
+    default: ''
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -35,6 +43,14 @@ const adminSchema = new mongoose.Schema({
   isEmailVerified: {
     type: Boolean,
     default: true
+  },
+  otp: {
+    type: String,
+    default: null
+  },
+  otpExpires: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true

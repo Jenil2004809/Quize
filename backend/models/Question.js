@@ -48,4 +48,8 @@ const questionSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Performance Indexes for Fast Question Lookups & Adaptive Pooling
+questionSchema.index({ quizId: 1, type: 1 });
+questionSchema.index({ quizId: 1, difficulty: 1 });
+
 module.exports = mongoose.model('Question', questionSchema);

@@ -8,6 +8,7 @@ const Category = require('../models/Category');
 const Question = require('../models/Question');
 const Notification = require('../models/Notification');
 const Subject = require('../models/Subject');
+const { getActiveUsersCount } = require('../config/socket');
 
 // @desc    Get dashboard analytics depending on role
 // @route   GET /api/analytics/dashboard
@@ -202,6 +203,8 @@ const getDashboardAnalytics = async (req, res, next) => {
         averagePercentage: parseFloat((item.averagePercentage || 0).toFixed(2))
       }));
 
+      const activeUsers = getActiveUsersCount();
+
       return res.json({
         success: true,
         stats: {
@@ -213,6 +216,7 @@ const getDashboardAnalytics = async (req, res, next) => {
           totalResults,
           totalSubjects,
           totalNotifications,
+          activeUsers: activeUsers || 1,
           averagePercentage,
           systemStatus: 'Operational'
         },

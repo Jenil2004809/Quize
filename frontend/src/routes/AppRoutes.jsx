@@ -17,6 +17,7 @@ import QuizDetails from '../pages/QuizDetails';
 
 // Shared Pages
 import ProfilePage from '../pages/ProfilePage';
+import QuizRecordings from '../pages/shared/QuizRecordings';
 
 // Student Pages
 import StudentDashboard from '../pages/student/StudentDashboard';
@@ -117,6 +118,7 @@ const AppRoutes = () => {
         <Route path="smart-scan" element={<SmartScanQuizBuilder />} />
         <Route path="quizzes" element={<ManageQuizzes />} />
         <Route path="quizzes/:id/questions" element={<ManageQuestions />} />
+        <Route path="recordings" element={<QuizRecordings role="teacher" />} />
         <Route path="categories" element={<TeacherCategories />} />
         <Route path="attempts" element={<StudentAttempts />} />
         <Route path="profile" element={<ProfilePage />} />
@@ -133,6 +135,7 @@ const AppRoutes = () => {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="smart-scan" element={<SmartScanQuizBuilder />} />
+        <Route path="recordings" element={<QuizRecordings role="admin" />} />
         <Route path="users" element={<ManageUsers />} />
         <Route path="policy-violations" element={<PolicyViolations />} />
         <Route path="categories" element={<TeacherCategories />} />

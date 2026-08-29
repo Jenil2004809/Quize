@@ -6,7 +6,8 @@ import { ASSET_BASE_URL } from '../services/api';
 import {
   FaTrophy, FaAward, FaHistory, FaBookmark, FaCog, FaUser, FaSignOutAlt,
   FaPlusCircle, FaFolderOpen, FaChartPie, FaCheckDouble, FaUsers,
-  FaComments, FaBars, FaTimes, FaHome, FaGamepad, FaDatabase, FaArrowLeft, FaShieldAlt, FaMagic
+  FaComments, FaBars, FaTimes, FaHome, FaGamepad, FaDatabase, FaArrowLeft, FaShieldAlt, FaMagic,
+  FaVideo
 } from 'react-icons/fa';
 
 const DashboardLayout = () => {
@@ -39,6 +40,7 @@ const DashboardLayout = () => {
           { to: '/teacher-dashboard', label: 'Overview', icon: <FaChartPie /> },
           { to: '/teacher-dashboard/smart-scan', label: '⚡ AI Scan-to-Quiz', icon: <FaMagic /> },
           { to: '/teacher-dashboard/quizzes', label: 'Manage Quizzes', icon: <FaFolderOpen /> },
+          { to: '/teacher-dashboard/recordings', label: '📹 Quiz Recordings', icon: <FaVideo /> },
           { to: '/teacher-dashboard/categories', label: 'Categories', icon: <FaPlusCircle /> },
           { to: '/teacher-dashboard/attempts', label: 'Student Attempts', icon: <FaCheckDouble /> },
           { to: '/teacher-dashboard/profile', label: 'My Profile', icon: <FaUser /> }
@@ -47,6 +49,7 @@ const DashboardLayout = () => {
         return [
           { to: '/admin-dashboard', label: 'Overview', icon: <FaChartPie /> },
           { to: '/admin-dashboard/smart-scan', label: '⚡ AI Scan-to-Quiz', icon: <FaMagic /> },
+          { to: '/admin-dashboard/recordings', label: '📹 Quiz Recordings', icon: <FaVideo /> },
           { to: '/admin-dashboard/policy-violations', label: 'Policy Violations', icon: <FaShieldAlt /> },
           { to: '/admin-dashboard/users', label: 'Manage Users', icon: <FaUsers /> },
           { to: '/admin-dashboard/categories', label: 'Categories', icon: <FaPlusCircle /> },

@@ -3,6 +3,7 @@ const Question = require('../models/Question');
 const Result = require('../models/Result');
 const Student = require('../models/Student');
 const Notification = require('../models/Notification');
+const { notifyAnalyticsUpdate } = require('../config/socket');
 
 // @desc    Get all quizzes (Search, Filter, Pagination)
 // @route   GET /api/quizzes
@@ -18,14 +19,42 @@ const getQuizzes = async (req, res, next) => {
       query.title = { $regex: search, $options: 'i' };
     }
 
-    // Category filter
+    // Category filter (supports both ObjectId and name string)
     if (category) {
-      query.category = category;
+      const mongoose = require('mongoose');
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        query.category = category;
+      } else {
+        const Category = require('../models/Category');
+        const catDoc = await Category.findOne({
+          $or: [
+            { name: new RegExp(category.trim(), 'i') },
+            { slug: category.trim().toLowerCase() }
+          ]
+        });
+        if (catDoc) {
+          query.category = catDoc._id;
+        }
+      }
     }
 
-    // Subject filter
+    // Subject filter (supports both ObjectId and name string)
     if (subject) {
-      query.subject = subject;
+      const mongoose = require('mongoose');
+      if (mongoose.Types.ObjectId.isValid(subject)) {
+        query.subject = subject;
+      } else {
+        const Subject = require('../models/Subject');
+        const subDoc = await Subject.findOne({
+          $or: [
+            { name: new RegExp(subject.trim(), 'i') },
+            { slug: subject.trim().toLowerCase() }
+          ]
+        });
+        if (subDoc) {
+          query.subject = subDoc._id;
+        }
+      }
     }
 
     // Difficulty level filter
@@ -177,6 +206,7 @@ const createQuiz = async (req, res, next) => {
       isPublished: false
     });
 
+    notifyAnalyticsUpdate();
     return res.status(201).json({ success: true, message: 'Quiz draft created successfully!', quiz });
   } catch (error) {
     next(error);
@@ -215,6 +245,7 @@ const updateQuiz = async (req, res, next) => {
     }
 
     await quiz.save();
+    notifyAnalyticsUpdate();
 
     return res.json({ success: true, message: 'Quiz updated successfully!', quiz });
   } catch (error) {
@@ -241,6 +272,7 @@ const deleteQuiz = async (req, res, next) => {
 
     // Delete the quiz
     await quiz.deleteOne();
+    notifyAnalyticsUpdate();
 
     return res.json({ success: true, message: 'Quiz and all associated questions/results deleted successfully from database!' });
   } catch (error) {
@@ -277,6 +309,7 @@ const togglePublishQuiz = async (req, res, next) => {
 
     quiz.isPublished = !quiz.isPublished;
     await quiz.save();
+    notifyAnalyticsUpdate();
 
     // Trigger Notification for new quizzes published
     if (quiz.isPublished) {
