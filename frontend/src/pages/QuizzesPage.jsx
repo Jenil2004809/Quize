@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { bookmarkToggleSuccess } from '../redux/authSlice';
 import { FaClock, FaTrophy, FaSearch, FaBookmark, FaGamepad, FaFilter, FaTrash, FaBookOpen, FaArrowLeft, FaLayerGroup, FaMicrochip, FaLaptopCode, FaCloud } from 'react-icons/fa';
+import { motion } from 'framer-motion';
 import api, { ASSET_BASE_URL } from '../services/api';
 import { io } from 'socket.io-client';
 import LoadingSkeleton from '../components/LoadingSkeleton';
@@ -309,18 +310,22 @@ const QuizzesPage = () => {
       {!selectedSubject && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {subjectMetadata.map((sub) => {
+            {subjectMetadata.map((sub, sIdx) => {
               const count = quizzes.filter(q => matchesSubject(q, sub)).length;
 
               return (
-                <div
+                <motion.div
                   key={sub.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: sIdx * 0.08 }}
+                  whileHover={{ y: -6, scale: 1.02 }}
                   onClick={() => setSelectedSubject(sub)}
-                  className={`glass-card rounded-3xl p-6 flex flex-col justify-between hover-lift cursor-pointer relative overflow-hidden group border-2 bg-gradient-to-br ${sub.color}`}
+                  className={`glass-card rounded-3xl p-6 flex flex-col justify-between cursor-pointer relative overflow-hidden group border-2 bg-gradient-to-br ${sub.color} card-glow-hover`}
                 >
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <div className="p-3 rounded-2xl bg-white/10 dark:bg-black/20 backdrop-blur-md">
+                      <div className="p-3.5 rounded-2xl bg-white/10 dark:bg-black/20 backdrop-blur-md shadow-inner group-hover:rotate-6 transition-transform">
                         {sub.icon}
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${sub.tagColor}`}>
@@ -347,7 +352,7 @@ const QuizzesPage = () => {
                       <span>View Unit Quizzes</span>
                     </button>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
@@ -455,11 +460,15 @@ const QuizzesPage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {activeQuizzes.map((quiz) => (
-                <div
+              {activeQuizzes.map((quiz, qIdx) => (
+                <motion.div
                   key={quiz._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: qIdx * 0.05 }}
+                  whileHover={{ y: -6, scale: 1.01 }}
                   onClick={() => navigate(`/quizzes/${quiz._id}`)}
-                  className="glass-card rounded-3xl p-6 flex flex-col justify-between hover-lift cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-blue-500"
+                  className="glass-card rounded-3xl p-6 flex flex-col justify-between cursor-pointer relative overflow-hidden group border-t-4 border-transparent hover:border-blue-500 card-glow-hover"
                 >
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
@@ -533,7 +542,7 @@ const QuizzesPage = () => {
                       <span>Delete</span>
                     </button>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           )}
