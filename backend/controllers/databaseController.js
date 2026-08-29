@@ -268,105 +268,18 @@ const deleteCollectionRecord = async (req, res, next) => {
   }
 };
 
-// @desc    Seed database with clean sample categories, subjects, and sample quizzes
+// @desc    Seed database with 100% original academic curriculum, categories, subjects, quizzes, and verified questions
 // @route   POST /api/database/seed
 // @access  Private (Admin only)
 const seedSampleData = async (req, res, next) => {
   try {
-    const Category = mongoose.model('Category');
-    const Subject = mongoose.model('Subject');
-    const Quiz = mongoose.model('Quiz');
-    const Question = mongoose.model('Question');
-    const Admin = mongoose.model('Admin');
-
-    // Create default categories if none exist
-    let catTech = await Category.findOne({ name: 'Technology & Programming' });
-    if (!catTech) {
-      catTech = await Category.create({
-        name: 'Technology & Programming',
-        description: 'Software development, algorithms, web technologies, and database architecture.'
-      });
-    }
-
-    let catScience = await Category.findOne({ name: 'Science & General Knowledge' });
-    if (!catScience) {
-      catScience = await Category.create({
-        name: 'Science & General Knowledge',
-        description: 'Physics, chemistry, general aptitude, and global trivia.'
-      });
-    }
-
-    // Create sample subject
-    let subJS = await Subject.findOne({ name: 'JavaScript & Web Architecture' });
-    if (!subJS) {
-      subJS = await Subject.create({
-        name: 'JavaScript & Web Architecture',
-        category: catTech._id,
-        description: 'Core ECMAScript fundamentals, async operations, and web APIs.'
-      });
-    }
-
-    // Check if sample quiz exists
-    let adminUser = await Admin.findOne();
-    if (adminUser) {
-      let sampleQuiz = await Quiz.findOne({ title: 'Full-Stack JavaScript Essentials' });
-      if (!sampleQuiz) {
-        sampleQuiz = await Quiz.create({
-          title: 'Full-Stack JavaScript Essentials',
-          description: 'Test your understanding of modern JavaScript, asynchronous execution, promises, and REST API conventions.',
-          category: catTech._id,
-          subject: subJS._id,
-          difficulty: 'medium',
-          timeLimit: 15,
-          passingMarks: 3,
-          maxAttempts: 5,
-          visibility: 'public',
-          creator: adminUser._id,
-          creatorModel: 'Admin',
-          isPublished: true
-        });
-
-        // Add questions to sample quiz
-        await Question.create([
-          {
-            quizId: sampleQuiz._id,
-            type: 'mcq',
-            text: 'Which operator is used to compare both value and data type in JavaScript?',
-            options: ['==', '===', '=', '!='],
-            correctAnswers: ['==='],
-            explanation: '=== checks strict equality without type coercion.',
-            marks: 2,
-            negativeMarks: 0
-          },
-          {
-            quizId: sampleQuiz._id,
-            type: 'true-false',
-            text: 'Promises in JavaScript can resolve asynchronously.',
-            options: ['True', 'False'],
-            correctAnswers: ['True'],
-            explanation: 'Promises handle asynchronous computations.',
-            marks: 1,
-            negativeMarks: 0
-          },
-          {
-            quizId: sampleQuiz._id,
-            type: 'short-answer',
-            text: 'What keyword defines a constant variable in JavaScript?',
-            options: [],
-            correctAnswers: ['const'],
-            explanation: 'const declares variables whose references cannot be reassigned.',
-            marks: 2,
-            negativeMarks: 0
-          }
-        ]);
-      }
-    }
-
+    const seedOriginalDatabase = require('../utils/seedOriginalDatabase');
+    await seedOriginalDatabase();
     notifyAnalyticsUpdate();
 
     return res.json({
       success: true,
-      message: 'Sample data seeded successfully into MongoDB!'
+      message: '100% Original Academic Curriculum & Question Bank seeded successfully into MongoDB!'
     });
   } catch (error) {
     next(error);
