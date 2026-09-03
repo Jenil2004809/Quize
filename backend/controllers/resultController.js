@@ -288,8 +288,21 @@ const getResultById = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    // Fetch quiz questions (including correct keys and explanation for review)
-    const questions = await Question.find({ quizId: result.quizId._id }).sort({ createdAt: 1 });
+    // Fetch ONLY the questions that were part of this specific quiz attempt
+    let questions;
+    if (result.answers && result.answers.length > 0) {
+      const questionIds = result.answers.map(a => a.questionId);
+      const fetchedQuestions = await Question.find({ _id: { $in: questionIds } });
+      const qMap = {};
+      fetchedQuestions.forEach(q => {
+        qMap[q._id.toString()] = q;
+      });
+      // Preserve the exact sequence of questions from the student's attempt
+      questions = questionIds.map(id => qMap[id.toString()]).filter(Boolean);
+    } else {
+      questions = await Question.find({ quizId: result.quizId._id }).sort({ createdAt: 1 });
+    }
+
     const certificate = await Certificate.findOne({ resultId: result._id });
 
     return res.json({

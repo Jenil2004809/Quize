@@ -1067,6 +1067,37 @@ const seedOriginalDatabase = async () => {
     console.log('✅ Subject 6 (Artificial Intelligence & Data Science) - 4 Unit Quizzes Seeded');
 
     // ─── 8. GENERATE AUTHENTIC STUDENT RESULTS & CERTIFICATES ────────────────
+    const seQuestions = await Question.find({ quizId: seQuiz1._id }).sort({ createdAt: 1 });
+    const iotQuestions = await Question.find({ quizId: iotQuiz1._id }).sort({ createdAt: 1 });
+    const aiQuestions = await Question.find({ quizId: aiQuiz1._id }).sort({ createdAt: 1 });
+
+    const aaravAnswers = seQuestions.map((q, idx) => {
+      const isCorrect = idx !== 1;
+      return {
+        questionId: q._id,
+        selectedAnswers: isCorrect ? q.correctAnswers : [q.options.find(opt => !q.correctAnswers.includes(opt)) || 'Wrong Choice'],
+        isCorrect,
+        marksAwarded: isCorrect ? q.marks : -q.negativeMarks
+      };
+    });
+
+    const diyaAnswers = iotQuestions.map((q) => ({
+      questionId: q._id,
+      selectedAnswers: q.correctAnswers,
+      isCorrect: true,
+      marksAwarded: q.marks
+    }));
+
+    const rohanAnswers = aiQuestions.map((q, idx) => {
+      const isCorrect = idx !== 2 && idx !== 6;
+      return {
+        questionId: q._id,
+        selectedAnswers: isCorrect ? q.correctAnswers : [q.options.find(opt => !q.correctAnswers.includes(opt)) || 'Wrong Choice'],
+        isCorrect,
+        marksAwarded: isCorrect ? q.marks : -q.negativeMarks
+      };
+    });
+
     const resAarav1 = await Result.create({
       studentId: studentAarav._id,
       quizId: seQuiz1._id,
@@ -1079,7 +1110,7 @@ const seedOriginalDatabase = async () => {
       wasDisqualified: false,
       tabChangeCount: 0,
       status: 'COMPLETED',
-      answers: []
+      answers: aaravAnswers
     });
 
     await Certificate.create({
@@ -1103,7 +1134,7 @@ const seedOriginalDatabase = async () => {
       wasDisqualified: false,
       tabChangeCount: 0,
       status: 'COMPLETED',
-      answers: []
+      answers: diyaAnswers
     });
 
     await Certificate.create({
@@ -1127,7 +1158,7 @@ const seedOriginalDatabase = async () => {
       wasDisqualified: false,
       tabChangeCount: 1,
       status: 'COMPLETED',
-      answers: []
+      answers: rohanAnswers
     });
 
     await Certificate.create({

@@ -356,9 +356,11 @@ const QuizResult = () => {
         {/* Question Cards List */}
         <div className="space-y-4">
           {filteredQuestions.map((q, idx) => {
-            const studentAnsObj = result.answers.find(a => a.questionId === q._id);
+            const studentAnsObj = result.answers?.find(a => String(a.questionId?._id || a.questionId) === String(q._id));
             const studentSelected = studentAnsObj?.selectedAnswers || [];
             const isCorrect = studentAnsObj?.isCorrect;
+            const correctKeyStr = Array.isArray(q.correctAnswers) ? q.correctAnswers.join(', ') : q.correctAnswers;
+            const studentChoiceStr = studentSelected.length > 0 ? studentSelected.join(', ') : 'No answer submitted';
 
             return (
               <div key={q._id} className="glass-card rounded-3xl p-6 space-y-4 border border-slate-200/70 dark:border-slate-800/70">
@@ -403,7 +405,8 @@ const QuizResult = () => {
                           text: q.text,
                           options: q.options,
                           selectedAnswers: studentSelected,
-                          correctAnswers: q.correctAnswers
+                          correctAnswers: q.correctAnswers,
+                          explanation: q.explanation
                         });
                         setChatModalOpen(true);
                       }}
@@ -420,11 +423,11 @@ const QuizResult = () => {
                 </h4>
 
                 {/* Display options if MCQ */}
-                {q.options.length > 0 && (
+                {q.options && q.options.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
                     {q.options.map((opt, oIdx) => {
                       const wasSelected = studentSelected.includes(opt);
-                      const isCorrectOpt = q.correctAnswers.includes(opt);
+                      const isCorrectOpt = Array.isArray(q.correctAnswers) ? q.correctAnswers.includes(opt) : q.correctAnswers === opt;
 
                       let borderClass = 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300';
                       let badge = '';
@@ -457,26 +460,43 @@ const QuizResult = () => {
                 )}
 
                 {/* If blank question */}
-                {q.options.length === 0 && (
+                {(!q.options || q.options.length === 0) && (
                   <div className="space-y-2 text-xs">
                     <p className="p-3 bg-slate-100 dark:bg-slate-900 rounded-xl">
                       Your answer: <strong className={isCorrect ? 'text-emerald-500' : 'text-red-500'}>{studentSelected[0] || '(Blank)'}</strong>
                     </p>
                     <p className="p-3 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 rounded-xl font-bold">
-                      Correct Key: {q.correctAnswers.join(', ')}
+                      Correct Key: {correctKeyStr}
                     </p>
                   </div>
                 )}
 
-                {/* Deep Technical Explanation */}
-                {q.explanation && (
-                  <div className="p-3.5 bg-blue-500/5 dark:bg-blue-500/10 rounded-2xl text-xs text-slate-600 dark:text-slate-300 leading-relaxed border border-blue-500/20">
-                    <strong className="text-blue-500 font-black uppercase text-[10px] tracking-wider block mb-0.5">
-                      📖 Academic Rationale & Citation:
-                    </strong>
-                    {q.explanation}
+                {/* Comprehensive Solution & Technical Explanation */}
+                <div className="p-4 bg-slate-100/70 dark:bg-slate-900/70 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-black uppercase text-[9px] tracking-wider">
+                      Verified Answer Key
+                    </span>
+                    <span className="font-bold text-slate-800 dark:text-slate-100">
+                      {correctKeyStr}
+                    </span>
                   </div>
-                )}
+
+                  {q.explanation && (
+                    <div className="text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
+                      <strong className="text-blue-500 font-extrabold uppercase text-[10px] tracking-wider block mb-0.5">
+                        💡 Solution & Academic Concept:
+                      </strong>
+                      {q.explanation}
+                    </div>
+                  )}
+
+                  {!isCorrect && (
+                    <div className="text-[11px] text-amber-600 dark:text-amber-400 pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                      <strong>Note on Selection:</strong> You selected <em>"{studentChoiceStr}"</em>, whereas the question requires <em>"{correctKeyStr}"</em>.
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
