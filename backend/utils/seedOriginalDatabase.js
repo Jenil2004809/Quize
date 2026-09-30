@@ -256,7 +256,7 @@ const seedOriginalDatabase = async () => {
           correctAnswers: q.correctAnswers,
           explanation: q.explanation || '',
           marks: q.marks || 1,
-          negativeMarks: q.negativeMarks !== undefined ? q.negativeMarks : 0.25
+          negativeMarks: q.negativeMarks !== undefined ? q.negativeMarks : 0
         });
       }
       return quiz;
@@ -1077,7 +1077,7 @@ const seedOriginalDatabase = async () => {
         questionId: q._id,
         selectedAnswers: isCorrect ? q.correctAnswers : [q.options.find(opt => !q.correctAnswers.includes(opt)) || 'Wrong Choice'],
         isCorrect,
-        marksAwarded: isCorrect ? q.marks : -q.negativeMarks
+        marksAwarded: isCorrect ? q.marks : 0
       };
     });
 
@@ -1094,7 +1094,7 @@ const seedOriginalDatabase = async () => {
         questionId: q._id,
         selectedAnswers: isCorrect ? q.correctAnswers : [q.options.find(opt => !q.correctAnswers.includes(opt)) || 'Wrong Choice'],
         isCorrect,
-        marksAwarded: isCorrect ? q.marks : -q.negativeMarks
+        marksAwarded: isCorrect ? q.marks : 0
       };
     });
 

@@ -93,6 +93,59 @@ const SmartScanQuizBuilder = () => {
     }
   };
 
+  // Re-shuffle option order across all questions so answers are evenly distributed (B, C, D, A)
+  const handleShuffleOptionOrder = () => {
+    if (!extractedQuestions || extractedQuestions.length === 0) return;
+
+    const slots = [1, 2, 3, 0];
+    const updated = extractedQuestions.map((q, idx) => {
+      if (!Array.isArray(q.options) || q.options.length <= 1) return q;
+      const correctChoice = q.correctAnswers?.[0] || q.options[0];
+      const distractors = q.options.filter(opt => opt !== correctChoice).sort(() => Math.random() - 0.5);
+      const targetSlot = slots[idx % slots.length] % q.options.length;
+
+      const newOptions = [];
+      let dIdx = 0;
+      for (let i = 0; i < q.options.length; i++) {
+        if (i === targetSlot) {
+          newOptions.push(correctChoice);
+        } else if (dIdx < distractors.length) {
+          newOptions.push(distractors[dIdx++]);
+        }
+      }
+
+      return {
+        ...q,
+        options: newOptions
+      };
+    });
+
+    setExtractedQuestions(updated);
+    Swal.fire({
+      title: '🔀 Options Shuffled!',
+      text: 'Option choices and answer keys have been evenly randomized across A, B, C, and D.',
+      icon: 'success',
+      timer: 1300,
+      showConfirmButton: false
+    });
+  };
+
+  // Track answer key distribution for teacher transparency
+  const answerKeyDistribution = React.useMemo(() => {
+    const counts = { A: 0, B: 0, C: 0, D: 0 };
+    extractedQuestions.forEach(q => {
+      if (Array.isArray(q.options)) {
+        const correctChoice = q.correctAnswers?.[0];
+        const idx = q.options.indexOf(correctChoice);
+        if (idx === 0) counts.A++;
+        else if (idx === 1) counts.B++;
+        else if (idx === 2) counts.C++;
+        else if (idx === 3) counts.D++;
+      }
+    });
+    return counts;
+  }, [extractedQuestions]);
+
   // Save Quiz and Attach Extracted Questions to Database
   const handleSaveQuizToDatabase = async () => {
     if (extractedQuestions.length === 0) return;
@@ -263,16 +316,36 @@ const SmartScanQuizBuilder = () => {
             <div className="space-y-4">
               
               {/* Scan Metrics Bar */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-2">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-3">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
                   <span className="text-xs font-bold text-slate-300">
                     {extractedQuestions.length} Questions Generated
                   </span>
                 </div>
-                <div className="text-[11px] font-mono text-slate-400 space-x-3">
-                  <span>Chars: {scanStats?.characters || 0}</span>
-                  <span>Paragraphs: {scanStats?.paragraphs || 0}</span>
+
+                {/* Answer Key Distribution Indicators & Re-Shuffle Action */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300">
+                    <span className="text-slate-500 font-bold">Answer Keys:</span>
+                    <span className="text-emerald-400 font-bold">A: {answerKeyDistribution.A}</span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-blue-400 font-bold">B: {answerKeyDistribution.B}</span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-purple-400 font-bold">C: {answerKeyDistribution.C}</span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-pink-400 font-bold">D: {answerKeyDistribution.D}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleShuffleOptionOrder}
+                    className="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/40 text-indigo-300 text-xs font-bold flex items-center space-x-1.5 transition-all hover:scale-105"
+                    title="Evenly randomize correct answer positions across A, B, C, and D"
+                  >
+                    <FaExchangeAlt className="w-3 h-3" />
+                    <span>🔀 Re-Shuffle Options</span>
+                  </button>
                 </div>
               </div>
 

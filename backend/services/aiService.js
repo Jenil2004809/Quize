@@ -102,12 +102,17 @@ Return ONLY a valid JSON object matching this schema:
     const prompt = `Generate ${count} distinct, high-quality multiple choice questions (MCQs) for the topic: "${topic}".
 Difficulty level: ${difficulty}.
 
+CRITICAL RULE FOR OPTIONS DISTRIBUTION:
+- You MUST vary and randomize the position of the correct answer across the 4 options (A, B, C, D).
+- Do NOT always put the correct answer as the first option (Option A).
+- Across the ${count} questions, distribute the correct answers across Option B, Option C, Option D, and Option A.
+
 Return ONLY a JSON array of objects with the following format:
 [
   {
     "text": "Clear, precise question text",
     "type": "mcq",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "options": ["Option text 1", "Option text 2", "Option text 3", "Option text 4"],
     "correctAnswers": ["Exact text of correct option"],
     "explanation": "Clear explanation of why this answer is correct",
     "marks": 1,
@@ -115,12 +120,14 @@ Return ONLY a JSON array of objects with the following format:
   }
 ]`;
 
+    const { randomizeQuestionOptions, balanceAndDistributeQuestionOptions } = require('../utils/shuffleUtils');
+
     const rawAiJson = await this.callGeminiAPI(prompt, true);
     if (rawAiJson) {
       try {
         const parsed = JSON.parse(rawAiJson);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return balanceAndDistributeQuestionOptions(parsed);
         }
       } catch (err) {
         console.warn('Failed to parse Gemini Quiz JSON');
@@ -129,17 +136,16 @@ Return ONLY a JSON array of objects with the following format:
 
     // Dynamic Topic Generator Fallback
     const questions = [];
-    const { randomizeQuestionOptions } = require('../utils/shuffleUtils');
 
     for (let i = 1; i <= count; i++) {
       const qText = `[${topic}] Question ${i}: Which statement accurately describes the core operation of "${topic}" in modern systems?`;
       const correctChoice = `It provides standard rules and optimized processing for "${topic}" (Variant ${i}).`;
-      const opts = randomizeQuestionOptions([
+      const opts = [
         correctChoice,
         `It mandates legacy single-threaded unencrypted execution`,
         `It disables network socket handshakes`,
         `It forces plain text file storage`
-      ]);
+      ];
 
       questions.push({
         text: qText,
@@ -152,7 +158,7 @@ Return ONLY a JSON array of objects with the following format:
       });
     }
 
-    return questions;
+    return balanceAndDistributeQuestionOptions(questions);
   }
 
   /**
@@ -173,13 +179,14 @@ Strict Requirements for Question Quality:
 3. Provide EXACTLY 4 plausible, professional options (1 correct answer and 3 realistic distractors).
 4. The 3 distractors must sound realistic and domain-relevant to rigorously test student knowledge.
 5. Provide a detailed, professional explanation citing the concept from the document.
+6. CRITICAL ANSWER DISTRIBUTION RULE: Do NOT place the correct answer as Option A for all or most questions. You MUST vary and distribute the correct answers across Option B, Option C, Option D, and Option A across the ${count} questions.
 
 Return ONLY a JSON array of objects with this structure:
 [
   {
     "text": "Professional academic question prompt text",
     "type": "mcq",
-    "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
+    "options": ["Option text 1", "Option text 2", "Option text 3", "Option text 4"],
     "correctAnswers": ["Exact text matching the correct option"],
     "explanation": "Professional academic explanation of the correct choice and concept.",
     "marks": 1,
@@ -201,7 +208,7 @@ Return ONLY a JSON array of objects with this structure:
             marks: q.marks || 1,
             difficulty: q.difficulty || (idx % 3 === 0 ? 'hard' : (idx % 2 === 0 ? 'medium' : 'easy'))
           }));
-          return valid;
+          return balanceAndDistributeQuestionOptions(valid);
         }
       } catch (err) {
         console.warn('Failed to parse Gemini Scan-to-Quiz JSON, using NLP Extractor');
@@ -210,7 +217,7 @@ Return ONLY a JSON array of objects with this structure:
 
     // Advanced Real-Time Document Semantic Synthesizer
     // Synthesizes 100% dynamic, authentic questions & options directly from the uploaded document text
-    const { randomizeQuestionOptions } = require('../utils/shuffleUtils');
+    const { randomizeQuestionOptions, balanceAndDistributeQuestionOptions } = require('../utils/shuffleUtils');
 
     // Extract clean academic sentences from document (> 35 chars, filters noise)
     const rawSentences = extractedText
@@ -291,7 +298,7 @@ Return ONLY a JSON array of objects with this structure:
       });
     }
 
-    return questions;
+    return balanceAndDistributeQuestionOptions(questions);
   }
 
   /**

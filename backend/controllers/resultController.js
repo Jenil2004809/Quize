@@ -99,12 +99,15 @@ const submitQuiz = async (req, res, next) => {
       let marksAwarded = 0;
       if (isCorrect) {
         correctAnswersCount++;
-        marksAwarded = question.marks;
-        score += question.marks;
+        marksAwarded = question.marks || 1;
+        score += marksAwarded;
       } else {
         wrongAnswersCount++;
-        marksAwarded = -question.negativeMarks;
-        score -= question.negativeMarks;
+        // Apply negative marking ONLY if explicitly enabled on quiz AND question has positive negativeMarks
+        const hasNegativeMarking = Boolean(quiz.allowNegativeMarking || quiz.negativeMarking);
+        const penalty = hasNegativeMarking && question.negativeMarks ? Math.abs(question.negativeMarks) : 0;
+        marksAwarded = -penalty;
+        score -= penalty;
       }
 
       evaluatedAnswers.push({
@@ -117,8 +120,9 @@ const submitQuiz = async (req, res, next) => {
 
     // Make sure score doesn't fall below zero
     if (score < 0) score = 0;
+    score = Math.round(score * 100) / 100;
 
-    const percentage = totalPossibleMarks > 0 ? (score / totalPossibleMarks) * 100 : 0;
+    const percentage = totalPossibleMarks > 0 ? Math.round(((score / totalPossibleMarks) * 100) * 100) / 100 : 0;
     
     // Check if score calculations or violations trigger tab-switch disqualification or explicit disqualification
     const exactReason = req.body.disqualificationReason || disqualificationReason || 'Exceeded Maximum Allowed Policy Violations';

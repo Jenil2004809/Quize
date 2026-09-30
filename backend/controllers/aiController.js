@@ -1,13 +1,14 @@
 const Question = require('../models/Question');
 const Quiz = require('../models/Quiz');
 const AIService = require('../services/aiService');
+const { balanceAndDistributeQuestionOptions } = require('../utils/shuffleUtils');
 
 // Intelligent Knowledge Base Templates for Instant High-Quality AI Generation
 const AI_TOPIC_TEMPLATES = {
   iot: [
     {
       text: "Which layer in the IoT architectural model is responsible for sensor data acquisition?",
-      options: ["Perception / Sensing Layer", "Network Layer", "Application Layer", "Business Layer"],
+      options: ["Network Layer", "Perception / Sensing Layer", "Application Layer", "Business Layer"],
       correctAnswers: ["Perception / Sensing Layer"],
       explanation: "The Perception Layer consists of sensors, RFID tags, and actuators that physical gather ambient data from the environment.",
       marks: 1,
@@ -15,7 +16,7 @@ const AI_TOPIC_TEMPLATES = {
     },
     {
       text: "Which wireless protocol is optimized for short-range, low-power personal area networks in IoT?",
-      options: ["Zigbee (IEEE 802.15.4)", "5G NR", "Ethernet IEEE 802.3", "Satellite X-Band"],
+      options: ["5G NR", "Ethernet IEEE 802.3", "Zigbee (IEEE 802.15.4)", "Satellite X-Band"],
       correctAnswers: ["Zigbee (IEEE 802.15.4)"],
       explanation: "Zigbee is specifically built for low-power, low-data rate mesh networking in smart home and industrial automation.",
       marks: 1,
@@ -23,7 +24,7 @@ const AI_TOPIC_TEMPLATES = {
     },
     {
       text: "What is the primary advantage of MQTT over traditional HTTP in constrained IoT deployments?",
-      options: ["Publish-Subscribe architecture with minimal header overhead", "Heavy synchronous XML formatting", "Stateless connectionless UDP streaming", "Built-in video rendering"],
+      options: ["Heavy synchronous XML formatting", "Stateless connectionless UDP streaming", "Built-in video rendering", "Publish-Subscribe architecture with minimal header overhead"],
       correctAnswers: ["Publish-Subscribe architecture with minimal header overhead"],
       explanation: "MQTT uses a lightweight 2-byte header with pub/sub architecture, dramatically reducing battery & data consumption compared to HTTP headers.",
       marks: 1,
@@ -33,7 +34,7 @@ const AI_TOPIC_TEMPLATES = {
   se: [
     {
       text: "Which SDLC model is characterized by iterative development cycles called Sprints?",
-      options: ["Agile Scrum", "Waterfall Model", "V-Model", "Big Bang Model"],
+      options: ["Waterfall Model", "Agile Scrum", "V-Model", "Big Bang Model"],
       correctAnswers: ["Agile Scrum"],
       explanation: "Scrum breaks software delivery into time-boxed iterations (1-4 weeks) called Sprints for continuous feedback.",
       marks: 1,
@@ -41,7 +42,7 @@ const AI_TOPIC_TEMPLATES = {
     },
     {
       text: "What does the Single Responsibility Principle (SRP) state in SOLID architecture?",
-      options: ["A class should have only one reason to change", "Functions must return single values", "All modules must compile in one file", "Database tables must have one primary key"],
+      options: ["Functions must return single values", "All modules must compile in one file", "A class should have only one reason to change", "Database tables must have one primary key"],
       correctAnswers: ["A class should have only one reason to change"],
       explanation: "SRP mandates that a software module/class should be encapsulated around a single core business responsibility.",
       marks: 1,
@@ -49,7 +50,7 @@ const AI_TOPIC_TEMPLATES = {
     },
     {
       text: "Which testing technique evaluates system behavior at stress boundaries exceeding normal capacity?",
-      options: ["Stress & Load Testing", "Unit Testing", "Syntax Checking", "Alpha Acceptance Testing"],
+      options: ["Unit Testing", "Syntax Checking", "Alpha Acceptance Testing", "Stress & Load Testing"],
       correctAnswers: ["Stress & Load Testing"],
       explanation: "Stress testing pushes system loads beyond theoretical capacity to verify failure recovery and stability under extreme spikes.",
       marks: 1,
@@ -59,7 +60,7 @@ const AI_TOPIC_TEMPLATES = {
   ws: [
     {
       text: "Which format is mandatory for messaging in SOAP (Simple Object Access Protocol)?",
-      options: ["XML Envelope", "JSON Array", "YAML Key-Value", "Binary Buffer"],
+      options: ["JSON Array", "XML Envelope", "YAML Key-Value", "Binary Buffer"],
       correctAnswers: ["XML Envelope"],
       explanation: "SOAP strictly relies on XML for formatting message headers and payloads.",
       marks: 1,
@@ -67,7 +68,7 @@ const AI_TOPIC_TEMPLATES = {
     },
     {
       text: "What does WSDL stand for in Web Services architecture?",
-      options: ["Web Services Description Language", "Wide System Data Link", "Web Server Directory List", "Wireless Service Definition Layer"],
+      options: ["Wide System Data Link", "Web Server Directory List", "Web Services Description Language", "Wireless Service Definition Layer"],
       correctAnswers: ["Web Services Description Language"],
       explanation: "WSDL is an XML-based specification used to describe web service endpoints, methods, and data contracts.",
       marks: 1,
@@ -75,7 +76,7 @@ const AI_TOPIC_TEMPLATES = {
     },
     {
       text: "Which HTTP method should be idempotent according to RESTful architectural guidelines?",
-      options: ["PUT & GET", "POST", "PATCH", "CONNECT"],
+      options: ["POST", "PATCH", "CONNECT", "PUT & GET"],
       correctAnswers: ["PUT & GET"],
       explanation: "PUT and GET methods are idempotent, meaning multiple identical requests yield the exact same resource state as a single request.",
       marks: 1,
@@ -97,12 +98,13 @@ const generateAIQuiz = async (req, res, next) => {
 
     const numRequested = Math.max(1, Math.min(parseInt(count || 5), 15));
     const generated = await AIService.generateQuizQuestions(topic, numRequested, difficulty);
+    const balancedQuestions = balanceAndDistributeQuestionOptions(generated);
 
     return res.json({
       success: true,
       topic,
-      count: generated.length,
-      questions: generated
+      count: balancedQuestions.length,
+      questions: balancedQuestions
     });
   } catch (error) {
     next(error);
@@ -323,12 +325,13 @@ const scanToQuiz = async (req, res, next) => {
 
     const countRequested = Math.max(3, Math.min(parseInt(req.body.count || 5), 10));
     const generatedQuestions = await AIService.scanToQuizText(sanitizedText, countRequested);
+    const balancedQuestions = balanceAndDistributeQuestionOptions(generatedQuestions);
 
     return res.json({
       success: true,
       extractedCharacters: sanitizedText.length,
-      questionsCount: generatedQuestions.length,
-      questions: generatedQuestions
+      questionsCount: balancedQuestions.length,
+      questions: balancedQuestions
     });
   } catch (error) {
     next(error);

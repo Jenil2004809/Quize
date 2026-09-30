@@ -110,7 +110,14 @@ const QuizResult = () => {
 
   const { result, questions, certificateId } = data;
   const quiz = result.quizId;
-  const isDistinction = result.percentage >= 75;
+
+  const totalPossibleMarks = questions?.reduce((sum, q) => sum + (Number(q.marks) || 1), 0) || questions?.length || 1;
+  const displayScore = result.score !== undefined && result.score !== null ? result.score : (result.correctAnswers || 0);
+  const displayPercentage = result.percentage !== undefined && result.percentage !== null
+    ? result.percentage
+    : Math.round((displayScore / totalPossibleMarks) * 100);
+
+  const isDistinction = displayPercentage >= 75;
 
   // Chart configuration
   const chartData = {
@@ -198,7 +205,7 @@ const QuizResult = () => {
             {isDistinction && (
               <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-amber-500/10 text-amber-400 font-black uppercase tracking-wider border border-amber-500/30 flex items-center space-x-1">
                 <FaTrophy className="w-2.5 h-2.5 text-amber-400" />
-                <span>Honors & Distinction ({result.percentage}%)</span>
+                <span>Honors & Distinction ({displayPercentage}%)</span>
               </span>
             )}
           </div>
@@ -273,8 +280,8 @@ const QuizResult = () => {
         {/* Summary stats */}
         <div className="md:col-span-2 glass-card rounded-3xl p-6 grid grid-cols-2 gap-4">
           {[
-            { icon: <FaTrophy className="text-yellow-500" />, title: 'Score Obtained', val: `${result.score} / ${questions.length * 1} Marks` },
-            { icon: <FaCheckCircle className="text-emerald-500" />, title: 'Percentage', val: `${result.percentage}%` },
+            { icon: <FaTrophy className="text-yellow-500" />, title: 'Score Obtained', val: `${displayScore} / ${totalPossibleMarks} Marks` },
+            { icon: <FaCheckCircle className="text-emerald-500" />, title: 'Percentage', val: `${displayPercentage}%` },
             { icon: <FaHourglass className="text-blue-500" />, title: 'Time Elapsed', val: `${Math.floor(result.timeTaken / 60)}m ${result.timeTaken % 60}s` },
             { icon: <FaShieldAlt className="text-purple-500" />, title: 'AI Integrity Score', val: `${result.integrityScore || 100}% Trust` }
           ].map((stat, i) => (
