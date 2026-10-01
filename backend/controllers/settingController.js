@@ -1,4 +1,21 @@
+const mongoose = require('mongoose');
 const Setting = require('../models/Setting');
+
+// Helper to keep legacy platformsettings collection in sync
+const syncToPlatformSettings = async (settingsDoc) => {
+  try {
+    if (settingsDoc && mongoose.connection.readyState === 1) {
+      const data = typeof settingsDoc.toObject === 'function' ? settingsDoc.toObject() : settingsDoc;
+      await mongoose.connection.db.collection('platformsettings').updateOne(
+        { _id: data._id },
+        { $set: data },
+        { upsert: true }
+      );
+    }
+  } catch (err) {
+    // Non-blocking sync notice
+  }
+};
 
 // @desc    Get Global System Settings
 // @route   GET /api/settings
@@ -20,6 +37,8 @@ const getSettings = async (req, res, next) => {
         maintenanceMode: false
       });
     }
+
+    await syncToPlatformSettings(settings);
 
     return res.json({
       success: true,
@@ -43,6 +62,7 @@ const updateSettings = async (req, res, next) => {
     }
 
     await settings.save();
+    await syncToPlatformSettings(settings);
 
     return res.json({
       success: true,
