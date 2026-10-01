@@ -5,3 +5,4 @@ backend/uploads/*
 !backend/uploads/.gitkeep
 .DS_Store
 *.log
+mongo_data/
