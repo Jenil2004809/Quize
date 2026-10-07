@@ -439,8 +439,11 @@ const approveUser = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    user.isApproved = true;
-    user.isActive = true;
+    const targetStatus = req.body.isApproved !== undefined ? Boolean(req.body.isApproved) : !user.isApproved;
+    user.isApproved = targetStatus;
+    if (targetStatus) {
+      user.isActive = true;
+    }
     await user.save();
 
     if (user.isApproved) {
@@ -457,7 +460,7 @@ const approveUser = async (req, res, next) => {
 
     return res.json({
       success: true,
-      message: `${role} account for ${user.name} has been ${user.isApproved ? 'approved' : 'rejected'}.`,
+      message: `${role} account for ${user.name} has been ${user.isApproved ? 'approved' : 'unapproved / revoked'}.`,
       user
     });
   } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaUsers, FaTrash, FaFilter, FaUserCheck, FaSync } from 'react-icons/fa';
+import { FaUsers, FaTrash, FaFilter, FaUserCheck, FaSync, FaShieldAlt, FaTimesCircle } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
@@ -9,7 +9,19 @@ const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [autoApproveTeachers, setAutoApproveTeachers] = useState(true);
   const [roleFilter, setRoleFilter] = useState('');
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      const res = await api.get('/settings');
+      if (res.data.success && res.data.settings) {
+        setAutoApproveTeachers(!!res.data.settings.autoApproveTeachers);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
 
   const fetchUsers = useCallback(async (isInitial = false) => {
     if (isInitial) setLoading(true);
@@ -28,13 +40,37 @@ const ManageUsers = () => {
 
   const handleManualRefresh = async () => {
     setRefreshing(true);
-    await fetchUsers(false);
+    await Promise.all([fetchUsers(false), fetchSettings()]);
     setTimeout(() => setRefreshing(false), 500);
   };
 
+  const handleToggleAutoApprove = async () => {
+    const newValue = !autoApproveTeachers;
+    setAutoApproveTeachers(newValue);
+    try {
+      const res = await api.put('/settings', { autoApproveTeachers: newValue });
+      if (res.data.success) {
+        Swal.fire({
+          title: newValue ? 'Auto-Approve Enabled ⚡' : 'Auto-Approve Disabled 🔒',
+          text: newValue
+            ? 'New educator registrations will be automatically approved. Approval action buttons hidden.'
+            : 'New educator registrations require manual admin approval. Approval action buttons are now shown.',
+          icon: 'info',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        fetchUsers(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setAutoApproveTeachers(!newValue);
+    }
+  };
+
   useEffect(() => {
+    fetchSettings();
     fetchUsers(true);
-  }, [fetchUsers]);
+  }, [fetchSettings, fetchUsers]);
 
   useEffect(() => {
     const backendUrl = ASSET_BASE_URL || window.location.origin;
@@ -42,17 +78,19 @@ const ManageUsers = () => {
 
     socket.on('analytics_updated', () => {
       fetchUsers(false);
+      fetchSettings();
     });
 
     const interval = setInterval(() => {
       fetchUsers(false);
+      fetchSettings();
     }, 5000);
 
     return () => {
       socket.disconnect();
       clearInterval(interval);
     };
-  }, [fetchUsers]);
+  }, [fetchUsers, fetchSettings]);
 
   const handleDelete = async (id, name) => {
     Swal.fire({
@@ -78,20 +116,20 @@ const ManageUsers = () => {
     });
   };
 
-  const handleApprove = async (id, name) => {
+  const handleApprove = async (id, name, targetState) => {
     try {
-      const res = await api.put(`/users/${id}/approve`);
+      const res = await api.put(`/users/${id}/approve`, { isApproved: targetState });
       if (res.data.success) {
         Swal.fire({
-          title: 'Account Activated! 🔓',
-          text: `${name}'s account has been successfully approved.`,
+          title: targetState ? 'Account Activated! 🔓' : 'Account Revoked 🔒',
+          text: `${name}'s account status has been updated.`,
           icon: 'success'
         });
-        fetchUsers();
+        fetchUsers(false);
       }
     } catch (err) {
       console.error(err);
-      Swal.fire('Error', 'Could not complete user approval.', 'error');
+      Swal.fire('Error', 'Could not update user approval status.', 'error');
     }
   };
 
@@ -102,12 +140,12 @@ const ManageUsers = () => {
           <div className="p-3 bg-blue-500/10 text-blue-500 rounded-2xl"><FaUsers className="w-6 h-6" /></div>
           <div>
             <h1 className="text-3xl font-black">Manage Users</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">View active student or educator accounts and prune records</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">View active student or educator accounts and manage approvals</p>
           </div>
         </div>
 
-        {/* Actions: Refresh & Role Filter */}
-        <div className="flex items-center space-x-3">
+        {/* Actions: Refresh, Auto-Approve Toggle & Role Filter */}
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={handleManualRefresh}
             disabled={refreshing}
@@ -116,6 +154,19 @@ const ManageUsers = () => {
           >
             <FaSync className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             <span>{refreshing ? 'Refreshing...' : 'Refresh Records'}</span>
+          </button>
+
+          <button
+            onClick={handleToggleAutoApprove}
+            className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all border shadow-sm ${
+              autoApproveTeachers
+                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/20'
+                : 'bg-amber-500/10 text-amber-500 border-amber-500/30 hover:bg-amber-500/20'
+            }`}
+            title="Click to toggle auto-approval for educator registrations"
+          >
+            <FaShieldAlt className="w-3.5 h-3.5" />
+            <span>Auto-Approve: {autoApproveTeachers ? 'ON' : 'OFF'}</span>
           </button>
 
           <div className="flex items-center space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl">
@@ -183,13 +234,18 @@ const ManageUsers = () => {
                     <td className="py-4 text-slate-400">{new Date(u.createdAt).toLocaleDateString()}</td>
                     <td className="py-4 text-right">
                       <div className="flex justify-end items-center gap-2">
-                        {u.role !== 'admin' && !u.isApproved && (
+                        {u.role !== 'admin' && (!autoApproveTeachers || !u.isApproved) && (
                           <button
-                            onClick={() => handleApprove(u._id, u.name)}
-                            className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-colors"
-                            title="Approve User Account"
+                            onClick={() => handleApprove(u._id, u.name, !u.isApproved)}
+                            className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1.5 ${
+                              u.isApproved
+                                ? 'bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white'
+                                : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white'
+                            }`}
+                            title={u.isApproved ? 'Revoke Approval' : 'Approve User Account'}
                           >
-                            <FaUserCheck className="w-3.5 h-3.5" />
+                            {u.isApproved ? <FaTimesCircle className="w-3.5 h-3.5" /> : <FaUserCheck className="w-3.5 h-3.5" />}
+                            <span>{u.isApproved ? 'Unapprove' : 'Approve'}</span>
                           </button>
                         )}
                         {u.role !== 'admin' && (
