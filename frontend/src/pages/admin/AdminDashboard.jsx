@@ -50,7 +50,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchAnalytics(true);
 
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5005' : window.location.origin;
+    const backendUrl = ASSET_BASE_URL || window.location.origin;
     const socket = io(backendUrl);
 
     socket.on('analytics_updated', () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaUsers, FaTrash, FaFilter, FaUserCheck } from 'react-icons/fa';
+import { FaUsers, FaTrash, FaFilter, FaUserCheck, FaSync } from 'react-icons/fa';
 import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import Swal from 'sweetalert2';
@@ -8,6 +8,7 @@ import { io } from 'socket.io-client';
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [roleFilter, setRoleFilter] = useState('');
 
   const fetchUsers = useCallback(async (isInitial = false) => {
@@ -25,12 +26,18 @@ const ManageUsers = () => {
     }
   }, [roleFilter]);
 
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await fetchUsers(false);
+    setTimeout(() => setRefreshing(false), 500);
+  };
+
   useEffect(() => {
     fetchUsers(true);
   }, [fetchUsers]);
 
   useEffect(() => {
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5005' : window.location.origin;
+    const backendUrl = ASSET_BASE_URL || window.location.origin;
     const socket = io(backendUrl);
 
     socket.on('analytics_updated', () => {
@@ -99,18 +106,30 @@ const ManageUsers = () => {
           </div>
         </div>
 
-        {/* Role Filter */}
-        <div className="flex items-center space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl">
-          <FaFilter className="text-slate-400 text-xs" />
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-transparent text-xs font-semibold focus:outline-none pr-6 cursor-pointer"
+        {/* Actions: Refresh & Role Filter */}
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-xl shadow-md shadow-blue-500/20 text-xs transition-all hover-scale disabled:opacity-50"
+            title="Reload latest user records from database"
           >
-            <option value="">All Users (Students & Teachers)</option>
-            <option value="student">Students Only</option>
-            <option value="teacher">Teachers Only</option>
-          </select>
+            <FaSync className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh Records'}</span>
+          </button>
+
+          <div className="flex items-center space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl">
+            <FaFilter className="text-slate-400 text-xs" />
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="bg-transparent text-xs font-semibold focus:outline-none pr-6 cursor-pointer"
+            >
+              <option value="">All Users (Students & Teachers)</option>
+              <option value="student">Students Only</option>
+              <option value="teacher">Teachers Only</option>
+            </select>
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FaDatabase, FaEdit, FaFilter, FaSearch, FaSort, FaTrash, FaSeedling, FaInfoCircle, FaProjectDiagram } from 'react-icons/fa';
+import { FaDatabase, FaEdit, FaFilter, FaSearch, FaSort, FaTrash, FaSeedling, FaInfoCircle, FaProjectDiagram, FaSync } from 'react-icons/fa';
 import Swal from 'sweetalert2';
-import api from '../../services/api';
+import api, { ASSET_BASE_URL } from '../../services/api';
 import LoadingSkeleton from '../../components/LoadingSkeleton';
 import { io } from 'socket.io-client';
 
@@ -53,11 +53,18 @@ const DatabaseManagement = () => {
   const [meta, setMeta] = useState({ page: 1, pages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([fetchCollections(), fetchRecords(false)]);
+    setTimeout(() => setRefreshing(false), 500);
+  };
 
   const activeItem = collections.find((item) => item.key === activeCollection);
   const activeLabel = activeItem?.label || 'Records';
@@ -94,7 +101,7 @@ const DatabaseManagement = () => {
 
   // Socket.IO + Polling for Real-Time Instant Database Sync
   useEffect(() => {
-    const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5005' : window.location.origin;
+    const backendUrl = ASSET_BASE_URL || window.location.origin;
     const socket = io(backendUrl);
 
     socket.on('analytics_updated', () => {
@@ -262,6 +269,16 @@ const DatabaseManagement = () => {
         </div>
 
         <div className="flex items-center space-x-2">
+          <button
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 text-xs transition-all hover-scale disabled:opacity-50"
+            title="Reload latest collection records from database"
+          >
+            <FaSync className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh Records'}</span>
+          </button>
+
           <button
             onClick={handleSeedDatabase}
             disabled={seeding}
