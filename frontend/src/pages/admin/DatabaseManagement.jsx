@@ -371,8 +371,8 @@ const DatabaseManagement = () => {
           </label>
           <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
             <FaFilter className="text-slate-400" />
-            <select value={status} onChange={(event) => setStatus(event.target.value)} className="w-full bg-transparent text-sm outline-none">
-              {statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            <select value={status} onChange={(event) => setStatus(event.target.value)} className="w-full bg-transparent text-sm outline-none text-slate-800 dark:text-slate-100">
+              {statusOptions.map((option) => <option key={option.value} value={option.value} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{option.label}</option>)}
             </select>
           </label>
           <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
@@ -380,12 +380,12 @@ const DatabaseManagement = () => {
             <input
               value={sortField}
               onChange={(event) => setSortField(event.target.value || 'createdAt')}
-              className="w-full bg-transparent text-sm outline-none"
+              className="w-full bg-transparent text-sm outline-none text-slate-800 dark:text-slate-100"
             />
           </label>
-          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-900">
-            <option value="desc">Descending</option>
-            <option value="asc">Ascending</option>
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none dark:border-slate-800 dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+            <option value="desc" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Descending</option>
+            <option value="asc" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Ascending</option>
           </select>
         </div>
 

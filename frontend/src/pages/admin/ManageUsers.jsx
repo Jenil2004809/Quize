@@ -123,11 +123,11 @@ const ManageUsers = () => {
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="bg-transparent text-xs font-semibold focus:outline-none pr-6 cursor-pointer"
+              className="bg-transparent text-xs font-semibold focus:outline-none pr-6 cursor-pointer text-slate-800 dark:text-slate-100"
             >
-              <option value="">All Users (Students & Teachers)</option>
-              <option value="student">Students Only</option>
-              <option value="teacher">Teachers Only</option>
+              <option value="" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">All Users (Students & Teachers)</option>
+              <option value="student" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Students Only</option>
+              <option value="teacher" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Teachers Only</option>
             </select>
           </div>
         </div>

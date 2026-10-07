@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const Admin = require('../models/Admin');
 const Student = require('../models/Student');
 const Teacher = require('../models/Teacher');
+const Setting = require('../models/Setting');
 const { notifyAnalyticsUpdate } = require('../config/socket');
 const sendEmail = require('../utils/sendEmail');
 
@@ -92,6 +93,10 @@ const registerTeacher = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
+    // Fetch platform settings to check if teacher auto-approval is enabled
+    const platformSettings = await Setting.findOne();
+    const shouldAutoApprove = platformSettings ? platformSettings.autoApproveTeachers : true;
+
     const teacher = await Teacher.create({
       name,
       email,
@@ -99,7 +104,7 @@ const registerTeacher = async (req, res, next) => {
       phone: phone || '',
       role: 'teacher',
       specialization: specialization || '',
-      isApproved: true,
+      isApproved: shouldAutoApprove,
       isEmailVerified: true
     });
 
