@@ -336,8 +336,14 @@ const AttemptQuiz = () => {
           }
         }
 
+        let attemptId = localStorage.getItem(`attempt_session_${quizId}`);
+        if (!attemptId) {
+          attemptId = `att_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+          localStorage.setItem(`attempt_session_${quizId}`, attemptId);
+        }
+
         const quizRes = await api.get(`/quizzes/${quizId}`);
-        const qRes = await api.get(`/quizzes/${quizId}/questions`);
+        const qRes = await api.get(`/quizzes/${quizId}/questions?attemptId=${attemptId}`);
 
         if (quizRes.data.success && qRes.data.success) {
           setQuiz(quizRes.data.quiz);
@@ -552,6 +558,7 @@ const AttemptQuiz = () => {
       // Clean autosave state
       localStorage.removeItem(`autosave_${quizId}`);
       localStorage.removeItem(`quiz_violations_${quizId}`);
+      localStorage.removeItem(`attempt_session_${quizId}`);
 
       if (isDisqualified) {
         navigate('/', { replace: true });

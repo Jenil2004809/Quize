@@ -83,7 +83,7 @@ const getQuestionsForQuiz = async (req, res, next) => {
     if (req.user.role === 'student') {
       const studentIdStr = req.user._id.toString();
       const quizIdStr = quizId.toString();
-      const attemptKey = req.query.attemptId || req.query.t || Date.now();
+      const attemptKey = req.query.attemptId || req.query.t || `${studentIdStr}_${quizIdStr}`;
 
       // Unique seed for question sequence per student attempt
       const questionSeed = stringToSeed(`${studentIdStr}_qseq_${quizIdStr}_${attemptKey}`);
