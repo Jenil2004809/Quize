@@ -225,15 +225,39 @@ const AttemptQuiz = () => {
     setIsExamStarted(true);
   };
 
-  // Clean up streams on unmount
-  useEffect(() => {
-    return () => {
+  // Thorough cleanup function to turn OFF all camera, microphone and screen share streams
+  const stopAllProctoringStreams = () => {
+    try {
       if (compositeCleanupRef.current) {
-        compositeCleanupRef.current();
+        try { compositeCleanupRef.current(); } catch (e) {}
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try { mediaRecorderRef.current.stop(); } catch (e) {}
+      }
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => {
+          try { track.stop(); } catch (e) {}
+        });
+        cameraStreamRef.current = null;
       }
       if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach(t => t.stop());
+        screenStreamRef.current.getTracks().forEach(track => {
+          try { track.stop(); } catch (e) {}
+        });
+        screenStreamRef.current = null;
       }
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch (err) {
+      console.warn('Error turning off camera/proctoring streams:', err);
+    }
+  };
+
+  // Clean up all media streams and camera hardware on unmount
+  useEffect(() => {
+    return () => {
+      stopAllProctoringStreams();
     };
   }, []);
 
@@ -555,10 +579,11 @@ const AttemptQuiz = () => {
         }
       }
 
-      // Clean autosave state
+      // Clean autosave state and turn off camera & media hardware
       localStorage.removeItem(`autosave_${quizId}`);
       localStorage.removeItem(`quiz_violations_${quizId}`);
       localStorage.removeItem(`attempt_session_${quizId}`);
+      stopAllProctoringStreams();
 
       if (isDisqualified) {
         navigate('/', { replace: true });
@@ -567,6 +592,7 @@ const AttemptQuiz = () => {
       }
     } catch (error) {
       console.error('Submission Error:', error);
+      stopAllProctoringStreams();
       if (isDisqualified) {
         navigate('/', { replace: true });
       } else {

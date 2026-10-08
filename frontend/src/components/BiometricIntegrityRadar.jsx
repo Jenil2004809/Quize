@@ -83,8 +83,22 @@ const BiometricIntegrityRadar = ({ onViolation, onIntegrityChange, onEyeOffScree
 
     return () => {
       if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(track => {
+          try { track.stop(); } catch (e) {}
+        });
       }
+      if (videoRef.current && videoRef.current.srcObject) {
+        try {
+          const activeStream = videoRef.current.srcObject;
+          if (activeStream && activeStream.getTracks) {
+            activeStream.getTracks().forEach(track => {
+              try { track.stop(); } catch (e) {}
+            });
+          }
+        } catch (e) {}
+        videoRef.current.srcObject = null;
+      }
+      setCameraActive(false);
     };
   }, [isExamActive]);
 
