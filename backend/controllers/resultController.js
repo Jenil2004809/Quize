@@ -85,15 +85,17 @@ const submitQuiz = async (req, res, next) => {
 
       if (['multiple-correct', 'multiple-select', 'multiple'].includes(question.type)) {
         // Must match all correct answers exactly
-        const sortedCorrect = [...question.correctAnswers].sort();
-        const sortedSelected = [...userSelected].sort();
+        const sortedCorrect = (question.correctAnswers || []).map(v => String(v).toLowerCase().trim()).sort();
+        const sortedSelected = userSelected.map(v => String(v).toLowerCase().trim()).sort();
         isCorrect = sortedCorrect.length === sortedSelected.length &&
-          sortedCorrect.every((val, index) => val.toLowerCase().trim() === sortedSelected[index].toLowerCase().trim());
+          sortedCorrect.every((val, index) => val === sortedSelected[index]);
       } else {
-        // Single option (mcq, true-false, fill-in-the-blank)
-        const correctVal = question.correctAnswers[0]?.toLowerCase().trim();
-        const selectedVal = userSelected[0]?.toLowerCase().trim();
-        isCorrect = correctVal === selectedVal;
+        // Single option (mcq, single, true-false, fill-in-the-blank, short-answer)
+        const selectedVal = userSelected[0] ? String(userSelected[0]).toLowerCase().trim() : '';
+        isCorrect = Array.isArray(question.correctAnswers) && question.correctAnswers.some(ans => {
+          const correctVal = String(ans).toLowerCase().trim();
+          return correctVal === selectedVal;
+        });
       }
 
       let marksAwarded = 0;

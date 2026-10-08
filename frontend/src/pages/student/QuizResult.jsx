@@ -433,8 +433,10 @@ const QuizResult = () => {
                 {q.options && q.options.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
                     {q.options.map((opt, oIdx) => {
-                      const wasSelected = studentSelected.includes(opt);
-                      const isCorrectOpt = Array.isArray(q.correctAnswers) ? q.correctAnswers.includes(opt) : q.correctAnswers === opt;
+                      const wasSelected = studentSelected.some(sel => String(sel).trim().toLowerCase() === String(opt).trim().toLowerCase());
+                      const isCorrectOpt = Array.isArray(q.correctAnswers)
+                        ? q.correctAnswers.some(ans => String(ans).trim().toLowerCase() === String(opt).trim().toLowerCase())
+                        : String(q.correctAnswers).trim().toLowerCase() === String(opt).trim().toLowerCase();
 
                       let borderClass = 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300';
                       let badge = '';
